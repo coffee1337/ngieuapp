@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+  AppTheme._();
+
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
@@ -78,7 +80,6 @@ class AppTheme {
   }
 }
 
-/// Доступ к фирменным цветам через Theme.of(context).extension<BrandColors>()!
 class BrandColors extends ThemeExtension<BrandColors> {
   const BrandColors({
     required this.primaryBrand,
@@ -87,21 +88,30 @@ class BrandColors extends ThemeExtension<BrandColors> {
     required this.orange,
     required this.brandGradient,
   });
-  final Color primaryBrand, deepBlue, purple, orange;
+
+  final Color primaryBrand;
+  final Color deepBlue;
+  final Color purple;
+  final Color orange;
   final Gradient brandGradient;
 
   @override
   BrandColors copyWith({
-    Color? primaryBrand, Color? deepBlue, Color? purple,
-    Color? orange, Gradient? brandGradient,
-  }) => BrandColors(
-        primaryBrand: primaryBrand ?? this.primaryBrand,
-        deepBlue: deepBlue ?? this.deepBlue,
-        purple: purple ?? this.purple,
-        orange: orange ?? this.orange,
-        brandGradient: brandGradient ?? this.brandGradient,
-      );
+    Color? primaryBrand,
+    Color? deepBlue,
+    Color? purple,
+    Color? orange,
+    Gradient? brandGradient,
+  }) {
+    return BrandColors(
+      primaryBrand: primaryBrand ?? this.primaryBrand,
+      deepBlue: deepBlue ?? this.deepBlue,
+      purple: purple ?? this.purple,
+      orange: orange ?? this.orange,
+      brandGradient: brandGradient ?? this.brandGradient,
+    );
+  }
 
   @override
-  BrandColors lerp(ThemeExtension<BrandColors>? o, double t) => this;
+  BrandColors lerp(ThemeExtension<BrandColors>? other, double t) => this;
 }

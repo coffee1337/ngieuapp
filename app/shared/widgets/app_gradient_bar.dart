@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
+
 class AppGradientBar extends StatelessWidget {
   const AppGradientBar({super.key, this.height = 4});
   final double height;
