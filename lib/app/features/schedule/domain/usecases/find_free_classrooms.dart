@@ -1,4 +1,5 @@
-import '../lesson.dart';
+import 'package:flutter/material.dart';
+
 import '../classroom_availability.dart';
 import '../schedule_repository.dart';
 
@@ -6,12 +7,10 @@ class FindFreeClassrooms {
   FindFreeClassrooms(this._repo);
   final ScheduleRepository _repo;
 
-  // Рабочий день универа
   static const _dayStart = TimeOfDay(hour: 8, minute: 0);
   static const _dayEnd = TimeOfDay(hour: 20, minute: 0);
   static const _minFreeWindow = Duration(minutes: 15);
 
-  // Мусор, не являющийся физической аудиторией
   static final _excluded = RegExp(
     r'^(дист\.?|онлайн|удал[её]нно|по\s+плану|н/д|\-)\s*$',
     caseSensitive: false,
@@ -28,26 +27,23 @@ class FindFreeClassrooms {
     final fromDt = _combine(day, from);
     final toDt = _combine(day, to);
 
-    // 1. Все занятия за день
     var lessons = await _repo.getAllLessonsForDate(day);
 
-    // 2. Фильтрация мусорных аудиторий
     lessons = lessons.where((l) =>
-        l.classroom.isNotEmpty && !_excluded.hasMatch(l.classroom)
-    ).toList();
+        l.classroom.isNotEmpty && !_excluded.hasMatch(l.classroom)).toList();
 
     if (buildingFilter != null) {
       lessons = lessons.where((l) => l.building == buildingFilter).toList();
     }
 
-    // 3. Группировка по кабинету
     final byRoom = <_RoomKey, List<_Interval>>{};
     for (final l in lessons) {
       final key = _RoomKey(l.classroom, l.building);
-      byRoom.putIfAbsent(key, () => []).add(_Interval(l.startTime, l.endTime));
+      byRoom
+          .putIfAbsent(key, () => [])
+          .add(_Interval(l.startTime, l.endTime));
     }
 
-    // 4. Для каждой комнаты — merge и поиск свободных окон
     final result = <ClassroomAvailability>[];
     final dayStartDt = _combine(day, _dayStart);
     final dayEndDt = _combine(day, _dayEnd);
@@ -57,7 +53,6 @@ class FindFreeClassrooms {
       final freeWindows = _gaps(merged, dayStartDt, dayEndDt);
 
       for (final w in freeWindows) {
-        // Пересечение с запрошенным интервалом
         final s = w.start.isAfter(fromDt) ? w.start : fromDt;
         final e = w.end.isBefore(toDt) ? w.end : toDt;
         if (e.isAfter(s) && e.difference(s) >= minDuration) {
@@ -72,7 +67,6 @@ class FindFreeClassrooms {
       }
     }
 
-    // 5. Сортируем: сначала дольше свободны
     result.sort((a, b) => b.freeDuration.compareTo(a.freeDuration));
     return result;
   }
@@ -127,9 +121,11 @@ class _RoomKey {
   _RoomKey(this.room, this.building);
   final String room;
   final String building;
+
   @override
   bool operator ==(Object o) =>
       o is _RoomKey && o.room == room && o.building == building;
+
   @override
   int get hashCode => Object.hash(room, building);
 }
