@@ -8,17 +8,8 @@ import 'app/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Локализация дат (русские названия дней/месяцев)
   await initializeDateFormatting('ru_RU', null);
-
-  // Hive инициализируем один раз на старте
   await Hive.initFlutter();
-
-  // Фиксируем портретную ориентацию
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ProviderScope(child: NgieuApp()));
 }
