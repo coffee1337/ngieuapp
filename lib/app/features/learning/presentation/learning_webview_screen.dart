@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
 import '../../../shared/widgets/error_view.dart';
 
 class LearningWebViewScreen extends StatefulWidget {
@@ -82,7 +83,6 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   supportZoom: true,
                   useOnDownloadStart: true,
                   thirdPartyCookiesEnabled: true,
-                  // Блокируем переходы на внешние сайты (чтобы не "улетать" из приложения)
                   useShouldOverrideUrlLoading: true,
                   allowsBackForwardNavigationGestures: true,
                   userAgent:
@@ -101,7 +101,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 },
                 onLoadStop: (c, _) async {
                   _canGoBack = await c.canGoBack();
-                  setState(() {});
+                  if (mounted) setState(() {});
                 },
                 onReceivedError: (_, request, error) {
                   if (request.isForMainFrame == true) {
@@ -123,17 +123,14 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 },
                 shouldOverrideUrlLoading: (c, action) async {
                   final host = action.request.url?.host ?? '';
-                  // Разрешаем только свои домены, остальное — в браузер
                   if (host.contains('ngiei.mcdir.ru') ||
                       host.contains('ngieu.ru')) {
                     return NavigationActionPolicy.ALLOW;
                   }
-                  // Тут можно открыть внешний браузер через url_launcher
                   return NavigationActionPolicy.CANCEL;
                 },
                 onDownloadStartRequest: (c, req) async {
                   // Отдаём ОС — пусть сохраняет файл через Download Manager
-                  // (подключить flutter_downloader при желании)
                 },
               ),
       ),

@@ -1,5 +1,8 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 class LearningAuthService {
-  // Хранилище креденшелов в Secure Storage
+  LearningAuthService();
+
   final _storage = const FlutterSecureStorage();
 
   Future<({String? login, String? password})> read() async => (

@@ -1,11 +1,15 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'student_identity.freezed.dart';
+part 'student_identity.g.dart';
+
 @freezed
 class StudentIdentity with _$StudentIdentity {
   const factory StudentIdentity({
-    required String actorId,          // id группы (из student.json)
+    required String actorId,
     required String groupName,
     required int departmentId,
-    String? fullName,                 // если юзер ввёл
-    int? course,                      // вычисляется из названия: "Б-23" = 2023 → курс 3
+    String? fullName,
   }) = _StudentIdentity;
 
   factory StudentIdentity.fromJson(Map<String, dynamic> json) =>
