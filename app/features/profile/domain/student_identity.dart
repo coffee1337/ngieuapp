@@ -1,0 +1,27 @@
+@freezed
+class StudentIdentity with _$StudentIdentity {
+  const factory StudentIdentity({
+    required String actorId,          // id группы (из student.json)
+    required String groupName,
+    required int departmentId,
+    String? fullName,                 // если юзер ввёл
+    int? course,                      // вычисляется из названия: "Б-23" = 2023 → курс 3
+  }) = _StudentIdentity;
+
+  factory StudentIdentity.fromJson(Map<String, dynamic> json) =>
+      _$StudentIdentityFromJson(json);
+}
+
+extension StudentIdentityDerived on StudentIdentity {
+  /// Из "Б-23 ИО" → 2023 → курс = текущий_год - 2023 + 1
+  int? get computedCourse {
+    final match = RegExp(r'(?:Б|М|С)-(\d{2})').firstMatch(groupName);
+    if (match == null) return null;
+    final yy = int.parse(match.group(1)!);
+    final enrolled = 2000 + yy;
+    final now = DateTime.now();
+    // Учебный год начинается 1 сентября
+    final academicYear = now.month >= 9 ? now.year : now.year - 1;
+    return academicYear - enrolled + 1;
+  }
+}
