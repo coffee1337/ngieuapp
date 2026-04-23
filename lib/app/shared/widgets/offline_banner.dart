@@ -12,34 +12,46 @@ class OfflineBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = ref.watch(connectivityProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
-      height: isOnline ? 0 : 32,
-      color: theme.colorScheme.errorContainer,
-      child: isOnline
-          ? null
-          : Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.cloud_off_outlined,
-                    size: 16,
-                    color: theme.colorScheme.onErrorContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Нет подключения. Показаны сохранённые данные.',
-                    style: theme.textTheme.labelMedium?.copyWith(
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: isOnline
+            ? const SizedBox.shrink(key: ValueKey('online'))
+            : Container(
+                key: const ValueKey('offline'),
+                width: double.infinity,
+                color: isDark
+                    ? theme.colorScheme.errorContainer.withValues(alpha: 0.6)
+                    : theme.colorScheme.errorContainer,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_off_outlined,
+                      size: 16,
                       color: theme.colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w500,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Нет подключения. Показаны сохранённые данные.',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }

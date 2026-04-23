@@ -15,39 +15,82 @@ class DayTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final today = DateTime.now();
     final dayFmt = DateFormat('EEE', 'ru_RU');
     final dateFmt = DateFormat('d', 'ru_RU');
 
-    return TabBar(
-      isScrollable: true,
-      tabAlignment: TabAlignment.start,
-      tabs: List.generate(6, (i) {
-        final d = weekStart.add(Duration(days: i));
-        final isToday = d.year == today.year &&
-            d.month == today.month &&
-            d.day == today.day;
-        return Tab(
-          height: 54,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                dayFmt.format(d).toUpperCase(),
-                style: theme.textTheme.labelSmall,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                dateFmt.format(d),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isToday ? theme.colorScheme.primary : null,
-                ),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? theme.colorScheme.surfaceContainerLow
+            : theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            width: 0.5,
           ),
-        );
-      }),
+        ),
+      ),
+      child: TabBar(
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        labelColor: theme.colorScheme.primary,
+        unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+        indicatorSize: TabBarIndicatorSize.label,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 3,
+          ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(3),
+            topRight: Radius.circular(3),
+          ),
+        ),
+        tabs: List.generate(6, (i) {
+          final d = weekStart.add(Duration(days: i));
+          final isToday = d.year == today.year &&
+              d.month == today.month &&
+              d.day == today.day;
+          return Tab(
+            height: 54,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  dayFmt.format(d).toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isToday
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isToday
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: Text(
+                    dateFmt.format(d),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isToday
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }

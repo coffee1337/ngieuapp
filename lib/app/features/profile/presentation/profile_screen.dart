@@ -48,28 +48,39 @@ class _NotSetYet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.person_outline,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_outline,
+              size: 48,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             'Вы ещё не выбрали группу',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Откройте расписание, выберите свою группу,\nи она появится в профиле',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 24),
@@ -92,6 +103,7 @@ class _ProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final course = identity.computedCourse;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     final today = DateTime.now();
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
@@ -101,7 +113,7 @@ class _ProfileContent extends ConsumerWidget {
     );
     final lessonsAsync = ref.watch(weekScheduleProvider(key));
 
-    // Обновляем виджет, когда есть свежие данные расписания.
+    // Update home widget
     ref.listen(weekScheduleProvider(key), (_, next) {
       next.whenData((lessons) {
         HomeWidgetService.instance.updateNextLesson(lessons);
@@ -110,27 +122,64 @@ class _ProfileContent extends ConsumerWidget {
 
     return ListView(
       children: [
+        // Gradient header with profile info
         Container(
-          padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
-          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+          decoration: BoxDecoration(
+            gradient: AppColors.brandGradient,
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                identity.groupName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                Departments.nameOf(identity.departmentId),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 14,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.school,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          identity.groupName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          Departments.nameOf(identity.departmentId),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Row(
@@ -161,6 +210,8 @@ class _ProfileContent extends ConsumerWidget {
             ],
           ),
         ),
+
+        // Next lesson card
         lessonsAsync.maybeWhen(
           data: (lessons) {
             final now = DateTime.now();
@@ -171,36 +222,45 @@ class _ProfileContent extends ConsumerWidget {
             if (next.isEmpty) return const SizedBox.shrink();
             final l = next.first;
             return Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
               child: _NextLessonCard(lesson: l),
             );
           },
           orElse: () => const SizedBox.shrink(),
         ),
+
+        const SizedBox(height: 8),
         const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.schedule),
-          title: const Text('Моё расписание'),
-          trailing: const Icon(Icons.chevron_right, size: 20),
+
+        // Menu items
+        _MenuTile(
+          icon: Icons.schedule,
+          title: 'Моё расписание',
           onTap: () => context.push('/schedule/${identity.actorId}'),
         ),
-        ListTile(
-          leading: const Icon(Icons.meeting_room_outlined),
-          title: const Text('Свободные аудитории'),
-          trailing: const Icon(Icons.chevron_right, size: 20),
+        _MenuTile(
+          icon: Icons.meeting_room_outlined,
+          title: 'Свободные аудитории',
           onTap: () => context.push('/schedule/free-rooms'),
         ),
-        ListTile(
-          leading: const Icon(Icons.settings_outlined),
-          title: const Text('Настройки'),
-          trailing: const Icon(Icons.chevron_right, size: 20),
+        _MenuTile(
+          icon: Icons.search,
+          title: 'Поиск по расписанию',
+          onTap: () => context.push('/schedule/search'),
+        ),
+        _MenuTile(
+          icon: Icons.settings_outlined,
+          title: 'Настройки',
           onTap: () => context.push('/profile/settings'),
         ),
-        const Divider(),
-        ListTile(
-          leading: Icon(Icons.logout, color: theme.colorScheme.error),
-          title: Text('Сменить группу',
-              style: TextStyle(color: theme.colorScheme.error)),
+
+        const Divider(height: 1),
+
+        _MenuTile(
+          icon: Icons.logout,
+          title: 'Сменить группу',
+          iconColor: theme.colorScheme.error,
+          textColor: theme.colorScheme.error,
           onTap: () async {
             await ref.read(profileLocalDataSourceProvider).clear();
             ref.invalidate(studentIdentityProvider);
@@ -221,7 +281,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(12),
@@ -233,7 +293,7 @@ class _StatCard extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -259,6 +319,7 @@ class _NextLessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final fmt = DateFormat('HH:mm');
     final now = DateTime.now();
     final isNow = now.isAfter(lesson.startTime) && now.isBefore(lesson.endTime);
@@ -276,11 +337,29 @@ class _NextLessonCard extends StatelessWidget {
       statusText = DateFormat('EEE, HH:mm', 'ru_RU').format(lesson.startTime);
     }
 
+    final containerColor = isNow
+        ? theme.colorScheme.primaryContainer
+        : (isDark
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.primaryContainer);
+
+    final onContainerColor = isNow
+        ? theme.colorScheme.onPrimaryContainer
+        : (isDark
+            ? theme.colorScheme.onSurface
+            : theme.colorScheme.onPrimaryContainer);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
+        color: containerColor,
         borderRadius: BorderRadius.circular(16),
+        border: isDark && !isNow
+            ? Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                width: 1,
+              )
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,62 +367,71 @@ class _NextLessonCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isNow ? Icons.play_circle : Icons.upcoming,
+                isNow ? Icons.play_circle_fill : Icons.upcoming,
                 size: 18,
-                color: theme.colorScheme.onPrimaryContainer,
+                color: onContainerColor,
               ),
               const SizedBox(width: 6),
               Text(
                 isNow ? 'СЕЙЧАС' : 'СЛЕДУЮЩАЯ ПАРА',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: onContainerColor,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
               ),
               const Spacer(),
-              Text(
-                statusText,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isNow
+                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                      : theme.colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  statusText,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: isNow
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onTertiaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             lesson.subject,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer,
+              color: onContainerColor,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             children: [
               Icon(Icons.access_time,
                   size: 14,
-                  color: theme.colorScheme.onPrimaryContainer
-                      .withValues(alpha: 0.8)),
+                  color: onContainerColor.withValues(alpha: 0.7)),
               const SizedBox(width: 4),
               Text(
                 '${fmt.format(lesson.startTime)}—${fmt.format(lesson.endTime)}',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: onContainerColor,
                 ),
               ),
               const SizedBox(width: 12),
               if (lesson.classroom.isNotEmpty) ...[
                 Icon(Icons.place,
                     size: 14,
-                    color: theme.colorScheme.onPrimaryContainer
-                        .withValues(alpha: 0.8)),
+                    color: onContainerColor.withValues(alpha: 0.7)),
                 const SizedBox(width: 4),
                 Text(
                   'Ауд. ${lesson.classroom}',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: onContainerColor,
                   ),
                 ),
               ],
@@ -351,6 +439,43 @@ class _NextLessonCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.iconColor,
+    this.textColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final Color? iconColor;
+  final Color? textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(icon, color: iconColor ?? theme.colorScheme.primary),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor ?? theme.colorScheme.onSurface,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        size: 20,
+        color: textColor ?? theme.colorScheme.onSurfaceVariant,
+      ),
+      onTap: onTap,
     );
   }
 }

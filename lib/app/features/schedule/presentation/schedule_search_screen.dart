@@ -8,7 +8,6 @@ import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../data/schedule_providers.dart';
-import '../domain/lesson.dart';
 import '../domain/usecases/search_schedule.dart';
 
 class ScheduleSearchScreen extends ConsumerStatefulWidget {

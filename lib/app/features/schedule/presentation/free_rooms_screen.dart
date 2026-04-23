@@ -59,7 +59,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
               .timeout(const Duration(seconds: 15));
           await dbDs.replaceForActor(g.id, lessons);
         } catch (_) {
-          // пропускаем
+          // skip
         }
         state = BackgroundLoaderState(
           isLoading: true,
@@ -143,8 +143,16 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       ),
       body: Column(
         children: [
-          // Индикатор фоновой загрузки
-          if (loader.isLoading) _LoadingBanner(loader: loader),
+          // Loading banner - more prominent with animation
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: loader.isLoading
+                ? _LoadingBanner(loader: loader)
+                : const SizedBox.shrink(),
+          ),
+          // Parameters card
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -175,7 +183,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Фильтры
+                // Filter chips
                 _FilterChips(
                   minDuration: _minDurationMinutes,
                   buildingFilter: _buildingFilter,
@@ -188,9 +196,11 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () {
-                      setState(() => _searched = true);
-                    },
+                    onPressed: loader.isLoading
+                        ? null
+                        : () {
+                            setState(() => _searched = true);
+                          },
                     icon: const Icon(Icons.search),
                     label: const Text('Найти'),
                   ),
@@ -198,13 +208,15 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                 if (!loader.isLoading && loader.loaded == 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // Запускаем и не ждём — фоновая загрузка
-                        ref.read(backgroundLoaderProvider.notifier).run();
-                      },
-                      icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                      label: const Text('Загрузить расписание всех групп'),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ref.read(backgroundLoaderProvider.notifier).run();
+                        },
+                        icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                        label: const Text('Загрузить расписание всех групп'),
+                      ),
                     ),
                   ),
               ],
@@ -264,28 +276,39 @@ class _LoadingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      color: theme.colorScheme.tertiaryContainer,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5)
+            : theme.colorScheme.tertiaryContainer,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               SizedBox(
-                width: 14,
-                height: 14,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                  strokeWidth: 2.5,
                   color: theme.colorScheme.onTertiaryContainer,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Загрузка расписания: ${loader.loaded}/${loader.total} групп',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  'Загрузка расписания: ${loader.loaded} из ${loader.total} групп',
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onTertiaryContainer,
                     fontWeight: FontWeight.w600,
                   ),
@@ -293,15 +316,24 @@ class _LoadingBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: loader.progress,
-              minHeight: 4,
+              minHeight: 6,
               backgroundColor:
-                  theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.2),
+                  theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.15),
               color: theme.colorScheme.onTertiaryContainer,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Данные загружаются в фоне. Вы можете искать аудитории\nпосле завершения загрузки для более точных результатов.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.7),
+              height: 1.3,
             ),
           ),
         ],
@@ -354,7 +386,7 @@ class _FilterChips extends StatelessWidget {
                 context: context,
                 builder: (_) => _BuildingSheet(current: buildingFilter),
               );
-              // null значит "не изменяли", а пустая строка = сбросить
+              // null means "didn't change", empty string = reset
               if (picked != null) {
                 onBuildingChanged(picked.isEmpty ? null : picked);
               }
@@ -391,7 +423,7 @@ class _FilterChips extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: fg),
               const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: fg, fontSize: 13)),
+              Text(label, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w500)),
               const SizedBox(width: 4),
               Icon(Icons.arrow_drop_down, size: 18, color: fg),
             ],
@@ -409,15 +441,18 @@ class _MinDurationSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const options = [15, 30, 45, 60, 90, 120, 180];
+    final theme = Theme.of(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text(
               'Минимальная длительность',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           for (final m in options)
@@ -427,6 +462,7 @@ class _MinDurationSheet extends StatelessWidget {
               groupValue: current,
               onChanged: (v) => Navigator.pop(context, v),
             ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -439,17 +475,19 @@ class _BuildingSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Зашитый список корпусов. Позже можно вычислять из БД.
     const options = <String>['', 'А', 'Б', 'В', 'Г'];
+    final theme = Theme.of(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text(
               'Корпус',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           for (final b in options)
@@ -459,6 +497,7 @@ class _BuildingSheet extends StatelessWidget {
               groupValue: current ?? '',
               onChanged: (v) => Navigator.pop(context, v ?? ''),
             ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -477,8 +516,9 @@ class _RowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: theme.colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -487,12 +527,18 @@ class _RowButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, size: 20),
+              Icon(icon, size: 20, color: theme.colorScheme.onSurface),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(label, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-              const Icon(Icons.arrow_drop_down),
+              Icon(Icons.arrow_drop_down, color: theme.colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -516,9 +562,20 @@ class _RoomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final fmt = DateFormat('HH:mm');
+
     return Card(
       margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: isDark
+            ? BorderSide(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                width: 0.5,
+              )
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -546,7 +603,7 @@ class _RoomCard extends StatelessWidget {
                         ? 'Ауд. ${room.classroom}'
                         : 'Ауд. ${room.classroom} (${room.building})',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -554,6 +611,7 @@ class _RoomCard extends StatelessWidget {
                     '${fmt.format(room.freeFrom)} — ${fmt.format(room.freeUntil)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
@@ -569,7 +627,7 @@ class _RoomCard extends StatelessWidget {
                 _durationText(),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onTertiaryContainer,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

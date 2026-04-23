@@ -15,19 +15,22 @@ import 'shared/widgets/offline_banner.dart';
 
 CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
       child: child,
-      transitionDuration: const Duration(milliseconds: 260),
-      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
       transitionsBuilder: (_, anim, __, child) {
         final curved = CurvedAnimation(
           parent: anim,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeIn,
+          curve: Curves.easeOutQuart,
+          reverseCurve: Curves.easeInToLinear,
         );
         return FadeTransition(
-          opacity: curved,
+          opacity: CurvedAnimation(
+            parent: anim,
+            curve: const Interval(0, 0.6, curve: Curves.easeOut),
+          ),
           child: SlideTransition(
             position: Tween<Offset>(
-              begin: const Offset(0, 0.04),
+              begin: const Offset(0, 0.03),
               end: Offset.zero,
             ).animate(curved),
             child: child,
@@ -98,9 +101,17 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class _RootShell extends StatelessWidget {
+class _RootShell extends StatefulWidget {
   const _RootShell({required this.child});
   final Widget child;
+
+  @override
+  State<_RootShell> createState() => _RootShellState();
+}
+
+class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
+  late final AnimationController _animController;
+  bool _initialized = false;
 
   static const _tabs = [
     (path: '/news', icon: Icons.article_outlined, label: 'Новости'),
@@ -108,6 +119,21 @@ class _RootShell extends StatelessWidget {
     (path: '/profile', icon: Icons.person_outline, label: 'Профиль'),
     (path: '/learning', icon: Icons.school_outlined, label: 'Обучение'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   int _indexFromLocation(String loc) {
     for (var i = 0; i < _tabs.length; i++) {
@@ -120,19 +146,44 @@ class _RootShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     final idx = _indexFromLocation(location);
+
+    // Animate on tab change
+    if (!_initialized) {
+      _initialized = true;
+      _animController.value = 1.0;
+    } else {
+      _animController.forward(from: 0.0);
+    }
+
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Column(
         children: [
           const OfflineBanner(),
-          Expanded(child: child),
+          Expanded(
+            child: FadeTransition(
+              opacity: _animController,
+              child: widget.child,
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
         onDestinationSelected: (i) => context.go(_tabs[i].path),
+        height: 64,
+        backgroundColor: theme.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: theme.colorScheme.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           for (final t in _tabs)
-            NavigationDestination(icon: Icon(t.icon), label: t.label),
+            NavigationDestination(
+              icon: Icon(t.icon),
+              selectedIcon: Icon(t.icon),
+              label: t.label,
+            ),
         ],
       ),
     );

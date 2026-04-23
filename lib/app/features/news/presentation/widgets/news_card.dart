@@ -13,9 +13,20 @@ class NewsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: isDark
+            ? BorderSide(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                width: 0.5,
+              )
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: onTap,
         child: Column(
@@ -29,6 +40,17 @@ class NewsCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(
                     color: theme.colorScheme.surfaceContainerHigh,
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ),
                   ),
                   errorWidget: (_, __, ___) => Container(
                     color: theme.colorScheme.surfaceContainerHigh,
@@ -48,7 +70,8 @@ class NewsCard extends StatelessWidget {
                     Text(
                       DateFormat('d MMMM y', 'ru_RU').format(article.publishedAt!),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -58,7 +81,7 @@ class NewsCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       height: 1.25,
                     ),
                   ),
@@ -70,7 +93,7 @@ class NewsCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.35,
+                        height: 1.4,
                       ),
                     ),
                   ],

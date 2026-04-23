@@ -9,13 +9,14 @@ class LessonTile extends StatelessWidget {
 
   Color _typeColor(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     return switch (lesson.type) {
-      LessonType.lecture => scheme.primary,
-      LessonType.practice => scheme.tertiary,
-      LessonType.lab => scheme.secondary,
+      LessonType.lecture => isDark ? scheme.primary : scheme.primary,
+      LessonType.practice => isDark ? const Color(0xFF80CBC4) : scheme.tertiary,
+      LessonType.lab => isDark ? const Color(0xFFCE93D8) : scheme.secondary,
       LessonType.exam => scheme.error,
-      LessonType.consultation => scheme.outline,
-      LessonType.event => scheme.tertiary,
+      LessonType.consultation => isDark ? scheme.outline : scheme.outline,
+      LessonType.event => isDark ? const Color(0xFF80CBC4) : scheme.tertiary,
       LessonType.unknown => scheme.outline,
     };
   }
@@ -35,29 +36,33 @@ class LessonTile extends StatelessWidget {
     final theme = Theme.of(context);
     final fmt = DateFormat('HH:mm');
     final typeColor = _typeColor(context);
-
     final isDark = theme.brightness == Brightness.dark;
 
+    // Change card background: subtle for dark, with error tint for changes
+    final cardColor = lesson.isChange
+        ? (isDark
+            ? theme.colorScheme.error.withValues(alpha: 0.15)
+            : theme.colorScheme.errorContainer.withValues(alpha: 0.5))
+        : theme.colorScheme.surfaceContainer;
+
+    final borderColor = lesson.isChange
+        ? theme.colorScheme.error.withValues(alpha: isDark ? 0.6 : 0.7)
+        : null;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: lesson.isChange
-            ? (isDark
-                ? theme.colorScheme.error.withValues(alpha: 0.12)
-                : theme.colorScheme.errorContainer.withValues(alpha: 0.35))
-            : theme.colorScheme.surfaceContainer,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: lesson.isChange
-            ? Border.all(
-                color: theme.colorScheme.error.withValues(alpha: isDark ? 0.5 : 0.7),
-                width: 1,
-              )
+        border: borderColor != null
+            ? Border.all(color: borderColor, width: 1.2)
             : null,
       ),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Colored left strip
             Container(
               width: 4,
               decoration: BoxDecoration(
@@ -68,16 +73,18 @@ class LessonTile extends StatelessWidget {
                 ),
               ),
             ),
+            // Time + pair number
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '${fmt.format(lesson.startTime)}\n${fmt.format(lesson.endTime)}',
-                    style: theme.textTheme.labelMedium?.copyWith(
+                    style: theme.textTheme.labelLarge?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.3,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -90,12 +97,14 @@ class LessonTile extends StatelessWidget {
                 ],
               ),
             ),
+            // Main content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 12, 12, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Type + change badge
                     Row(
                       children: [
                         if (_typeLabel().isNotEmpty)
@@ -103,7 +112,7 @@ class LessonTile extends StatelessWidget {
                             _typeLabel(),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: typeColor,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         if (lesson.isChange) ...[
@@ -112,26 +121,32 @@ class LessonTile extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.error,
+                              color: isDark
+                                  ? theme.colorScheme.error.withValues(alpha: 0.8)
+                                  : theme.colorScheme.error,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'ЗАМЕНА',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onError,
-                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : theme.colorScheme.onError,
+                                fontWeight: FontWeight.w800,
                                 fontSize: 9,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       lesson.subject,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -187,6 +202,7 @@ class _IconLine extends StatelessWidget {
               text,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                height: 1.3,
               ),
             ),
           ),

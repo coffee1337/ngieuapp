@@ -91,36 +91,49 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
         body: Column(
           children: [
             const AppGradientBar(),
+            // Search bar with clear visual separation
             Container(
               color: theme.colorScheme.surface,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: TextField(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: SearchBar(
                 controller: _searchCtrl,
                 onChanged: _onQueryChanged,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: 'Название группы или ФИО',
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  suffixIcon: _searchCtrl.text.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            _searchCtrl.clear();
-                            _onQueryChanged('');
-                          },
-                        ),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+                hintText: 'Название группы или ФИО',
+                leading: const Padding(
+                  padding: EdgeInsets.only(left: 12),
+                  child: Icon(Icons.search, size: 22),
+                ),
+                trailing: [
+                  if (_searchCtrl.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        _onQueryChanged('');
+                      },
+                    ),
+                ],
+                elevation: WidgetStateProperty.all(0),
+                backgroundColor: WidgetStateProperty.all(
+                  theme.colorScheme.surfaceContainerHighest,
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
                   ),
+                ),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                textStyle: WidgetStateProperty.all(
+                  theme.textTheme.bodyLarge,
                 ),
               ),
             ),
             Divider(
               height: 1,
-              color: theme.colorScheme.outlineVariant,
+              thickness: 1,
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
             ),
             Expanded(
               child: TabBarView(
@@ -168,12 +181,15 @@ class _ActorList extends StatelessWidget {
       data: (all) {
         final items = filter(all);
         if (items.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
                 'Ничего не найдено',
-                style: TextStyle(fontSize: 14),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           );
@@ -202,7 +218,7 @@ class _ActorList extends StatelessWidget {
                       color: Theme.of(context)
                           .colorScheme
                           .outlineVariant
-                          .withValues(alpha: 0.4),
+                          .withValues(alpha: 0.3),
                     ),
                     itemBuilder: (_, i) {
                       final a = grouped[id]![i];
@@ -224,22 +240,26 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int id;
 
   @override
-  double get minExtent => 40;
+  double get minExtent => 44;
   @override
-  double get maxExtent => 40;
+  double get maxExtent => 44;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: isDark
+          ? theme.colorScheme.surfaceContainerLow
+          : theme.colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.centerLeft,
       child: Row(
         children: [
           Container(
-            width: 3,
-            height: 14,
+            width: 4,
+            height: 18,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(2),
@@ -249,9 +269,10 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
           Expanded(
             child: Text(
               Departments.nameOf(id),
-              style: theme.textTheme.labelLarge?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -273,6 +294,7 @@ class _ActorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -282,12 +304,15 @@ class _ActorTile extends StatelessWidget {
             Expanded(
               child: Text(
                 actor.name,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                ),
               ),
             ),
             Icon(
               Icons.chevron_right,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
               size: 20,
             ),
           ],

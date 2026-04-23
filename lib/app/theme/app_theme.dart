@@ -15,11 +15,39 @@ class AppTheme {
   }
 
   static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+    // Custom dark scheme with proper contrast for brand colors
+    const scheme = ColorScheme(
       brightness: Brightness.dark,
-      secondary: AppColors.purple,
-      tertiary: AppColors.orange,
+      primary: Color(0xFFFFB3C2),       // Lighter rose for dark bg
+      onPrimary: Color(0xFF680025),      // Dark on primary
+      primaryContainer: Color(0xFF9F003D), // Brand primary as container
+      onPrimaryContainer: Color(0xFFFFD9E0),
+      secondary: Color(0xFFCF9FDB),      // Lighter purple
+      onSecondary: Color(0xFF3B004F),
+      secondaryContainer: Color(0xFF621472), // Brand purple as container
+      onSecondaryContainer: Color(0xFFF0DBF6),
+      tertiary: Color(0xFFFFB870),       // Lighter orange
+      onTertiary: Color(0xFF4A2800),
+      tertiaryContainer: Color(0xFFFFA300), // Brand orange as container
+      onTertiaryContainer: Color(0xFF3D2500),
+      error: Color(0xFFFFB4AB),
+      onError: Color(0xFF690005),
+      errorContainer: Color(0xFF93000A),
+      onErrorContainer: Color(0xFFFFDAD6),
+      surface: Color(0xFF1A1A1F),
+      onSurface: Color(0xFFE3E1E6),
+      surfaceContainer: Color(0xFF252429),
+      surfaceContainerHigh: Color(0xFF2F2E34),
+      surfaceContainerHighest: Color(0xFF3A393F),
+      surfaceContainerLow: Color(0xFF1E1D23),
+      surfaceContainerLowest: Color(0xFF141418),
+      onSurfaceVariant: Color(0xFFC7C5CA),
+      outline: Color(0xFF919095),
+      outlineVariant: Color(0xFF4B4B50),
+      inverseSurface: Color(0xFFE3E1E6),
+      onInverseSurface: Color(0xFF1A1A1F),
+      shadow: Color(0xFF000000),
+      scrim: Color(0xFF000000),
     );
     return _build(scheme);
   }
@@ -67,7 +95,15 @@ class AppTheme {
         labelColor: scheme.primary,
         unselectedLabelColor: scheme.onSurfaceVariant,
       ),
-      extensions: [
+      navigationBarTheme: NavigationBarThemeData(
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primaryContainer,
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: scheme.primary,
+      ),
+      extensions: const [
         BrandColors(
           primaryBrand: AppColors.primary,
           deepBlue: AppColors.deepBlue,
