@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/utils/date_ext.dart';
 import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../settings/data/settings_providers.dart';
 import '../data/schedule_providers.dart';
 import 'widgets/day_tabs.dart';
 import 'widgets/lesson_tile.dart';
@@ -26,28 +28,61 @@ class WeekScheduleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weekStart = ref.watch(currentWeekStartProvider);
-    final lessonsAsync = ref.watch(weekScheduleProvider(actorId, weekStart));
+    final key = (actorId: actorId, weekStart: weekStart);
+    final lessonsAsync = ref.watch(weekScheduleProvider(key));
     final weekEnd = weekStart.add(const Duration(days: 5));
     final fmt = DateFormat('d MMM', 'ru_RU');
+    final showChanges = ref.watch(appSettingsProvider).showChanges;
+    final isEvenWeek = weekStart.isEvenWeek;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${fmt.format(weekStart)} — ${fmt.format(weekEnd)}'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${fmt.format(weekStart)} — ${fmt.format(weekEnd)}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              isEvenWeek ? 'Верхняя неделя' : 'Нижняя неделя',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
         actions: [
+          IconButton(
+            tooltip: showChanges
+                ? 'Скрыть изменения (показать плановое)'
+                : 'Показать изменения',
+            icon: Icon(showChanges
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined),
+            onPressed: () => ref
+                .read(appSettingsProvider.notifier)
+                .setShowChanges(!showChanges),
+          ),
           IconButton(
             tooltip: 'Предыдущая неделя',
             icon: const Icon(Icons.chevron_left),
-            onPressed: () => ref.read(currentWeekStartProvider.notifier).prevWeek(),
+            onPressed: () =>
+                ref.read(currentWeekStartProvider.notifier).prevWeek(),
           ),
           IconButton(
             tooltip: 'Сегодня',
             icon: const Icon(Icons.today),
-            onPressed: () => ref.read(currentWeekStartProvider.notifier).thisWeek(),
+            onPressed: () =>
+                ref.read(currentWeekStartProvider.notifier).thisWeek(),
           ),
           IconButton(
             tooltip: 'Следующая неделя',
             icon: const Icon(Icons.chevron_right),
-            onPressed: () => ref.read(currentWeekStartProvider.notifier).nextWeek(),
+            onPressed: () =>
+                ref.read(currentWeekStartProvider.notifier).nextWeek(),
           ),
         ],
         bottom: const PreferredSize(
@@ -66,9 +101,7 @@ class WeekScheduleScreen extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => ErrorView(
                   error: e,
-                  onRetry: () => ref.invalidate(
-                    weekScheduleProvider(actorId, weekStart),
-                  ),
+                  onRetry: () => ref.invalidate(rawWeekScheduleProvider(key)),
                 ),
                 data: (lessons) => TabBarView(
                   children: List.generate(6, (i) {
@@ -81,9 +114,8 @@ class WeekScheduleScreen extends ConsumerWidget {
                         .toList()
                       ..sort((a, b) => a.pairNumber.compareTo(b.pairNumber));
                     return RefreshIndicator(
-                      onRefresh: () async => ref.invalidate(
-                        weekScheduleProvider(actorId, weekStart),
-                      ),
+                      onRefresh: () async =>
+                          ref.invalidate(rawWeekScheduleProvider(key)),
                       child: dayLessons.isEmpty
                           ? ListView(
                               children: const [

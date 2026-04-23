@@ -13,7 +13,7 @@ class NewsListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(newsListControllerProvider);
+    final state = ref.watch(newsListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,7 +27,7 @@ class NewsListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => ErrorView(
           error: error,
-          onRetry: () => ref.read(newsListControllerProvider.notifier).refresh(),
+          onRetry: () => ref.invalidate(newsListProvider),
         ),
         data: (articles) {
           if (articles.isEmpty) {
@@ -37,8 +37,7 @@ class NewsListScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(newsListControllerProvider.notifier).refresh(),
+            onRefresh: () async => ref.invalidate(newsListProvider),
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 6),
               itemCount: articles.length,

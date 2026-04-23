@@ -13,8 +13,11 @@ class LearningWebViewScreen extends StatefulWidget {
 
 class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
   InAppWebViewController? _controller;
-  final _pullToRefresh = PullToRefreshController(
+  late final PullToRefreshController _pullToRefresh = PullToRefreshController(
     settings: PullToRefreshSettings(color: const Color(0xFF9F003D)),
+    onRefresh: () async {
+      await _controller?.reload();
+    },
   );
   double _progress = 0;
   bool _hasError = false;
@@ -24,9 +27,6 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
   @override
   void initState() {
     super.initState();
-    _pullToRefresh.onRefresh = () async {
-      await _controller?.reload();
-    };
   }
 
   Future<bool> _handleBack() async {

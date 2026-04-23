@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../profile/data/profile_providers.dart';
+import '../../profile/domain/student_identity.dart';
 import '../data/schedule_providers.dart';
 import '../domain/actor.dart';
+import '../domain/department.dart';
 
 class ActorPickerScreen extends ConsumerStatefulWidget {
   const ActorPickerScreen({super.key});
@@ -38,6 +41,22 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   List<Actor> _filter(List<Actor> all) {
     if (_query.isEmpty) return all;
     return all.where((a) => a.name.toLowerCase().contains(_query)).toList();
+  }
+
+  Future<void> _onActorTap(Actor a) async {
+    // Если это группа — сохраняем как профиль студента
+    if (a.type == ActorType.studentGroup) {
+      final repo = ref.read(profileLocalDataSourceProvider);
+      await repo.save(StudentIdentity(
+        actorId: a.id,
+        groupName: a.name,
+        departmentId: a.departmentId,
+      ));
+      ref.invalidate(studentIdentityProvider);
+    }
+    if (mounted) {
+      context.push('/schedule/${a.id}');
+    }
   }
 
   @override
@@ -98,11 +117,13 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                   _ActorList(
                     asyncProvider: ref.watch(studentGroupsProvider),
                     filter: _filter,
+                    onTap: _onActorTap,
                     onRetry: () => ref.invalidate(studentGroupsProvider),
                   ),
                   _ActorList(
                     asyncProvider: ref.watch(teachersProvider),
                     filter: _filter,
+                    onTap: _onActorTap,
                     onRetry: () => ref.invalidate(teachersProvider),
                   ),
                 ],
@@ -119,11 +140,13 @@ class _ActorList extends StatelessWidget {
   const _ActorList({
     required this.asyncProvider,
     required this.filter,
+    required this.onTap,
     required this.onRetry,
   });
 
   final AsyncValue<List<Actor>> asyncProvider;
   final List<Actor> Function(List<Actor>) filter;
+  final void Function(Actor) onTap;
   final VoidCallback onRetry;
 
   @override
@@ -136,21 +159,63 @@ class _ActorList extends StatelessWidget {
         if (items.isEmpty) {
           return const Center(child: Text('Ничего не найдено'));
         }
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+
+        final grouped = <int, List<Actor>>{};
+        for (final a in items) {
+          grouped.putIfAbsent(a.departmentId, () => []).add(a);
+        }
+        final depIds = grouped.keys.toList()..sort();
+
+        final flat = <Object>[];
+        for (final id in depIds) {
+          flat.add(_DepartmentHeader(id: id));
+          flat.addAll(grouped[id]!);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.only(bottom: 12),
+          itemCount: flat.length,
           itemBuilder: (_, i) {
-            final a = items[i];
+            final el = flat[i];
+            if (el is _DepartmentHeader) {
+              return _DepartmentTitle(id: el.id);
+            }
+            final a = el as Actor;
             return ListTile(
               title: Text(a.name),
-              subtitle: Text('Кафедра №${a.departmentId}'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/schedule/${a.id}'),
+              onTap: () => onTap(a),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _DepartmentHeader {
+  const _DepartmentHeader({required this.id});
+  final int id;
+}
+
+class _DepartmentTitle extends StatelessWidget {
+  const _DepartmentTitle({required this.id});
+  final int id;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      color: theme.colorScheme.surfaceContainerHigh,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Text(
+        Departments.nameOf(id).toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }

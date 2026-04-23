@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../core/storage/app_database.dart';
-import '../../../core/storage/tables/lessons_table.dart';
 import '../domain/lesson.dart';
 
 class ScheduleDbDataSource {
@@ -15,10 +14,9 @@ class ScheduleDbDataSource {
     DateTime from,
     DateTime to,
   ) async {
-    final query = _db.select(_db.lessons)
+    final query = _db.select(_db.scheduleEntries)
       ..where((t) =>
-          t.actorId.equals(actorId) &
-          t.date.isBetweenValues(from, to));
+          t.actorId.equals(actorId) & t.date.isBetweenValues(from, to));
     final rows = await query.get();
     return rows.map(_toLesson).toList();
   }
@@ -26,7 +24,7 @@ class ScheduleDbDataSource {
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) async {
     final dayStart = DateTime(date.year, date.month, date.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
-    final query = _db.select(_db.lessons)
+    final query = _db.select(_db.scheduleEntries)
       ..where((t) => t.date.isBetweenValues(dayStart, dayEnd));
     final rows = await query.get();
     return rows.map(_toLesson).toList();
@@ -34,16 +32,14 @@ class ScheduleDbDataSource {
 
   Future<void> replaceForActor(String actorId, List<Lesson> lessons) async {
     await _db.transaction(() async {
-      // Удаляем старые записи этого актора
-      await (_db.delete(_db.lessons)
+      await (_db.delete(_db.scheduleEntries)
             ..where((t) => t.actorId.equals(actorId)))
           .go();
 
-      // Вставляем новые пачкой
       final now = DateTime.now();
       await _db.batch((batch) {
         batch.insertAll(
-          _db.lessons,
+          _db.scheduleEntries,
           lessons.map((l) => _toCompanion(actorId, l, now)).toList(),
           mode: InsertMode.insertOrReplace,
         );
@@ -51,9 +47,8 @@ class ScheduleDbDataSource {
     });
   }
 
-  /// Устарел ли кэш по данному актору (нет записей или последняя вставка давно).
   Future<bool> isStale(String actorId, Duration ttl) async {
-    final query = _db.select(_db.lessons)
+    final query = _db.select(_db.scheduleEntries)
       ..where((t) => t.actorId.equals(actorId))
       ..orderBy([(t) => OrderingTerm.desc(t.cachedAt)])
       ..limit(1);
@@ -62,9 +57,9 @@ class ScheduleDbDataSource {
     return DateTime.now().difference(row.cachedAt) > ttl;
   }
 
-  // ---- Маппинг Drift ↔ Domain ----
+  // ---- Mapping ----
 
-  Lesson _toLesson(Lesson_ row) {
+  Lesson _toLesson(ScheduleEntry row) {
     return Lesson(
       id: row.id,
       date: row.date,
@@ -82,13 +77,23 @@ class ScheduleDbDataSource {
       teacherNames: _decodeList(row.teacherNames),
       groupIds: _decodeList(row.groupIds),
       groupNames: _decodeList(row.groupNames),
+      parity: WeekParity.values.firstWhere(
+        (e) => e.name == row.parity,
+        orElse: () => WeekParity.any,
+      ),
+      isChange: row.isChange,
+      isEvent: row.isEvent,
       subgroup: row.subgroup,
       note: row.note,
     );
   }
 
-  LessonsCompanion _toCompanion(String actorId, Lesson l, DateTime cachedAt) {
-    return LessonsCompanion.insert(
+  ScheduleEntriesCompanion _toCompanion(
+    String actorId,
+    Lesson l,
+    DateTime cachedAt,
+  ) {
+    return ScheduleEntriesCompanion.insert(
       id: l.id,
       actorId: actorId,
       date: l.date,
@@ -103,6 +108,9 @@ class ScheduleDbDataSource {
       teacherNames: _encodeList(l.teacherNames),
       groupIds: _encodeList(l.groupIds),
       groupNames: _encodeList(l.groupNames),
+      isChange: Value(l.isChange),
+      isEvent: Value(l.isEvent),
+      parity: Value(l.parity.name),
       subgroup: Value(l.subgroup),
       note: Value(l.note),
       cachedAt: cachedAt,
@@ -119,7 +127,6 @@ class ScheduleDbDataSource {
         return decoded.map((e) => e.toString()).toList();
       }
     } catch (_) {
-      // Если там была CSV-строка — поддержим и это
       return raw.split(',').map((e) => e.trim()).where((s) => s.isNotEmpty).toList();
     }
     return const [];

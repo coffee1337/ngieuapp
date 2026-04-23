@@ -1,30 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/date_ext.dart';
 import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../data/schedule_providers.dart';
 import '../domain/classroom_availability.dart';
-
-part 'free_rooms_screen.g.dart';
-
-@riverpod
-Future<List<ClassroomAvailability>> freeRooms(
-  FreeRoomsRef ref,
-  DateTime date,
-  ({int hour, int minute}) from,
-  ({int hour, int minute}) to,
-) {
-  final uc = ref.watch(findFreeClassroomsProvider);
-  return uc.call(
-    date: date,
-    from: TimeOfDay(hour: from.hour, minute: from.minute),
-    to: TimeOfDay(hour: to.hour, minute: to.minute),
-  );
-}
 
 class FreeRoomsScreen extends ConsumerStatefulWidget {
   const FreeRoomsScreen({super.key});
@@ -38,6 +21,10 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   TimeOfDay _from = const TimeOfDay(hour: 10, minute: 0);
   TimeOfDay _to = const TimeOfDay(hour: 12, minute: 0);
   bool _searched = false;
+
+  bool _isLoadingAll = false;
+  int _loadedCount = 0;
+  int _totalCount = 0;
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -66,41 +53,45 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
     }
   }
 
+  Future<void> _loadAllSchedules() async {
+    if (_isLoadingAll) return;
+
+    final groups = await ref.read(studentGroupsProvider.future);
+    setState(() {
+      _isLoadingAll = true;
+      _totalCount = groups.length;
+      _loadedCount = 0;
+    });
+
+    final repo = ref.read(scheduleRepositoryProvider);
+    final weekStart = DateTime.now().startOfWeek;
+
+    for (final g in groups) {
+      if (!mounted) break;
+      try {
+        // Подписываемся на стрим и берём первое значение — это триггерит сетевой запрос и кэш
+        await repo.watchWeek(g.id, weekStart).first.timeout(
+              const Duration(seconds: 20),
+              onTimeout: () => const <dynamic>[] as dynamic,
+            );
+      } catch (_) {
+        // игнорируем, чтобы не прерывать процесс
+      }
+      if (mounted) {
+        setState(() => _loadedCount++);
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isLoadingAll = false);
+      // Переснимаем результаты
+      ref.invalidate(freeRoomsProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('EEEE, d MMMM', 'ru_RU');
-
-    Widget buildResults() {
-      if (!_searched) {
-        return const EmptyView(
-          text: 'Выберите дату и время,\nнажмите «Найти»',
-          icon: Icons.search,
-        );
-      }
-      final asyncValue = ref.watch(freeRoomsProvider(
-        _date,
-        (hour: _from.hour, minute: _from.minute),
-        (hour: _to.hour, minute: _to.minute),
-      ));
-      return asyncValue.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => ErrorView(error: e),
-        data: (rooms) {
-          if (rooms.isEmpty) {
-            return const EmptyView(
-              text: 'Свободных аудиторий\nв этот интервал не найдено',
-              icon: Icons.meeting_room_outlined,
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            itemCount: rooms.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _RoomCard(room: rooms[i]),
-          );
-        },
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -147,17 +138,112 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                   child: FilledButton.icon(
                     onPressed: () {
                       setState(() => _searched = true);
-                      ref.invalidate(freeRoomsProvider);
                     },
                     icon: const Icon(Icons.search),
                     label: const Text('Найти'),
                   ),
                 ),
+                const SizedBox(height: 8),
+                _LoadAllBanner(
+                  isLoading: _isLoadingAll,
+                  loaded: _loadedCount,
+                  total: _totalCount,
+                  onTap: _loadAllSchedules,
+                ),
               ],
             ),
           ),
           const Divider(height: 1),
-          Expanded(child: buildResults()),
+          Expanded(child: _buildResults()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResults() {
+    if (!_searched) {
+      return const EmptyView(
+        text: 'Выберите дату и время,\nнажмите «Найти»',
+        icon: Icons.search,
+      );
+    }
+    final key = (
+      date: _date,
+      fromHour: _from.hour,
+      fromMinute: _from.minute,
+      toHour: _to.hour,
+      toMinute: _to.minute,
+    );
+    final asyncValue = ref.watch(freeRoomsProvider(key));
+    return asyncValue.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => ErrorView(error: e),
+      data: (rooms) {
+        if (rooms.isEmpty) {
+          return const EmptyView(
+            text:
+                'Свободных аудиторий не найдено.\nВозможно, нужно загрузить\nрасписание всех групп выше.',
+            icon: Icons.meeting_room_outlined,
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          itemCount: rooms.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) => _RoomCard(room: rooms[i]),
+        );
+      },
+    );
+  }
+}
+
+class _LoadAllBanner extends StatelessWidget {
+  const _LoadAllBanner({
+    required this.isLoading,
+    required this.loaded,
+    required this.total,
+    required this.onTap,
+  });
+
+  final bool isLoading;
+  final int loaded;
+  final int total;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isLoading
+                ? 'Загружаю расписание: $loaded / $total групп'
+                : 'Для точного поиска загрузите расписание всех групп',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
+          if (isLoading)
+            LinearProgressIndicator(
+              value: total == 0 ? null : loaded / total,
+              minHeight: 4,
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onTap,
+                icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                label: const Text('Загрузить все группы'),
+              ),
+            ),
         ],
       ),
     );

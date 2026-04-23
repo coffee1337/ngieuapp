@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'dio_client.dart';
 
-part 'providers.g.dart';
+final scheduleApiProvider = Provider<Dio>((ref) {
+  return DioClient.createScheduleApi();
+});
 
-@Riverpod(keepAlive: true)
-Dio scheduleApi(ScheduleApiRef ref) => DioClient.createScheduleApi();
-
-@Riverpod(keepAlive: true)
-Dio newsApi(NewsApiRef ref) => DioClient.createNewsClient();
+final newsApiProvider = Provider<Dio>((ref) {
+  return DioClient.createNewsClient();
+});

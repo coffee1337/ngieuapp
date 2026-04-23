@@ -1,16 +1,17 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'news_article.freezed.dart';
 part 'news_article.g.dart';
 
 @freezed
-class NewsArticle with _$NewsArticle {
+abstract class NewsArticle with _$NewsArticle {
   const factory NewsArticle({
-    required int id,              // 49607
+    required int id,
     required String title,
     required String url,
     required String excerpt,
     String? imageUrl,
-    DateTime? publishedAt,        // локальная дата (день+месяц, год из сайта не видно)
+    DateTime? publishedAt,
     String? author,
   }) = _NewsArticle;
 
@@ -19,10 +20,10 @@ class NewsArticle with _$NewsArticle {
 }
 
 @freezed
-class NewsArticleFull with _$NewsArticleFull {
+abstract class NewsArticleFull with _$NewsArticleFull {
   const factory NewsArticleFull({
     required NewsArticle preview,
-    required String contentHtml,   // очищенный HTML для flutter_html
+    required String contentHtml,
     required List<String> gallery,
   }) = _NewsArticleFull;
 }

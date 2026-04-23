@@ -1,13 +1,14 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'actor.freezed.dart';
 part 'actor.g.dart';
 
 enum ActorType { studentGroup, teacher, department }
 
 @freezed
-class Actor with _$Actor {
+abstract class Actor with _$Actor {
   const factory Actor({
-    required String id,           // GUID или числовой id — храним строкой
+    required String id,
     required int departmentId,
     required String name,
     required ActorType type,

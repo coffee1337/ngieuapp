@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'classroom_availability.freezed.dart';
 
 @freezed
-class ClassroomAvailability with _$ClassroomAvailability {
+abstract class ClassroomAvailability with _$ClassroomAvailability {
   const factory ClassroomAvailability({
     required String classroom,
     required String building,

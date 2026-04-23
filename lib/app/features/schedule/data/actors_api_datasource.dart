@@ -9,7 +9,6 @@ class ActorsApiDataSource {
   ActorsApiDataSource(this._dio);
   final Dio _dio;
 
-  /// Группы студентов — из bundled JSON.
   Future<List<Actor>> loadStudentGroups() async {
     final raw = await rootBundle.loadString('assets/json/student.json');
     final list = jsonDecode(raw) as List;
@@ -19,7 +18,6 @@ class ActorsApiDataSource {
         .toList();
   }
 
-  /// Преподаватели — из bundled JSON.
   Future<List<Actor>> loadTeachers() async {
     final raw = await rootBundle.loadString('assets/json/teachers.json');
     final list = jsonDecode(raw) as List;
@@ -29,7 +27,6 @@ class ActorsApiDataSource {
         .toList();
   }
 
-  /// Кафедры — из API.
   Future<List<Actor>> fetchDepartments({CancelToken? ct}) async {
     final resp = await _dio.get<dynamic>(
       'Departments/Get',
@@ -43,11 +40,13 @@ class ActorsApiDataSource {
       _ => const [],
     };
     return raw.whereType<Map<String, dynamic>>().map((j) {
+      final depRaw = j['departmentId'] ?? j['id'];
+      final departmentId = depRaw is int
+          ? depRaw
+          : int.tryParse(depRaw?.toString() ?? '') ?? 0;
       return Actor(
         id: j['id'].toString(),
-        departmentId: (j['departmentId'] ?? j['id']) is int
-            ? (j['departmentId'] ?? j['id']) as int
-            : int.tryParse(j['departmentId']?.toString() ?? j['id'].toString()) ?? 0,
+        departmentId: departmentId,
         name: (j['name'] ?? '').toString(),
         type: ActorType.department,
       );

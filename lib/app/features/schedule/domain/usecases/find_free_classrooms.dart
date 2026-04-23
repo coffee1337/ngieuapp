@@ -12,10 +12,10 @@ class FindFreeClassrooms {
   static const _minFreeWindow = Duration(minutes: 15);
 
   static final _excluded = RegExp(
-    r'^(дист\.?|онлайн|удал[её]нно|по\s+плану|н/д|\-)\s*$',
+    r'^(дист\.?|онлайн|удал[её]нно|по\s+плану|н/д|\-|спортзал.*|актовый\s+зал|каф\..*)\s*$',
     caseSensitive: false,
   );
-
+  
   Future<List<ClassroomAvailability>> call({
     required DateTime date,
     required TimeOfDay from,

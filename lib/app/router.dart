@@ -9,6 +9,7 @@ import 'features/profile/presentation/profile_screen.dart';
 import 'features/schedule/presentation/actor_picker_screen.dart';
 import 'features/schedule/presentation/free_rooms_screen.dart';
 import 'features/schedule/presentation/week_schedule_screen.dart';
+import 'features/settings/presentation/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -35,20 +36,26 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const ActorPickerScreen(),
             routes: [
               GoRoute(
+                path: 'free-rooms',
+                builder: (_, __) => const FreeRoomsScreen(),
+              ),
+              GoRoute(
                 path: ':actorId',
                 builder: (ctx, state) => WeekScheduleScreen(
                   actorId: state.pathParameters['actorId']!,
                 ),
-              ),
-              GoRoute(
-                path: 'free-rooms',
-                builder: (_, __) => const FreeRoomsScreen(),
               ),
             ],
           ),
           GoRoute(
             path: '/profile',
             builder: (_, __) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path: 'settings',
+                builder: (_, __) => const SettingsScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: '/learning',

@@ -6,25 +6,39 @@ import 'tables/lessons_table.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Lessons, Classrooms])
+@DriftDatabase(tables: [ScheduleEntries, Classrooms])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'ngieu_app'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_lessons_date ON lessons(date);',
+            'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
           );
           await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_lessons_classroom ON lessons(classroom, building);',
+            'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
           );
           await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_lessons_actor ON lessons(actor_id);',
+            'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
+          );
+        },
+        onUpgrade: (m, from, to) async {
+          // Старая схема несовместима с новой — проще перекачать с нуля
+          await m.deleteTable('schedule_entries');
+          await m.createTable(scheduleEntries);
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
+          );
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
+          );
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
           );
         },
       );
