@@ -1,213 +1,164 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../shared/widgets/error_view.dart';
-import '../../../theme/app_colors.dart';
-import '../../schedule/domain/department.dart';
-import '../data/profile_providers.dart';
-import '../domain/student_identity.dart';
+import '../../../core/network/providers.dart';
+import '../../../core/storage/app_database.dart';
+import '../../../core/utils/date_ext.dart';
+import '../../settings/data/settings_providers.dart';
+import '../domain/actor.dart';
+import '../domain/classroom_availability.dart';
+import '../domain/lesson.dart';
+import '../domain/schedule_repository.dart';
+import '../domain/usecases/find_free_classrooms.dart';
+import 'actors_api_datasource.dart';
+import 'schedule_api_datasource.dart';
+import 'schedule_db_datasource.dart';
+import 'schedule_repository_impl.dart';
 
-class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+// ---- Core DB ----
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final identity = ref.watch(studentIdentityProvider);
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Профиль'),
-        actions: [
-          IconButton(
-            tooltip: 'Настройки',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/profile/settings'),
-          ),
-        ],
-      ),
-      body: identity.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => ErrorView(
-          error: e,
-          onRetry: () => ref.invalidate(studentIdentityProvider),
-        ),
-        data: (id) =>
-            id == null ? const _NotSetYet() : _ProfileContent(identity: id),
-      ),
-    );
-  }
+// ---- Data sources ----
+
+final scheduleApiDataSourceProvider = Provider<ScheduleApiDataSource>((ref) {
+  return ScheduleApiDataSource(ref.watch(scheduleApiProvider));
+});
+
+final scheduleDbDataSourceProvider = Provider<ScheduleDbDataSource>((ref) {
+  return ScheduleDbDataSource(ref.watch(appDatabaseProvider));
+});
+
+final actorsApiDataSourceProvider = Provider<ActorsApiDataSource>((ref) {
+  return ActorsApiDataSource(ref.watch(scheduleApiProvider));
+});
+
+// ---- Repository / Use-cases ----
+
+final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
+  return ScheduleRepositoryImpl(
+    ref.watch(scheduleApiDataSourceProvider),
+    ref.watch(scheduleDbDataSourceProvider),
+  );
+});
+
+final findFreeClassroomsProvider = Provider<FindFreeClassrooms>((ref) {
+  return FindFreeClassrooms(ref.watch(scheduleRepositoryProvider));
+});
+
+// ---- UI state ----
+
+class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
+  CurrentWeekStartNotifier() : super(DateTime.now().startOfWeek);
+
+  void nextWeek() => state = state.add(const Duration(days: 7));
+  void prevWeek() => state = state.subtract(const Duration(days: 7));
+  void thisWeek() => state = DateTime.now().startOfWeek;
 }
 
-class _NotSetYet extends StatelessWidget {
-  const _NotSetYet();
+final currentWeekStartProvider =
+    StateNotifierProvider<CurrentWeekStartNotifier, DateTime>((ref) {
+  return CurrentWeekStartNotifier();
+});
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Вы ещё не выбрали группу',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Откройте расписание, выберите свою группу,\nи она появится в профиле',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () => context.go('/schedule'),
-            icon: const Icon(Icons.arrow_forward),
-            label: const Text('Выбрать группу'),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ---- Data streams ----
 
-class _ProfileContent extends ConsumerWidget {
-  const _ProfileContent({required this.identity});
-  final StudentIdentity identity;
+typedef WeekKey = ({String actorId, DateTime weekStart});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final course = identity.computedCourse;
+/// Сырые данные из репозитория (без фильтра замен и чётности).
+final rawWeekScheduleProvider =
+    StreamProvider.autoDispose.family<List<Lesson>, WeekKey>((ref, key) {
+  return ref
+      .watch(scheduleRepositoryProvider)
+      .watchWeek(key.actorId, key.weekStart);
+});
 
-    return ListView(
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
-          decoration: const BoxDecoration(
-            gradient: AppColors.brandGradient,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                identity.groupName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                Departments.nameOf(identity.departmentId),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        _InfoTile(
-          label: 'Курс',
-          value: course == null ? '—' : '$course',
-          icon: Icons.school_outlined,
-        ),
-        _InfoTile(
-          label: 'Кафедра',
-          value: Departments.nameOf(identity.departmentId),
-          icon: Icons.account_balance_outlined,
-        ),
-        if (identity.fullName != null)
-          _InfoTile(
-            label: 'ФИО',
-            value: identity.fullName!,
-            icon: Icons.badge_outlined,
-          ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.schedule),
-          title: const Text('Моё расписание'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/schedule/${identity.actorId}'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.meeting_room_outlined),
-          title: const Text('Свободные аудитории'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/schedule/free-rooms'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.settings_outlined),
-          title: const Text('Настройки'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/profile/settings'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.school),
-          title: const Text('Оценки'),
-          subtitle: const Text('Появятся в ближайших обновлениях'),
-          enabled: false,
-        ),
-        const Divider(),
-        ListTile(
-          leading: Icon(
-            Icons.logout,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          title: Text(
-            'Сменить группу',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-            ),
-          ),
-          onTap: () async {
-            await ref.read(profileLocalDataSourceProvider).clear();
-            ref.invalidate(studentIdentityProvider);
-          },
-        ),
-        const SizedBox(height: 32),
-      ],
-    );
-  }
-}
+/// Отфильтрованное расписание для UI — с учётом настроек и замен.
+final weekScheduleProvider =
+    Provider.autoDispose.family<AsyncValue<List<Lesson>>, WeekKey>((ref, key) {
+  final rawAsync = ref.watch(rawWeekScheduleProvider(key));
+  final showChanges = ref.watch(appSettingsProvider).showChanges;
 
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.label,
-    required this.value,
-    required this.icon,
+  return rawAsync.whenData((all) {
+    // Оставляем только занятия текущей недели (для выборки)
+    final weekEnd = key.weekStart.add(const Duration(days: 7));
+    final thisWeek = all.where((l) =>
+        !l.date.isBefore(key.weekStart) && l.date.isBefore(weekEnd)).toList();
+
+    // Группируем по (дата, пара)
+    final byCell = <String, List<Lesson>>{};
+    for (final l in thisWeek) {
+      final k = '${l.date.toIso8601String()}|${l.pairNumber}';
+      byCell.putIfAbsent(k, () => []).add(l);
+    }
+
+    final result = <Lesson>[];
+    for (final cell in byCell.values) {
+      final changes = cell.where((l) => l.isChange).toList();
+      final regulars = cell.where((l) => !l.isChange).toList();
+
+      if (showChanges && changes.isNotEmpty) {
+        // Изменения полностью заменяют обычные занятия в этой ячейке.
+        final visible = changes.where((l) =>
+            !(l.isEvent &&
+                l.subject.toLowerCase() == 'мероприятие' &&
+                l.classroom.isEmpty)).toList();
+        if (visible.isEmpty) {
+          // Всё отменено — показываем плашку "отменено"
+          result.add(changes.first.copyWith(
+            subject: 'Занятие отменено',
+            isEvent: true,
+          ));
+        } else {
+          result.addAll(visible);
+        }
+      } else {
+        // Показываем только плановые с учётом чётности
+        for (final l in regulars) {
+          if (_parityMatches(l, key.weekStart)) {
+            result.add(l);
+          }
+        }
+      }
+    }
+    return result;
   });
+});
 
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
-      title: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      subtitle: Text(
-        value,
-        style: theme.textTheme.bodyLarge,
-      ),
-    );
-  }
+bool _parityMatches(Lesson l, DateTime weekStart) {
+  if (l.parity == WeekParity.any) return true;
+  final isEven = weekStart.isEvenWeek;
+  return (l.parity == WeekParity.even) == isEven;
 }
+
+final studentGroupsProvider = FutureProvider<List<Actor>>((ref) {
+  return ref.watch(actorsApiDataSourceProvider).loadStudentGroups();
+});
+
+final teachersProvider = FutureProvider<List<Actor>>((ref) {
+  return ref.watch(actorsApiDataSourceProvider).loadTeachers();
+});
+
+// ---- Free rooms ----
+
+typedef FreeRoomsKey = ({
+  DateTime date,
+  int fromHour,
+  int fromMinute,
+  int toHour,
+  int toMinute,
+});
+
+final freeRoomsProvider = FutureProvider.autoDispose
+    .family<List<ClassroomAvailability>, FreeRoomsKey>((ref, key) {
+  final uc = ref.watch(findFreeClassroomsProvider);
+  return uc.call(
+    date: key.date,
+    from: TimeOfDay(hour: key.fromHour, minute: key.fromMinute),
+    to: TimeOfDay(hour: key.toHour, minute: key.toMinute),
+  );
+});
