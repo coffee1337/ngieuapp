@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- AppThemeMode get themeMode; AppFontScale get fontScale; bool get showChanges;
+ AppThemeMode get themeMode; AppFontScale get fontScale; bool get showChanges; bool get notificationsEnabled; int get notificationMinutesBefore;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges);
+int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore);
 
 @override
 String toString() {
-  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges)';
+  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- AppThemeMode themeMode, AppFontScale fontScale, bool showChanges
+ AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore
 });
 
 
@@ -65,12 +65,14 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,}) {
   return _then(_self.copyWith(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as AppThemeMode,fontScale: null == fontScale ? _self.fontScale : fontScale // ignore: cast_nullable_to_non_nullable
 as AppFontScale,showChanges: null == showChanges ? _self.showChanges : showChanges // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,notificationsEnabled: null == notificationsEnabled ? _self.notificationsEnabled : notificationsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,notificationMinutesBefore: null == notificationMinutesBefore ? _self.notificationMinutesBefore : notificationMinutesBefore // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -155,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
   return orElse();
 
 }
@@ -176,10 +178,10 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +198,10 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
   return null;
 
 }
@@ -211,12 +213,14 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges);case _:
 @JsonSerializable()
 
 class _AppSettings implements AppSettings {
-  const _AppSettings({this.themeMode = AppThemeMode.system, this.fontScale = AppFontScale.normal, this.showChanges = true});
+  const _AppSettings({this.themeMode = AppThemeMode.system, this.fontScale = AppFontScale.normal, this.showChanges = true, this.notificationsEnabled = false, this.notificationMinutesBefore = 15});
   factory _AppSettings.fromJson(Map<String, dynamic> json) => _$AppSettingsFromJson(json);
 
 @override@JsonKey() final  AppThemeMode themeMode;
 @override@JsonKey() final  AppFontScale fontScale;
 @override@JsonKey() final  bool showChanges;
+@override@JsonKey() final  bool notificationsEnabled;
+@override@JsonKey() final  int notificationMinutesBefore;
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges);
+int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore);
 
 @override
 String toString() {
-  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges)';
+  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore)';
 }
 
 
@@ -251,7 +255,7 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- AppThemeMode themeMode, AppFontScale fontScale, bool showChanges
+ AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore
 });
 
 
@@ -268,12 +272,14 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,}) {
   return _then(_AppSettings(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as AppThemeMode,fontScale: null == fontScale ? _self.fontScale : fontScale // ignore: cast_nullable_to_non_nullable
 as AppFontScale,showChanges: null == showChanges ? _self.showChanges : showChanges // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,notificationsEnabled: null == notificationsEnabled ? _self.notificationsEnabled : notificationsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,notificationMinutesBefore: null == notificationMinutesBefore ? _self.notificationMinutesBefore : notificationMinutesBefore // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

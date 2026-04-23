@@ -14,6 +14,9 @@ _AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => _AppSettings(
       $enumDecodeNullable(_$AppFontScaleEnumMap, json['fontScale']) ??
       AppFontScale.normal,
   showChanges: json['showChanges'] as bool? ?? true,
+  notificationsEnabled: json['notificationsEnabled'] as bool? ?? false,
+  notificationMinutesBefore:
+      (json['notificationMinutesBefore'] as num?)?.toInt() ?? 15,
 );
 
 Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
@@ -21,6 +24,8 @@ Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
       'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
       'fontScale': _$AppFontScaleEnumMap[instance.fontScale]!,
       'showChanges': instance.showChanges,
+      'notificationsEnabled': instance.notificationsEnabled,
+      'notificationMinutesBefore': instance.notificationMinutesBefore,
     };
 
 const _$AppThemeModeEnumMap = {
