@@ -5,11 +5,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app.dart';
+import 'app/features/notifications/notifications_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ru_RU', null);
   await Hive.initFlutter();
+  await NotificationsService.instance.init();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ProviderScope(child: NgieuApp()));
 }

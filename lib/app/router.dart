@@ -8,10 +8,11 @@ import 'features/news/presentation/news_list_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 import 'features/schedule/presentation/actor_picker_screen.dart';
 import 'features/schedule/presentation/free_rooms_screen.dart';
+import 'features/schedule/presentation/schedule_search_screen.dart';
 import 'features/schedule/presentation/week_schedule_screen.dart';
 import 'features/settings/presentation/settings_screen.dart';
+import 'shared/widgets/offline_banner.dart';
 
-/// Плавная кастомная анимация для push-переходов (детальные экраны).
 CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
       child: child,
       transitionDuration: const Duration(milliseconds: 260),
@@ -62,6 +63,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'free-rooms',
                 pageBuilder: (_, __) => _page(const FreeRoomsScreen()),
+              ),
+              GoRoute(
+                path: 'search',
+                pageBuilder: (_, __) => _page(const ScheduleSearchScreen()),
               ),
               GoRoute(
                 path: ':actorId',
@@ -116,7 +121,12 @@ class _RootShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
     final idx = _indexFromLocation(location);
     return Scaffold(
-      body: child,
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: child),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
         onDestinationSelected: (i) => context.go(_tabs[i].path),

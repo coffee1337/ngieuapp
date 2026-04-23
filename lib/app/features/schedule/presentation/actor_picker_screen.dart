@@ -68,6 +68,11 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
           title: const Text('Выберите расписание'),
           actions: [
             IconButton(
+              tooltip: 'Поиск по расписанию',
+              icon: const Icon(Icons.search),
+              onPressed: () => context.push('/schedule/search'),
+            ),
+            IconButton(
               tooltip: 'Свободные аудитории',
               icon: const Icon(Icons.meeting_room_outlined),
               onPressed: () => context.push('/schedule/free-rooms'),
@@ -86,7 +91,6 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
         body: Column(
           children: [
             const AppGradientBar(),
-            // Поисковая панель в своём блоке
             Container(
               color: theme.colorScheme.surface,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -175,14 +179,12 @@ class _ActorList extends StatelessWidget {
           );
         }
 
-        // Группируем по кафедре
         final grouped = <int, List<Actor>>{};
         for (final a in items) {
           grouped.putIfAbsent(a.departmentId, () => []).add(a);
         }
         final depIds = grouped.keys.toList()..sort();
 
-        // CustomScrollView с SliverStickyHeader — sticky-заголовки
         return CustomScrollView(
           slivers: [
             for (final id in depIds)

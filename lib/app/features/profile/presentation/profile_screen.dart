@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../schedule/data/schedule_providers.dart';
-import '../../schedule/domain/lesson.dart';
-
 import '../../../shared/widgets/error_view.dart';
 import '../../../theme/app_colors.dart';
+import '../../schedule/data/schedule_providers.dart';
 import '../../schedule/domain/department.dart';
+import '../../schedule/domain/lesson.dart';
+import '../../widget/home_widget_service.dart';
 import '../data/profile_providers.dart';
 import '../domain/student_identity.dart';
 
@@ -93,17 +93,23 @@ class _ProfileContent extends ConsumerWidget {
     final course = identity.computedCourse;
     final theme = Theme.of(context);
 
-    // Следующая пара — слушаем сегодняшний стрим
     final today = DateTime.now();
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
-    final key = (actorId: identity.actorId, weekStart: DateTime(
-      weekStart.year, weekStart.month, weekStart.day,
-    ));
+    final key = (
+      actorId: identity.actorId,
+      weekStart: DateTime(weekStart.year, weekStart.month, weekStart.day),
+    );
     final lessonsAsync = ref.watch(weekScheduleProvider(key));
+
+    // Обновляем виджет, когда есть свежие данные расписания.
+    ref.listen(weekScheduleProvider(key), (_, next) {
+      next.whenData((lessons) {
+        HomeWidgetService.instance.updateNextLesson(lessons);
+      });
+    });
 
     return ListView(
       children: [
-        // Градиентный header
         Container(
           padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
           decoration: const BoxDecoration(gradient: AppColors.brandGradient),
@@ -155,8 +161,6 @@ class _ProfileContent extends ConsumerWidget {
             ],
           ),
         ),
-
-        // Следующая пара
         lessonsAsync.maybeWhen(
           data: (lessons) {
             final now = DateTime.now();
@@ -173,7 +177,6 @@ class _ProfileContent extends ConsumerWidget {
           },
           orElse: () => const SizedBox.shrink(),
         ),
-
         const Divider(height: 1),
         ListTile(
           leading: const Icon(Icons.schedule),
@@ -347,36 +350,6 @@ class _NextLessonCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
-      title: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      subtitle: Text(
-        value,
-        style: theme.textTheme.bodyLarge,
       ),
     );
   }

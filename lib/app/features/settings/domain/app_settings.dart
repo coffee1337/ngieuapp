@@ -21,6 +21,8 @@ abstract class AppSettings with _$AppSettings {
     @Default(AppThemeMode.system) AppThemeMode themeMode,
     @Default(AppFontScale.normal) AppFontScale fontScale,
     @Default(true) bool showChanges,
+    @Default(false) bool notificationsEnabled,
+    @Default(15) int notificationMinutesBefore,
   }) = _AppSettings;
 
   factory AppSettings.fromJson(Map<String, dynamic> json) =>

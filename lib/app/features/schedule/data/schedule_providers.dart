@@ -10,6 +10,7 @@ import '../domain/classroom_availability.dart';
 import '../domain/lesson.dart';
 import '../domain/schedule_repository.dart';
 import '../domain/usecases/find_free_classrooms.dart';
+import '../domain/usecases/search_schedule.dart';
 import 'actors_api_datasource.dart';
 import 'schedule_api_datasource.dart';
 import 'schedule_db_datasource.dart';
@@ -50,6 +51,10 @@ final findFreeClassroomsProvider = Provider<FindFreeClassrooms>((ref) {
   return FindFreeClassrooms(ref.watch(scheduleRepositoryProvider));
 });
 
+final searchScheduleProvider = Provider<SearchSchedule>((ref) {
+  return SearchSchedule(ref.watch(scheduleRepositoryProvider));
+});
+
 // ---- UI state ----
 
 class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
@@ -69,7 +74,6 @@ final currentWeekStartProvider =
 
 typedef WeekKey = ({String actorId, DateTime weekStart});
 
-/// Сырые данные из репозитория (без фильтра замен и чётности).
 final rawWeekScheduleProvider =
     StreamProvider.autoDispose.family<List<Lesson>, WeekKey>((ref, key) {
   return ref
@@ -77,19 +81,16 @@ final rawWeekScheduleProvider =
       .watchWeek(key.actorId, key.weekStart);
 });
 
-/// Отфильтрованное расписание для UI — с учётом настроек и замен.
 final weekScheduleProvider =
     Provider.autoDispose.family<AsyncValue<List<Lesson>>, WeekKey>((ref, key) {
   final rawAsync = ref.watch(rawWeekScheduleProvider(key));
   final showChanges = ref.watch(appSettingsProvider).showChanges;
 
   return rawAsync.whenData((all) {
-    // Оставляем только занятия текущей недели (для выборки)
     final weekEnd = key.weekStart.add(const Duration(days: 7));
     final thisWeek = all.where((l) =>
         !l.date.isBefore(key.weekStart) && l.date.isBefore(weekEnd)).toList();
 
-    // Группируем по (дата, пара)
     final byCell = <String, List<Lesson>>{};
     for (final l in thisWeek) {
       final k = '${l.date.toIso8601String()}|${l.pairNumber}';
@@ -102,13 +103,11 @@ final weekScheduleProvider =
       final regulars = cell.where((l) => !l.isChange).toList();
 
       if (showChanges && changes.isNotEmpty) {
-        // Изменения полностью заменяют обычные занятия в этой ячейке.
         final visible = changes.where((l) =>
             !(l.isEvent &&
                 l.subject.toLowerCase() == 'мероприятие' &&
                 l.classroom.isEmpty)).toList();
         if (visible.isEmpty) {
-          // Всё отменено — показываем плашку "отменено"
           result.add(changes.first.copyWith(
             subject: 'Занятие отменено',
             isEvent: true,
@@ -117,7 +116,6 @@ final weekScheduleProvider =
           result.addAll(visible);
         }
       } else {
-        // Показываем только плановые с учётом чётности
         for (final l in regulars) {
           if (_parityMatches(l, key.weekStart)) {
             result.add(l);
@@ -166,4 +164,11 @@ final freeRoomsProvider = FutureProvider.autoDispose
     buildingFilter:
         key.buildingFilter.isEmpty ? null : key.buildingFilter,
   );
+});
+
+// ---- Search ----
+
+final scheduleSearchResultsProvider = FutureProvider.autoDispose
+    .family<List<SearchScheduleResult>, String>((ref, query) {
+  return ref.watch(searchScheduleProvider).call(query);
 });

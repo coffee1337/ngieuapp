@@ -32,6 +32,16 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(showChanges: value);
     await _repo.save(state);
   }
+
+  Future<void> setNotificationsEnabled(bool value) async {
+    state = state.copyWith(notificationsEnabled: value);
+    await _repo.save(state);
+  }
+
+  Future<void> setNotificationMinutes(int minutes) async {
+    state = state.copyWith(notificationMinutesBefore: minutes);
+    await _repo.save(state);
+  }
 }
 
 final appSettingsProvider =
