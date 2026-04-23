@@ -36,15 +36,22 @@ class LessonTile extends StatelessWidget {
     final fmt = DateFormat('HH:mm');
     final typeColor = _typeColor(context);
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: lesson.isChange
-            ? theme.colorScheme.errorContainer.withValues(alpha: 0.3)
+            ? (isDark
+                ? theme.colorScheme.error.withValues(alpha: 0.12)
+                : theme.colorScheme.errorContainer.withValues(alpha: 0.35))
             : theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
         border: lesson.isChange
-            ? Border.all(color: theme.colorScheme.error, width: 1)
+            ? Border.all(
+                color: theme.colorScheme.error.withValues(alpha: isDark ? 0.5 : 0.7),
+                width: 1,
+              )
             : null,
       ),
       child: IntrinsicHeight(

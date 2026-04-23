@@ -151,6 +151,8 @@ typedef FreeRoomsKey = ({
   int fromMinute,
   int toHour,
   int toMinute,
+  int minDurationMinutes,
+  String buildingFilter,
 });
 
 final freeRoomsProvider = FutureProvider.autoDispose
@@ -160,5 +162,8 @@ final freeRoomsProvider = FutureProvider.autoDispose
     date: key.date,
     from: TimeOfDay(hour: key.fromHour, minute: key.fromMinute),
     to: TimeOfDay(hour: key.toHour, minute: key.toMinute),
+    minDuration: Duration(minutes: key.minDurationMinutes),
+    buildingFilter:
+        key.buildingFilter.isEmpty ? null : key.buildingFilter,
   );
 });

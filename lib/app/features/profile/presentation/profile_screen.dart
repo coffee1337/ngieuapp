@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import '../../schedule/data/schedule_providers.dart';
+import '../../schedule/domain/lesson.dart';
 
 import '../../../shared/widgets/error_view.dart';
 import '../../../theme/app_colors.dart';
@@ -87,14 +91,22 @@ class _ProfileContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final course = identity.computedCourse;
+    final theme = Theme.of(context);
+
+    // Следующая пара — слушаем сегодняшний стрим
+    final today = DateTime.now();
+    final weekStart = today.subtract(Duration(days: today.weekday - 1));
+    final key = (actorId: identity.actorId, weekStart: DateTime(
+      weekStart.year, weekStart.month, weekStart.day,
+    ));
+    final lessonsAsync = ref.watch(weekScheduleProvider(key));
 
     return ListView(
       children: [
+        // Градиентный header
         Container(
           padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
-          decoration: const BoxDecoration(
-            gradient: AppColors.brandGradient,
-          ),
+          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -114,63 +126,78 @@ class _ProfileContent extends ConsumerWidget {
                   fontSize: 14,
                 ),
               ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _StatCard(
+                    label: 'Курс',
+                    value: course == null ? '—' : '$course',
+                  ),
+                  const SizedBox(width: 8),
+                  lessonsAsync.when(
+                    loading: () => const _StatCard(label: 'Сегодня', value: '…'),
+                    error: (_, __) => const _StatCard(label: 'Сегодня', value: '—'),
+                    data: (lessons) {
+                      final todayCount = lessons
+                          .where((l) =>
+                              l.date.year == today.year &&
+                              l.date.month == today.month &&
+                              l.date.day == today.day)
+                          .length;
+                      return _StatCard(
+                        label: 'Сегодня пар',
+                        value: '$todayCount',
+                      );
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        _InfoTile(
-          label: 'Курс',
-          value: course == null ? '—' : '$course',
-          icon: Icons.school_outlined,
+
+        // Следующая пара
+        lessonsAsync.maybeWhen(
+          data: (lessons) {
+            final now = DateTime.now();
+            final next = lessons
+                .where((l) => l.endTime.isAfter(now))
+                .toList()
+              ..sort((a, b) => a.startTime.compareTo(b.startTime));
+            if (next.isEmpty) return const SizedBox.shrink();
+            final l = next.first;
+            return Padding(
+              padding: const EdgeInsets.all(12),
+              child: _NextLessonCard(lesson: l),
+            );
+          },
+          orElse: () => const SizedBox.shrink(),
         ),
-        _InfoTile(
-          label: 'Кафедра',
-          value: Departments.nameOf(identity.departmentId),
-          icon: Icons.account_balance_outlined,
-        ),
-        if (identity.fullName != null)
-          _InfoTile(
-            label: 'ФИО',
-            value: identity.fullName!,
-            icon: Icons.badge_outlined,
-          ),
-        const Divider(),
+
+        const Divider(height: 1),
         ListTile(
           leading: const Icon(Icons.schedule),
           title: const Text('Моё расписание'),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: () => context.push('/schedule/${identity.actorId}'),
         ),
         ListTile(
           leading: const Icon(Icons.meeting_room_outlined),
           title: const Text('Свободные аудитории'),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: () => context.push('/schedule/free-rooms'),
         ),
         ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: const Text('Настройки'),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: () => context.push('/profile/settings'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.school),
-          title: const Text('Оценки'),
-          subtitle: const Text('Появятся в ближайших обновлениях'),
-          enabled: false,
         ),
         const Divider(),
         ListTile(
-          leading: Icon(
-            Icons.logout,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          title: Text(
-            'Сменить группу',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-            ),
-          ),
+          leading: Icon(Icons.logout, color: theme.colorScheme.error),
+          title: Text('Сменить группу',
+              style: TextStyle(color: theme.colorScheme.error)),
           onTap: () async {
             await ref.read(profileLocalDataSourceProvider).clear();
             ref.invalidate(studentIdentityProvider);
@@ -178,6 +205,149 @@ class _ProfileContent extends ConsumerWidget {
         ),
         const SizedBox(height: 32),
       ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NextLessonCard extends StatelessWidget {
+  const _NextLessonCard({required this.lesson});
+  final Lesson lesson;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fmt = DateFormat('HH:mm');
+    final now = DateTime.now();
+    final isNow = now.isAfter(lesson.startTime) && now.isBefore(lesson.endTime);
+    final minsUntilStart = lesson.startTime.difference(now).inMinutes;
+
+    String statusText;
+    if (isNow) {
+      statusText = 'Идёт сейчас';
+    } else if (minsUntilStart < 60) {
+      statusText = 'Через $minsUntilStart мин';
+    } else if (minsUntilStart < 60 * 24) {
+      final h = minsUntilStart ~/ 60;
+      statusText = 'Через $h ч';
+    } else {
+      statusText = DateFormat('EEE, HH:mm', 'ru_RU').format(lesson.startTime);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isNow ? Icons.play_circle : Icons.upcoming,
+                size: 18,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isNow ? 'СЕЙЧАС' : 'СЛЕДУЮЩАЯ ПАРА',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                statusText,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            lesson.subject,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.access_time,
+                  size: 14,
+                  color: theme.colorScheme.onPrimaryContainer
+                      .withValues(alpha: 0.8)),
+              const SizedBox(width: 4),
+              Text(
+                '${fmt.format(lesson.startTime)}—${fmt.format(lesson.endTime)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (lesson.classroom.isNotEmpty) ...[
+                Icon(Icons.place,
+                    size: 14,
+                    color: theme.colorScheme.onPrimaryContainer
+                        .withValues(alpha: 0.8)),
+                const SizedBox(width: 4),
+                Text(
+                  'Ауд. ${lesson.classroom}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -44,7 +44,6 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   }
 
   Future<void> _onActorTap(Actor a) async {
-    // Если это группа — сохраняем как профиль студента
     if (a.type == ActorType.studentGroup) {
       final repo = ref.read(profileLocalDataSourceProvider);
       await repo.save(StudentIdentity(
@@ -61,6 +60,7 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -74,42 +74,49 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
             ),
           ],
           bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(52),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TabBar(
-                  tabs: [
-                    Tab(text: 'Группы'),
-                    Tab(text: 'Преподаватели'),
-                  ],
-                ),
-                AppGradientBar(),
+            preferredSize: Size.fromHeight(48),
+            child: TabBar(
+              tabs: [
+                Tab(text: 'Группы'),
+                Tab(text: 'Преподаватели'),
               ],
             ),
           ),
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            const AppGradientBar(),
+            // Поисковая панель в своём блоке
+            Container(
+              color: theme.colorScheme.surface,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: _onQueryChanged,
+                textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Поиск',
-                  prefixIcon: const Icon(Icons.search),
+                  hintText: 'Название группы или ФИО',
+                  prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchCtrl.text.isEmpty
                       ? null
                       : IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: const Icon(Icons.clear, size: 18),
                           onPressed: () {
                             _searchCtrl.clear();
                             _onQueryChanged('');
                           },
                         ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
               ),
+            ),
+            Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant,
             ),
             Expanded(
               child: TabBarView(
@@ -157,63 +164,131 @@ class _ActorList extends StatelessWidget {
       data: (all) {
         final items = filter(all);
         if (items.isEmpty) {
-          return const Center(child: Text('Ничего не найдено'));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Ничего не найдено',
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+          );
         }
 
+        // Группируем по кафедре
         final grouped = <int, List<Actor>>{};
         for (final a in items) {
           grouped.putIfAbsent(a.departmentId, () => []).add(a);
         }
         final depIds = grouped.keys.toList()..sort();
 
-        final flat = <Object>[];
-        for (final id in depIds) {
-          flat.add(_DepartmentHeader(id: id));
-          flat.addAll(grouped[id]!);
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 12),
-          itemCount: flat.length,
-          itemBuilder: (_, i) {
-            final el = flat[i];
-            if (el is _DepartmentHeader) {
-              return _DepartmentTitle(id: el.id);
-            }
-            final a = el as Actor;
-            return ListTile(
-              title: Text(a.name),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => onTap(a),
-            );
-          },
+        // CustomScrollView с SliverStickyHeader — sticky-заголовки
+        return CustomScrollView(
+          slivers: [
+            for (final id in depIds)
+              SliverMainAxisGroup(
+                slivers: [
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _DepartmentHeaderDelegate(id: id),
+                  ),
+                  SliverList.separated(
+                    itemCount: grouped[id]!.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      indent: 16,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outlineVariant
+                          .withValues(alpha: 0.4),
+                    ),
+                    itemBuilder: (_, i) {
+                      final a = grouped[id]![i];
+                      return _ActorTile(actor: a, onTap: () => onTap(a));
+                    },
+                  ),
+                ],
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
         );
       },
     );
   }
 }
 
-class _DepartmentHeader {
-  const _DepartmentHeader({required this.id});
-  final int id;
-}
-
-class _DepartmentTitle extends StatelessWidget {
-  const _DepartmentTitle({required this.id});
+class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _DepartmentHeaderDelegate({required this.id});
   final int id;
 
   @override
-  Widget build(BuildContext context) {
+  double get minExtent => 40;
+  @override
+  double get maxExtent => 40;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final theme = Theme.of(context);
     return Container(
-      color: theme.colorScheme.surfaceContainerHigh,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-      child: Text(
-        Departments.nameOf(id).toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+      color: theme.colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 14,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              Departments.nameOf(id),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _DepartmentHeaderDelegate old) => old.id != id;
+}
+
+class _ActorTile extends StatelessWidget {
+  const _ActorTile({required this.actor, required this.onTap});
+  final Actor actor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                actor.name,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
         ),
       ),
     );

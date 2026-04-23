@@ -1,13 +1,89 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/utils/date_ext.dart';
 import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../data/schedule_providers.dart';
 import '../domain/classroom_availability.dart';
+
+/// Глобальный лоадер — выживает между открытиями экрана.
+class BackgroundLoaderState {
+  const BackgroundLoaderState({
+    required this.isLoading,
+    required this.loaded,
+    required this.total,
+  });
+  final bool isLoading;
+  final int loaded;
+  final int total;
+
+  double? get progress => total == 0 ? null : loaded / total;
+}
+
+class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
+  BackgroundLoaderNotifier(this._ref)
+      : super(const BackgroundLoaderState(
+          isLoading: false,
+          loaded: 0,
+          total: 0,
+        ));
+
+  final Ref _ref;
+  Completer<void>? _completer;
+
+  Future<void> run() async {
+    if (state.isLoading) return _completer?.future;
+    _completer = Completer<void>();
+
+    final groups = await _ref.read(studentGroupsProvider.future);
+    state = BackgroundLoaderState(
+      isLoading: true,
+      loaded: 0,
+      total: groups.length,
+    );
+
+    final apiDs = _ref.read(scheduleApiDataSourceProvider);
+    final dbDs = _ref.read(scheduleDbDataSourceProvider);
+
+    const batchSize = 5;
+    for (var i = 0; i < groups.length; i += batchSize) {
+      final batch = groups.skip(i).take(batchSize).toList();
+      await Future.wait(batch.map((g) async {
+        try {
+          final lessons = await apiDs
+              .fetchSchedule(g.id)
+              .timeout(const Duration(seconds: 15));
+          await dbDs.replaceForActor(g.id, lessons);
+        } catch (_) {
+          // пропускаем
+        }
+        state = BackgroundLoaderState(
+          isLoading: true,
+          loaded: state.loaded + 1,
+          total: state.total,
+        );
+      }));
+    }
+
+    state = BackgroundLoaderState(
+      isLoading: false,
+      loaded: state.loaded,
+      total: state.total,
+    );
+    _ref.invalidate(freeRoomsProvider);
+    _completer?.complete();
+  }
+}
+
+final backgroundLoaderProvider =
+    StateNotifierProvider<BackgroundLoaderNotifier, BackgroundLoaderState>(
+        (ref) {
+  return BackgroundLoaderNotifier(ref);
+});
 
 class FreeRoomsScreen extends ConsumerStatefulWidget {
   const FreeRoomsScreen({super.key});
@@ -22,9 +98,8 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   TimeOfDay _to = const TimeOfDay(hour: 12, minute: 0);
   bool _searched = false;
 
-  bool _isLoadingAll = false;
-  int _loadedCount = 0;
-  int _totalCount = 0;
+  int _minDurationMinutes = 45;
+  String? _buildingFilter;
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -53,45 +128,10 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
     }
   }
 
-  Future<void> _loadAllSchedules() async {
-    if (_isLoadingAll) return;
-
-    final groups = await ref.read(studentGroupsProvider.future);
-    setState(() {
-      _isLoadingAll = true;
-      _totalCount = groups.length;
-      _loadedCount = 0;
-    });
-
-    final repo = ref.read(scheduleRepositoryProvider);
-    final weekStart = DateTime.now().startOfWeek;
-
-    for (final g in groups) {
-      if (!mounted) break;
-      try {
-        // Подписываемся на стрим и берём первое значение — это триггерит сетевой запрос и кэш
-        await repo.watchWeek(g.id, weekStart).first.timeout(
-              const Duration(seconds: 20),
-              onTimeout: () => const <dynamic>[] as dynamic,
-            );
-      } catch (_) {
-        // игнорируем, чтобы не прерывать процесс
-      }
-      if (mounted) {
-        setState(() => _loadedCount++);
-      }
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingAll = false);
-      // Переснимаем результаты
-      ref.invalidate(freeRoomsProvider);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('EEEE, d MMMM', 'ru_RU');
+    final loader = ref.watch(backgroundLoaderProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -103,6 +143,8 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       ),
       body: Column(
         children: [
+          // Индикатор фоновой загрузки
+          if (loader.isLoading) _LoadingBanner(loader: loader),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -132,6 +174,16 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // Фильтры
+                _FilterChips(
+                  minDuration: _minDurationMinutes,
+                  buildingFilter: _buildingFilter,
+                  onMinDurationChanged: (v) =>
+                      setState(() => _minDurationMinutes = v),
+                  onBuildingChanged: (v) =>
+                      setState(() => _buildingFilter = v),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -143,13 +195,18 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                     label: const Text('Найти'),
                   ),
                 ),
-                const SizedBox(height: 8),
-                _LoadAllBanner(
-                  isLoading: _isLoadingAll,
-                  loaded: _loadedCount,
-                  total: _totalCount,
-                  onTap: _loadAllSchedules,
-                ),
+                if (!loader.isLoading && loader.loaded == 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // Запускаем и не ждём — фоновая загрузка
+                        ref.read(backgroundLoaderProvider.notifier).run();
+                      },
+                      icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                      label: const Text('Загрузить расписание всех групп'),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -163,7 +220,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   Widget _buildResults() {
     if (!_searched) {
       return const EmptyView(
-        text: 'Выберите дату и время,\nнажмите «Найти»',
+        text: 'Выберите параметры\nи нажмите «Найти»',
         icon: Icons.search,
       );
     }
@@ -173,6 +230,8 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       fromMinute: _from.minute,
       toHour: _to.hour,
       toMinute: _to.minute,
+      minDurationMinutes: _minDurationMinutes,
+      buildingFilter: _buildingFilter ?? '',
     );
     final asyncValue = ref.watch(freeRoomsProvider(key));
     return asyncValue.when(
@@ -181,8 +240,9 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       data: (rooms) {
         if (rooms.isEmpty) {
           return const EmptyView(
-            text:
-                'Свободных аудиторий не найдено.\nВозможно, нужно загрузить\nрасписание всех групп выше.',
+            text: 'Свободных аудиторий не найдено.\n'
+                'Попробуйте загрузить расписание\n'
+                'всех групп кнопкой выше.',
             icon: Icons.meeting_room_outlined,
           );
         }
@@ -197,52 +257,207 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   }
 }
 
-class _LoadAllBanner extends StatelessWidget {
-  const _LoadAllBanner({
-    required this.isLoading,
-    required this.loaded,
-    required this.total,
-    required this.onTap,
-  });
-
-  final bool isLoading;
-  final int loaded;
-  final int total;
-  final VoidCallback onTap;
+class _LoadingBanner extends StatelessWidget {
+  const _LoadingBanner({required this.loader});
+  final BackgroundLoaderState loader;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      color: theme.colorScheme.tertiaryContainer,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isLoading
-                ? 'Загружаю расписание: $loaded / $total групп'
-                : 'Для точного поиска загрузите расписание всех групп',
-            style: theme.textTheme.bodySmall,
+          Row(
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Загрузка расписания: ${loader.loaded}/${loader.total} групп',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onTertiaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
-          if (isLoading)
-            LinearProgressIndicator(
-              value: total == 0 ? null : loaded / total,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: loader.progress,
               minHeight: 4,
-            )
-          else
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onTap,
-                icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                label: const Text('Загрузить все группы'),
-              ),
+              backgroundColor:
+                  theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.2),
+              color: theme.colorScheme.onTertiaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({
+    required this.minDuration,
+    required this.buildingFilter,
+    required this.onMinDurationChanged,
+    required this.onBuildingChanged,
+  });
+
+  final int minDuration;
+  final String? buildingFilter;
+  final ValueChanged<int> onMinDurationChanged;
+  final ValueChanged<String?> onBuildingChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _chip(
+            context,
+            label: 'От $minDuration мин',
+            icon: Icons.timer_outlined,
+            onTap: () async {
+              final picked = await showModalBottomSheet<int>(
+                context: context,
+                builder: (_) => _MinDurationSheet(current: minDuration),
+              );
+              if (picked != null) onMinDurationChanged(picked);
+            },
+          ),
+          const SizedBox(width: 8),
+          _chip(
+            context,
+            label: buildingFilter == null
+                ? 'Любой корпус'
+                : 'Корпус: $buildingFilter',
+            icon: Icons.apartment_outlined,
+            active: buildingFilter != null,
+            onTap: () async {
+              final picked = await showModalBottomSheet<String?>(
+                context: context,
+                builder: (_) => _BuildingSheet(current: buildingFilter),
+              );
+              // null значит "не изменяли", а пустая строка = сбросить
+              if (picked != null) {
+                onBuildingChanged(picked.isEmpty ? null : picked);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool active = false,
+  }) {
+    final theme = Theme.of(context);
+    final bg = active
+        ? theme.colorScheme.primaryContainer
+        : theme.colorScheme.surfaceContainerHighest;
+    final fg = active
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.onSurface;
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(color: fg, fontSize: 13)),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_drop_down, size: 18, color: fg),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MinDurationSheet extends StatelessWidget {
+  const _MinDurationSheet({required this.current});
+  final int current;
+
+  @override
+  Widget build(BuildContext context) {
+    const options = [15, 30, 45, 60, 90, 120, 180];
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Минимальная длительность',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+          for (final m in options)
+            RadioListTile<int>(
+              title: Text('$m мин'),
+              value: m,
+              groupValue: current,
+              onChanged: (v) => Navigator.pop(context, v),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BuildingSheet extends StatelessWidget {
+  const _BuildingSheet({required this.current});
+  final String? current;
+
+  @override
+  Widget build(BuildContext context) {
+    // Зашитый список корпусов. Позже можно вычислять из БД.
+    const options = <String>['', 'А', 'Б', 'В', 'Г'];
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Корпус',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+          for (final b in options)
+            RadioListTile<String>(
+              title: Text(b.isEmpty ? 'Любой' : 'Корпус $b'),
+              value: b,
+              groupValue: current ?? '',
+              onChanged: (v) => Navigator.pop(context, v ?? ''),
             ),
         ],
       ),

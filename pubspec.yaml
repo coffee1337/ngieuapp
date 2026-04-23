@@ -46,8 +46,26 @@ dev_dependencies:
   freezed: ^3.0.0
   json_serializable: ^6.8.0
   drift_dev: ^2.32.1
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
   assets:
     - assets/json/
+    - assets/branding/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/icon.png"
+  adaptive_icon_background: "#9F003D"
+  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#9F003D"
+  image: assets/branding/splash.png
+  android_12:
+    image: assets/branding/splash.png
+    color: "#9F003D"
