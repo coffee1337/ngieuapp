@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../shared/widgets/app_components.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../theme/app_tokens.dart';
 import '../../domain/lesson.dart';
+import '../../domain/utils/floor_utils.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({super.key, required this.lesson});
   final Lesson lesson;
 
   Color _typeColor(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = scheme.brightness == Brightness.dark;
+    final brand = Theme.of(context).extension<BrandColors>();
+    if (brand == null) return Theme.of(context).colorScheme.primary;
     return switch (lesson.type) {
-      LessonType.lecture => isDark ? scheme.primary : scheme.primary,
-      LessonType.practice => isDark ? const Color(0xFF80CBC4) : scheme.tertiary,
-      LessonType.lab => isDark ? const Color(0xFFCE93D8) : scheme.secondary,
-      LessonType.exam => scheme.error,
-      LessonType.consultation => isDark ? scheme.outline : scheme.outline,
-      LessonType.event => isDark ? const Color(0xFF80CBC4) : scheme.tertiary,
-      LessonType.unknown => scheme.outline,
+      LessonType.lecture => brand.primaryBrand,
+      LessonType.practice => brand.purple,
+      LessonType.lab => brand.deepBlue,
+      LessonType.exam => Theme.of(context).colorScheme.error,
+      LessonType.consultation => brand.orange,
+      LessonType.event => const Color(0xFF4CAF50),
+      LessonType.unknown => Theme.of(context).colorScheme.outline,
     };
   }
 
@@ -36,134 +40,63 @@ class LessonTile extends StatelessWidget {
     final theme = Theme.of(context);
     final fmt = DateFormat('HH:mm');
     final typeColor = _typeColor(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    // Change card background: subtle for dark, with error tint for changes
-    final cardColor = lesson.isChange
-        ? (isDark
-            ? theme.colorScheme.error.withValues(alpha: 0.15)
-            : theme.colorScheme.errorContainer.withValues(alpha: 0.5))
-        : theme.colorScheme.surfaceContainer;
-
-    final borderColor = lesson.isChange
-        ? theme.colorScheme.error.withValues(alpha: isDark ? 0.6 : 0.7)
-        : null;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: borderColor != null
-            ? Border.all(color: borderColor, width: 1.2)
-            : null,
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.xs,
       ),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Colored left strip
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                color: typeColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14),
-                  bottomLeft: Radius.circular(14),
-                ),
-              ),
+            // Left: time column with type accent stripe
+            _TimeColumn(
+              startTime: fmt.format(lesson.startTime),
+              endTime: fmt.format(lesson.endTime),
+              pairNumber: lesson.pairNumber,
+              accentColor: typeColor,
             ),
-            // Time + pair number
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${fmt.format(lesson.startTime)}\n${fmt.format(lesson.endTime)}',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.3,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${lesson.pairNumber} пара',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Main content
+            // Right: lesson content
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 12, 12, 12),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Type + change badge
-                    Row(
-                      children: [
-                        if (_typeLabel().isNotEmpty)
-                          Text(
-                            _typeLabel(),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: typeColor,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        if (lesson.isChange) ...[
-                          if (_typeLabel().isNotEmpty) const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? theme.colorScheme.error.withValues(alpha: 0.8)
-                                  : theme.colorScheme.error,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'ЗАМЕНА',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: isDark
-                                    ? Colors.white
-                                    : theme.colorScheme.onError,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 9,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    // Badges row: type + change status
+                    _BadgesRow(
+                      typeLabel: _typeLabel(),
+                      typeColor: typeColor,
+                      isChange: lesson.isChange,
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Subject name -- main element
                     Text(
                       lesson.subject,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        height: 1.3,
+                        height: 1.25,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Teacher
                     if (lesson.teacherNames.isNotEmpty)
-                      _IconLine(
+                      _InfoLine(
                         icon: Icons.person_outline,
                         text: lesson.teacherNames.join(', '),
                       ),
+                    // Classroom
                     if (lesson.classroom.isNotEmpty)
-                      _IconLine(
+                      _InfoLine(
                         icon: Icons.place_outlined,
-                        text: lesson.building.isEmpty
-                            ? 'Ауд. ${lesson.classroom}'
-                            : 'Ауд. ${lesson.classroom} (${lesson.building})',
+                        text: FloorUtils.formatRoomForLesson(lesson.classroom),
                       ),
+                    // Groups
                     if (lesson.groupNames.isNotEmpty)
-                      _IconLine(
+                      _InfoLine(
                         icon: Icons.groups_outlined,
                         text: lesson.groupNames.join(', '),
                       ),
@@ -178,8 +111,115 @@ class LessonTile extends StatelessWidget {
   }
 }
 
-class _IconLine extends StatelessWidget {
-  const _IconLine({required this.icon, required this.text});
+class _TimeColumn extends StatelessWidget {
+  const _TimeColumn({
+    required this.startTime,
+    required this.endTime,
+    required this.pairNumber,
+    required this.accentColor,
+  });
+
+  final String startTime;
+  final String endTime;
+  final int pairNumber;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: AppSizes.lessonTimeColumnWidth,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.lg),
+          bottomLeft: Radius.circular(AppRadius.lg),
+        ),
+        border: Border(
+          right: BorderSide(
+            color: accentColor.withValues(alpha: 0.4),
+            width: 2.5,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.lg,
+        horizontal: AppSpacing.sm,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            startTime,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurface,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            endTime,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xxs,
+            ),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.12),
+              borderRadius: AppRadius.xsBr,
+            ),
+            child: Text(
+              '$pairNumber пара',
+              style: TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w700,
+                color: accentColor,
+                letterSpacing: 0.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgesRow extends StatelessWidget {
+  const _BadgesRow({
+    required this.typeLabel,
+    required this.typeColor,
+    required this.isChange,
+  });
+
+  final String typeLabel;
+  final Color typeColor;
+  final bool isChange;
+
+  @override
+  Widget build(BuildContext context) {
+    if (typeLabel.isEmpty && !isChange) return const SizedBox.shrink();
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.xs,
+      children: [
+        if (typeLabel.isNotEmpty)
+          LessonTypeBadge(label: typeLabel, color: typeColor),
+        if (isChange) const ChangeBadge(),
+      ],
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.icon, required this.text});
   final IconData icon;
   final String text;
 
@@ -187,23 +227,23 @@ class _IconLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
-            size: 14,
+            size: AppSizes.iconSm,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               text,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.3,
+                fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

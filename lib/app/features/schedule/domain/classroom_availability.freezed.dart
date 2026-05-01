@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ClassroomAvailability {
 
- String get classroom; String get building; DateTime get freeFrom; DateTime get freeUntil; Duration get freeDuration;
+ String get classroom; String get building; DateTime get freeFrom; DateTime get freeUntil; Duration get freeDuration; String get institute; int? get floor;
 /// Create a copy of ClassroomAvailability
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ClassroomAvailabilityCopyWith<ClassroomAvailability> get copyWith => _$Classroo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClassroomAvailability&&(identical(other.classroom, classroom) || other.classroom == classroom)&&(identical(other.building, building) || other.building == building)&&(identical(other.freeFrom, freeFrom) || other.freeFrom == freeFrom)&&(identical(other.freeUntil, freeUntil) || other.freeUntil == freeUntil)&&(identical(other.freeDuration, freeDuration) || other.freeDuration == freeDuration));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClassroomAvailability&&(identical(other.classroom, classroom) || other.classroom == classroom)&&(identical(other.building, building) || other.building == building)&&(identical(other.freeFrom, freeFrom) || other.freeFrom == freeFrom)&&(identical(other.freeUntil, freeUntil) || other.freeUntil == freeUntil)&&(identical(other.freeDuration, freeDuration) || other.freeDuration == freeDuration)&&(identical(other.institute, institute) || other.institute == institute)&&(identical(other.floor, floor) || other.floor == floor));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,classroom,building,freeFrom,freeUntil,freeDuration);
+int get hashCode => Object.hash(runtimeType,classroom,building,freeFrom,freeUntil,freeDuration,institute,floor);
 
 @override
 String toString() {
-  return 'ClassroomAvailability(classroom: $classroom, building: $building, freeFrom: $freeFrom, freeUntil: $freeUntil, freeDuration: $freeDuration)';
+  return 'ClassroomAvailability(classroom: $classroom, building: $building, freeFrom: $freeFrom, freeUntil: $freeUntil, freeDuration: $freeDuration, institute: $institute, floor: $floor)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ClassroomAvailabilityCopyWith<$Res>  {
   factory $ClassroomAvailabilityCopyWith(ClassroomAvailability value, $Res Function(ClassroomAvailability) _then) = _$ClassroomAvailabilityCopyWithImpl;
 @useResult
 $Res call({
- String classroom, String building, DateTime freeFrom, DateTime freeUntil, Duration freeDuration
+ String classroom, String building, DateTime freeFrom, DateTime freeUntil, Duration freeDuration, String institute, int? floor
 });
 
 
@@ -62,14 +62,16 @@ class _$ClassroomAvailabilityCopyWithImpl<$Res>
 
 /// Create a copy of ClassroomAvailability
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? classroom = null,Object? building = null,Object? freeFrom = null,Object? freeUntil = null,Object? freeDuration = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? classroom = null,Object? building = null,Object? freeFrom = null,Object? freeUntil = null,Object? freeDuration = null,Object? institute = null,Object? floor = freezed,}) {
   return _then(_self.copyWith(
 classroom: null == classroom ? _self.classroom : classroom // ignore: cast_nullable_to_non_nullable
 as String,building: null == building ? _self.building : building // ignore: cast_nullable_to_non_nullable
 as String,freeFrom: null == freeFrom ? _self.freeFrom : freeFrom // ignore: cast_nullable_to_non_nullable
 as DateTime,freeUntil: null == freeUntil ? _self.freeUntil : freeUntil // ignore: cast_nullable_to_non_nullable
 as DateTime,freeDuration: null == freeDuration ? _self.freeDuration : freeDuration // ignore: cast_nullable_to_non_nullable
-as Duration,
+as Duration,institute: null == institute ? _self.institute : institute // ignore: cast_nullable_to_non_nullable
+as String,floor: freezed == floor ? _self.floor : floor // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration,  String institute,  int? floor)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClassroomAvailability() when $default != null:
-return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration);case _:
+return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration,_that.institute,_that.floor);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration,  String institute,  int? floor)  $default,) {final _that = this;
 switch (_that) {
 case _ClassroomAvailability():
-return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration);case _:
+return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration,_that.institute,_that.floor);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +197,10 @@ return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String classroom,  String building,  DateTime freeFrom,  DateTime freeUntil,  Duration freeDuration,  String institute,  int? floor)?  $default,) {final _that = this;
 switch (_that) {
 case _ClassroomAvailability() when $default != null:
-return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration);case _:
+return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_that.freeDuration,_that.institute,_that.floor);case _:
   return null;
 
 }
@@ -209,8 +211,8 @@ return $default(_that.classroom,_that.building,_that.freeFrom,_that.freeUntil,_t
 /// @nodoc
 
 
-class _ClassroomAvailability implements ClassroomAvailability {
-  const _ClassroomAvailability({required this.classroom, required this.building, required this.freeFrom, required this.freeUntil, required this.freeDuration});
+class _ClassroomAvailability extends ClassroomAvailability {
+  const _ClassroomAvailability({required this.classroom, required this.building, required this.freeFrom, required this.freeUntil, required this.freeDuration, required this.institute, required this.floor}): super._();
   
 
 @override final  String classroom;
@@ -218,6 +220,8 @@ class _ClassroomAvailability implements ClassroomAvailability {
 @override final  DateTime freeFrom;
 @override final  DateTime freeUntil;
 @override final  Duration freeDuration;
+@override final  String institute;
+@override final  int? floor;
 
 /// Create a copy of ClassroomAvailability
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +233,16 @@ _$ClassroomAvailabilityCopyWith<_ClassroomAvailability> get copyWith => __$Class
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClassroomAvailability&&(identical(other.classroom, classroom) || other.classroom == classroom)&&(identical(other.building, building) || other.building == building)&&(identical(other.freeFrom, freeFrom) || other.freeFrom == freeFrom)&&(identical(other.freeUntil, freeUntil) || other.freeUntil == freeUntil)&&(identical(other.freeDuration, freeDuration) || other.freeDuration == freeDuration));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClassroomAvailability&&(identical(other.classroom, classroom) || other.classroom == classroom)&&(identical(other.building, building) || other.building == building)&&(identical(other.freeFrom, freeFrom) || other.freeFrom == freeFrom)&&(identical(other.freeUntil, freeUntil) || other.freeUntil == freeUntil)&&(identical(other.freeDuration, freeDuration) || other.freeDuration == freeDuration)&&(identical(other.institute, institute) || other.institute == institute)&&(identical(other.floor, floor) || other.floor == floor));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,classroom,building,freeFrom,freeUntil,freeDuration);
+int get hashCode => Object.hash(runtimeType,classroom,building,freeFrom,freeUntil,freeDuration,institute,floor);
 
 @override
 String toString() {
-  return 'ClassroomAvailability(classroom: $classroom, building: $building, freeFrom: $freeFrom, freeUntil: $freeUntil, freeDuration: $freeDuration)';
+  return 'ClassroomAvailability(classroom: $classroom, building: $building, freeFrom: $freeFrom, freeUntil: $freeUntil, freeDuration: $freeDuration, institute: $institute, floor: $floor)';
 }
 
 
@@ -249,7 +253,7 @@ abstract mixin class _$ClassroomAvailabilityCopyWith<$Res> implements $Classroom
   factory _$ClassroomAvailabilityCopyWith(_ClassroomAvailability value, $Res Function(_ClassroomAvailability) _then) = __$ClassroomAvailabilityCopyWithImpl;
 @override @useResult
 $Res call({
- String classroom, String building, DateTime freeFrom, DateTime freeUntil, Duration freeDuration
+ String classroom, String building, DateTime freeFrom, DateTime freeUntil, Duration freeDuration, String institute, int? floor
 });
 
 
@@ -266,14 +270,16 @@ class __$ClassroomAvailabilityCopyWithImpl<$Res>
 
 /// Create a copy of ClassroomAvailability
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? classroom = null,Object? building = null,Object? freeFrom = null,Object? freeUntil = null,Object? freeDuration = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? classroom = null,Object? building = null,Object? freeFrom = null,Object? freeUntil = null,Object? freeDuration = null,Object? institute = null,Object? floor = freezed,}) {
   return _then(_ClassroomAvailability(
 classroom: null == classroom ? _self.classroom : classroom // ignore: cast_nullable_to_non_nullable
 as String,building: null == building ? _self.building : building // ignore: cast_nullable_to_non_nullable
 as String,freeFrom: null == freeFrom ? _self.freeFrom : freeFrom // ignore: cast_nullable_to_non_nullable
 as DateTime,freeUntil: null == freeUntil ? _self.freeUntil : freeUntil // ignore: cast_nullable_to_non_nullable
 as DateTime,freeDuration: null == freeDuration ? _self.freeDuration : freeDuration // ignore: cast_nullable_to_non_nullable
-as Duration,
+as Duration,institute: null == institute ? _self.institute : institute // ignore: cast_nullable_to_non_nullable
+as String,floor: freezed == floor ? _self.floor : floor // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

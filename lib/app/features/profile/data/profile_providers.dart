@@ -7,7 +7,6 @@ final profileLocalDataSourceProvider = Provider<ProfileLocalDataSource>((ref) {
   return ProfileLocalDataSource();
 });
 
-final studentIdentityProvider =
-    FutureProvider<StudentIdentity?>((ref) {
+final studentIdentityProvider = FutureProvider<StudentIdentity?>((ref) {
   return ref.watch(profileLocalDataSourceProvider).load();
 });

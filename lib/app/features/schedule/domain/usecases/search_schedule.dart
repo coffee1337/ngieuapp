@@ -2,10 +2,7 @@ import '../lesson.dart';
 import '../schedule_repository.dart';
 
 class SearchScheduleResult {
-  const SearchScheduleResult({
-    required this.lesson,
-    required this.matchType,
-  });
+  const SearchScheduleResult({required this.lesson, required this.matchType});
   final Lesson lesson;
   final SearchMatchType matchType;
 }
@@ -29,15 +26,14 @@ class SearchSchedule {
     final seen = <String>{};
 
     // Идём по дням и собираем всё, что совпадает
-    for (var d = from;
-        d.isBefore(to);
-        d = d.add(const Duration(days: 1))) {
+    for (var d = from; d.isBefore(to); d = d.add(const Duration(days: 1))) {
       final dayLessons = await _repo.getAllLessonsForDate(d);
       for (final l in dayLessons) {
         final match = _matchType(l, q);
         if (match == null) continue;
         // Дедупликация — одно и то же занятие может быть повторено (разные группы)
-        final key = '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join("")}';
+        final key =
+            '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join("")}';
         if (!seen.add(key)) continue;
         results.add(SearchScheduleResult(lesson: l, matchType: match));
       }

@@ -27,7 +27,9 @@ class NotificationsService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    await _plugin.initialize(const InitializationSettings(android: androidInit, iOS: iosInit));
+    await _plugin.initialize(
+      const InitializationSettings(android: androidInit, iOS: iosInit),
+    );
     _initialized = true;
   }
 
@@ -35,7 +37,10 @@ class NotificationsService {
     if (Platform.isAndroid) {
       final status = await Permission.notification.request();
       if (!status.isGranted) return false;
-      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       final canSchedule = await android?.canScheduleExactNotifications();
       if (canSchedule == false) {
         await android?.requestExactAlarmsPermission();
@@ -43,14 +48,23 @@ class NotificationsService {
       return true;
     }
     if (Platform.isIOS) {
-      final granted = await _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
+      final granted = await _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
       return granted ?? false;
     }
     return false;
   }
 
-  Future<void> scheduleLessonReminder(Lesson lesson, {int minutesBefore = 15}) async {
-    final notifyTime = lesson.startTime.subtract(Duration(minutes: minutesBefore));
+  Future<void> scheduleLessonReminder(
+    Lesson lesson, {
+    int minutesBefore = 15,
+  }) async {
+    final notifyTime = lesson.startTime.subtract(
+      Duration(minutes: minutesBefore),
+    );
     if (notifyTime.isBefore(DateTime.now())) return;
     final id = _idFromString(lesson.id);
     final tzTime = tz.TZDateTime.from(notifyTime, tz.local);
@@ -79,11 +93,18 @@ class NotificationsService {
 
   Future<void> cancelAll() async => _plugin.cancelAll();
 
-  Future<void> rescheduleFor(List<Lesson> lessons, {required int minutesBefore, required bool enabled}) async {
+  Future<void> rescheduleFor(
+    List<Lesson> lessons, {
+    required int minutesBefore,
+    required bool enabled,
+  }) async {
     await cancelAll();
     if (!enabled) return;
     final now = DateTime.now();
-    final upcoming = lessons.where((l) => l.startTime.isAfter(now) && !l.isEvent).take(50).toList();
+    final upcoming = lessons
+        .where((l) => l.startTime.isAfter(now) && !l.isEvent)
+        .take(50)
+        .toList();
     for (final l in upcoming) {
       try {
         await scheduleLessonReminder(l, minutesBefore: minutesBefore);

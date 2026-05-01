@@ -80,8 +80,8 @@ class _NotSetYet extends StatelessWidget {
             'Откройте расписание, выберите свою группу,\nи она появится в профиле',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -190,14 +190,18 @@ class _ProfileContent extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   lessonsAsync.when(
-                    loading: () => const _StatCard(label: 'Сегодня', value: '…'),
-                    error: (_, __) => const _StatCard(label: 'Сегодня', value: '—'),
+                    loading: () =>
+                        const _StatCard(label: 'Сегодня', value: '…'),
+                    error: (_, __) =>
+                        const _StatCard(label: 'Сегодня', value: '—'),
                     data: (lessons) {
                       final todayCount = lessons
-                          .where((l) =>
-                              l.date.year == today.year &&
-                              l.date.month == today.month &&
-                              l.date.day == today.day)
+                          .where(
+                            (l) =>
+                                l.date.year == today.year &&
+                                l.date.month == today.month &&
+                                l.date.day == today.day,
+                          )
                           .length;
                       return _StatCard(
                         label: 'Сегодня пар',
@@ -215,9 +219,7 @@ class _ProfileContent extends ConsumerWidget {
         lessonsAsync.maybeWhen(
           data: (lessons) {
             final now = DateTime.now();
-            final next = lessons
-                .where((l) => l.endTime.isAfter(now))
-                .toList()
+            final next = lessons.where((l) => l.endTime.isAfter(now)).toList()
               ..sort((a, b) => a.startTime.compareTo(b.startTime));
             if (next.isEmpty) return const SizedBox.shrink();
             final l = next.first;
@@ -340,14 +342,14 @@ class _NextLessonCard extends StatelessWidget {
     final containerColor = isNow
         ? theme.colorScheme.primaryContainer
         : (isDark
-            ? theme.colorScheme.surfaceContainerHigh
-            : theme.colorScheme.primaryContainer);
+              ? theme.colorScheme.surfaceContainerHigh
+              : theme.colorScheme.primaryContainer);
 
     final onContainerColor = isNow
         ? theme.colorScheme.onPrimaryContainer
         : (isDark
-            ? theme.colorScheme.onSurface
-            : theme.colorScheme.onPrimaryContainer);
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onPrimaryContainer);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -412,9 +414,11 @@ class _NextLessonCard extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.access_time,
-                  size: 14,
-                  color: onContainerColor.withValues(alpha: 0.7)),
+              Icon(
+                Icons.access_time,
+                size: 14,
+                color: onContainerColor.withValues(alpha: 0.7),
+              ),
               const SizedBox(width: 4),
               Text(
                 '${fmt.format(lesson.startTime)}—${fmt.format(lesson.endTime)}',
@@ -424,9 +428,11 @@ class _NextLessonCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               if (lesson.classroom.isNotEmpty) ...[
-                Icon(Icons.place,
-                    size: 14,
-                    color: onContainerColor.withValues(alpha: 0.7)),
+                Icon(
+                  Icons.place,
+                  size: 14,
+                  color: onContainerColor.withValues(alpha: 0.7),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Ауд. ${lesson.classroom}',

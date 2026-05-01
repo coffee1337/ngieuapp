@@ -43,10 +43,7 @@ class NgieuApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('ru'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('ru'), Locale('en')],
       locale: const Locale('ru'),
     );
   }

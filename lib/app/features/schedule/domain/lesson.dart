@@ -4,6 +4,7 @@ part 'lesson.freezed.dart';
 part 'lesson.g.dart';
 
 enum LessonType { lecture, practice, lab, exam, consultation, event, unknown }
+
 enum WeekParity { any, odd, even }
 
 @freezed

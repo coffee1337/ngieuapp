@@ -15,8 +15,9 @@ class ScheduleDbDataSource {
     DateTime to,
   ) async {
     final query = _db.select(_db.scheduleEntries)
-      ..where((t) =>
-          t.actorId.equals(actorId) & t.date.isBetweenValues(from, to));
+      ..where(
+        (t) => t.actorId.equals(actorId) & t.date.isBetweenValues(from, to),
+      );
     final rows = await query.get();
     return rows.map(_toLesson).toList();
   }
@@ -32,9 +33,9 @@ class ScheduleDbDataSource {
 
   Future<void> replaceForActor(String actorId, List<Lesson> lessons) async {
     await _db.transaction(() async {
-      await (_db.delete(_db.scheduleEntries)
-            ..where((t) => t.actorId.equals(actorId)))
-          .go();
+      await (_db.delete(
+        _db.scheduleEntries,
+      )..where((t) => t.actorId.equals(actorId))).go();
 
       final now = DateTime.now();
       await _db.batch((batch) {
@@ -127,7 +128,11 @@ class ScheduleDbDataSource {
         return decoded.map((e) => e.toString()).toList();
       }
     } catch (_) {
-      return raw.split(',').map((e) => e.trim()).where((s) => s.isNotEmpty).toList();
+      return raw
+          .split(',')
+          .map((e) => e.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     return const [];
   }

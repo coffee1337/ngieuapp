@@ -36,7 +36,8 @@ class ConnectivityNotifier extends StateNotifier<bool> {
   }
 }
 
-final connectivityProvider =
-    StateNotifierProvider<ConnectivityNotifier, bool>((ref) {
+final connectivityProvider = StateNotifierProvider<ConnectivityNotifier, bool>((
+  ref,
+) {
   return ConnectivityNotifier();
 });

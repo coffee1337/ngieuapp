@@ -11,33 +11,35 @@ import 'features/schedule/presentation/free_rooms_screen.dart';
 import 'features/schedule/presentation/schedule_search_screen.dart';
 import 'features/schedule/presentation/week_schedule_screen.dart';
 import 'features/settings/presentation/settings_screen.dart';
+import 'shared/widgets/app_gradient_bar.dart';
 import 'shared/widgets/offline_banner.dart';
+import 'theme/app_tokens.dart';
 
 CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
-      child: child,
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
-      transitionsBuilder: (_, anim, __, child) {
-        final curved = CurvedAnimation(
-          parent: anim,
-          curve: Curves.easeOutQuart,
-          reverseCurve: Curves.easeInToLinear,
-        );
-        return FadeTransition(
-          opacity: CurvedAnimation(
-            parent: anim,
-            curve: const Interval(0, 0.6, curve: Curves.easeOut),
-          ),
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.03),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          ),
-        );
-      },
+  child: child,
+  transitionDuration: AppDurations.normal,
+  reverseTransitionDuration: AppDurations.normal,
+  transitionsBuilder: (_, anim, __, child) {
+    final curved = CurvedAnimation(
+      parent: anim,
+      curve: Curves.easeOutQuart,
+      reverseCurve: Curves.easeInToLinear,
     );
+    return FadeTransition(
+      opacity: CurvedAnimation(
+        parent: anim,
+        curve: const Interval(0, 0.6, curve: Curves.easeOut),
+      ),
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.03),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  },
+);
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -74,9 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':actorId',
                 pageBuilder: (ctx, state) => _page(
-                  WeekScheduleScreen(
-                    actorId: state.pathParameters['actorId']!,
-                  ),
+                  WeekScheduleScreen(actorId: state.pathParameters['actorId']!),
                 ),
               ),
             ],
@@ -114,10 +114,10 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
   bool _initialized = false;
 
   static const _tabs = [
-    (path: '/news', icon: Icons.article_outlined, label: 'Новости'),
-    (path: '/schedule', icon: Icons.calendar_today_outlined, label: 'Расписание'),
-    (path: '/profile', icon: Icons.person_outline, label: 'Профиль'),
-    (path: '/learning', icon: Icons.school_outlined, label: 'Обучение'),
+    (path: '/news', icon: Icons.article_outlined, activeIcon: Icons.article_rounded, label: 'Новости'),
+    (path: '/schedule', icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today_rounded, label: 'Расписание'),
+    (path: '/profile', icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Профиль'),
+    (path: '/learning', icon: Icons.school_outlined, activeIcon: Icons.school_rounded, label: 'Обучение'),
   ];
 
   @override
@@ -125,7 +125,7 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: AppDurations.fast,
     );
   }
 
@@ -146,16 +146,14 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     final idx = _indexFromLocation(location);
+    final theme = Theme.of(context);
 
-    // Animate on tab change
     if (!_initialized) {
       _initialized = true;
       _animController.value = 1.0;
     } else {
       _animController.forward(from: 0.0);
     }
-
-    final theme = Theme.of(context);
 
     return Scaffold(
       body: Column(
@@ -169,21 +167,27 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: idx,
-        onDestinationSelected: (i) => context.go(_tabs[i].path),
-        height: 64,
-        backgroundColor: theme.colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: theme.colorScheme.primaryContainer,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: [
-          for (final t in _tabs)
-            NavigationDestination(
-              icon: Icon(t.icon),
-              selectedIcon: Icon(t.icon),
-              label: t.label,
-            ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AppGradientBar(height: 1),
+          NavigationBar(
+            selectedIndex: idx,
+            onDestinationSelected: (i) => context.go(_tabs[i].path),
+            height: AppSizes.navBarHeight,
+            backgroundColor: theme.colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            indicatorColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: [
+              for (final t in _tabs)
+                NavigationDestination(
+                  icon: Icon(t.icon, size: AppSizes.iconLg),
+                  selectedIcon: Icon(t.activeIcon, size: AppSizes.iconLg),
+                  label: t.label,
+                ),
+            ],
+          ),
         ],
       ),
     );

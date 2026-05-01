@@ -50,9 +50,7 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
           decoration: InputDecoration(
             hintText: 'Предмет, препод, ауд., группа',
             border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           style: theme.textTheme.titleMedium,
         ),
@@ -67,7 +65,7 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
             ),
         ],
         bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(4),
+          preferredSize: Size.fromHeight(3),
           child: AppGradientBar(),
         ),
       ),
@@ -89,7 +87,8 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
       data: (results) {
         if (results.isEmpty) {
           return const EmptyView(
-            text: 'Ничего не найдено.\n'
+            text:
+                'Ничего не найдено.\n'
                 'Возможно, нужно загрузить расписание\n'
                 'всех групп в «Свободные аудитории».',
             icon: Icons.search_off,
@@ -290,18 +289,18 @@ class _SearchResultTile extends StatelessWidget {
   }
 
   IconData _iconFor(SearchMatchType t) => switch (t) {
-        SearchMatchType.subject => Icons.book_outlined,
-        SearchMatchType.teacher => Icons.person_outline,
-        SearchMatchType.classroom => Icons.meeting_room_outlined,
-        SearchMatchType.group => Icons.groups_outlined,
-      };
+    SearchMatchType.subject => Icons.book_outlined,
+    SearchMatchType.teacher => Icons.person_outline,
+    SearchMatchType.classroom => Icons.meeting_room_outlined,
+    SearchMatchType.group => Icons.groups_outlined,
+  };
 
   String _labelFor(SearchMatchType t) => switch (t) {
-        SearchMatchType.subject => 'Предмет',
-        SearchMatchType.teacher => 'Преподаватель',
-        SearchMatchType.classroom => 'Аудитория',
-        SearchMatchType.group => 'Группа',
-      };
+    SearchMatchType.subject => 'Предмет',
+    SearchMatchType.teacher => 'Преподаватель',
+    SearchMatchType.classroom => 'Аудитория',
+    SearchMatchType.group => 'Группа',
+  };
 }
 
 /// Подсветка совпадений поискового запроса в тексте.
@@ -320,8 +319,12 @@ class _Highlighted extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (query.isEmpty) {
-      return Text(text, style: style, maxLines: maxLines,
-          overflow: maxLines != null ? TextOverflow.ellipsis : null);
+      return Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      );
     }
     final theme = Theme.of(context);
     final lower = text.toLowerCase();
@@ -338,14 +341,16 @@ class _Highlighted extends StatelessWidget {
       if (idx > i) {
         spans.add(TextSpan(text: text.substring(i, idx)));
       }
-      spans.add(TextSpan(
-        text: text.substring(idx, idx + q.length),
-        style: (style ?? const TextStyle()).copyWith(
-          backgroundColor: theme.colorScheme.primaryContainer,
-          color: theme.colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.w700,
+      spans.add(
+        TextSpan(
+          text: text.substring(idx, idx + q.length),
+          style: (style ?? const TextStyle()).copyWith(
+            backgroundColor: theme.colorScheme.primaryContainer,
+            color: theme.colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ));
+      );
       i = idx + q.length;
     }
 

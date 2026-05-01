@@ -19,16 +19,14 @@ class NewsListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Новости НГИЭУ'),
         bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(4),
+          preferredSize: Size.fromHeight(3),
           child: AppGradientBar(),
         ),
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => ErrorView(
-          error: error,
-          onRetry: () => ref.invalidate(newsListProvider),
-        ),
+        error: (error, _) =>
+            ErrorView(error: error, onRetry: () => refreshNews(ref)),
         data: (articles) {
           if (articles.isEmpty) {
             return const EmptyView(
@@ -37,7 +35,7 @@ class NewsListScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(newsListProvider),
+            onRefresh: () async => refreshNews(ref),
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 6),
               itemCount: articles.length,

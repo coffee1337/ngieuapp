@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../classroom_availability.dart';
 import '../schedule_repository.dart';
+import '../utils/classroom_utils.dart';
 
 class FindFreeClassrooms {
   FindFreeClassrooms(this._repo);
@@ -15,13 +16,14 @@ class FindFreeClassrooms {
     r'^(дист\.?|онлайн|удал[её]нно|по\s+плану|н/д|\-|спортзал.*|актовый\s+зал|каф\..*)\s*$',
     caseSensitive: false,
   );
-  
+
   Future<List<ClassroomAvailability>> call({
     required DateTime date,
     required TimeOfDay from,
     required TimeOfDay to,
     Duration minDuration = const Duration(minutes: 45),
     String? buildingFilter,
+    String? instituteFilter,
   }) async {
     final day = DateTime(date.year, date.month, date.day);
     final fromDt = _combine(day, from);
@@ -29,19 +31,31 @@ class FindFreeClassrooms {
 
     var lessons = await _repo.getAllLessonsForDate(day);
 
-    lessons = lessons.where((l) =>
-        l.classroom.isNotEmpty && !_excluded.hasMatch(l.classroom)).toList();
+    lessons = lessons
+        .where(
+          (l) => l.classroom.isNotEmpty && !_excluded.hasMatch(l.classroom),
+        )
+        .toList();
 
-    if (buildingFilter != null) {
+    // Применяем фильтр по институту, если задан
+    if (instituteFilter != null && instituteFilter.isNotEmpty) {
+      lessons = lessons.where((l) {
+        final institute = ClassroomUtils.getInstituteFromRoomNumber(
+          l.classroom,
+          l.building,
+        );
+        return institute == instituteFilter;
+      }).toList();
+    }
+    // Иначе применяем старый фильтр по зданию (для обратной совместимости)
+    else if (buildingFilter != null) {
       lessons = lessons.where((l) => l.building == buildingFilter).toList();
     }
 
     final byRoom = <_RoomKey, List<_Interval>>{};
     for (final l in lessons) {
       final key = _RoomKey(l.classroom, l.building);
-      byRoom
-          .putIfAbsent(key, () => [])
-          .add(_Interval(l.startTime, l.endTime));
+      byRoom.putIfAbsent(key, () => []).add(_Interval(l.startTime, l.endTime));
     }
 
     final result = <ClassroomAvailability>[];
@@ -56,13 +70,24 @@ class FindFreeClassrooms {
         final s = w.start.isAfter(fromDt) ? w.start : fromDt;
         final e = w.end.isBefore(toDt) ? w.end : toDt;
         if (e.isAfter(s) && e.difference(s) >= minDuration) {
-          result.add(ClassroomAvailability(
-            classroom: entry.key.room,
-            building: entry.key.building,
-            freeFrom: s,
-            freeUntil: e,
-            freeDuration: e.difference(s),
-          ));
+          // Определяем институт и этаж для кабинета
+          final institute = ClassroomUtils.getInstituteFromRoomNumber(
+            entry.key.room,
+            entry.key.building,
+          );
+          final floor = ClassroomUtils.getFloorFromRoomNumber(entry.key.room);
+
+          result.add(
+            ClassroomAvailability(
+              classroom: entry.key.room,
+              building: entry.key.building,
+              freeFrom: s,
+              freeUntil: e,
+              freeDuration: e.difference(s),
+              institute: institute,
+              floor: floor,
+            ),
+          );
         }
       }
     }
@@ -90,7 +115,11 @@ class FindFreeClassrooms {
     return out;
   }
 
-  List<_Interval> _gaps(List<_Interval> busy, DateTime dayStart, DateTime dayEnd) {
+  List<_Interval> _gaps(
+    List<_Interval> busy,
+    DateTime dayStart,
+    DateTime dayEnd,
+  ) {
     final gaps = <_Interval>[];
     var cursor = dayStart;
     for (final b in busy) {
@@ -100,8 +129,7 @@ class FindFreeClassrooms {
       }
       if (b.end.isAfter(cursor)) cursor = b.end;
     }
-    if (dayEnd.isAfter(cursor) &&
-        dayEnd.difference(cursor) >= _minFreeWindow) {
+    if (dayEnd.isAfter(cursor) && dayEnd.difference(cursor) >= _minFreeWindow) {
       gaps.add(_Interval(cursor, dayEnd));
     }
     return gaps;

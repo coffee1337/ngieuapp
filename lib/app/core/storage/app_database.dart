@@ -15,31 +15,31 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
-          );
-        },
-        onUpgrade: (m, from, to) async {
-          // Старая схема несовместима с новой — проще перекачать с нуля
-          await m.deleteTable('schedule_entries');
-          await m.createTable(scheduleEntries);
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
-          );
-          await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
-          );
-        },
+    onCreate: (m) async {
+      await m.createAll();
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
       );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
+      );
+    },
+    onUpgrade: (m, from, to) async {
+      // Старая схема несовместима с новой — проще перекачать с нуля
+      await m.deleteTable('schedule_entries');
+      await m.createTable(scheduleEntries);
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_date ON schedule_entries(date);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_classroom ON schedule_entries(classroom, building);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_schedule_actor ON schedule_entries(actor_id);',
+      );
+    },
+  );
 }

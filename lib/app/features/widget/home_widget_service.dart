@@ -24,8 +24,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData('widget_room', '');
     } else {
       final now = DateTime.now();
-      final isNow =
-          now.isAfter(next.startTime) && now.isBefore(next.endTime);
+      final isNow = now.isAfter(next.startTime) && now.isBefore(next.endTime);
 
       final timeFmt = DateFormat('HH:mm');
       final dayFmt = DateFormat('d MMM, HH:mm', 'ru_RU');
@@ -34,8 +33,8 @@ class HomeWidgetService {
       final header = isNow
           ? 'СЕЙЧАС'
           : isToday
-              ? 'СЛЕДУЮЩАЯ ПАРА'
-              : 'БЛИЖАЙШАЯ ПАРА';
+          ? 'СЛЕДУЮЩАЯ ПАРА'
+          : 'БЛИЖАЙШАЯ ПАРА';
 
       final timeStr = isToday
           ? '${timeFmt.format(next.startTime)} — ${timeFmt.format(next.endTime)}'
@@ -52,17 +51,14 @@ class HomeWidgetService {
     }
 
     // Пнуть виджет, чтоб перерисовался
-    await HomeWidget.updateWidget(
-      androidName: _androidProvider,
-    );
+    await HomeWidget.updateWidget(androidName: _androidProvider);
   }
 
   Lesson? _findNext(List<Lesson> lessons) {
     final now = DateTime.now();
-    final future = lessons
-        .where((l) => l.endTime.isAfter(now) && !l.isEvent)
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final future =
+        lessons.where((l) => l.endTime.isAfter(now) && !l.isEvent).toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
     return future.isEmpty ? null : future.first;
   }
 

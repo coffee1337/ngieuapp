@@ -28,7 +28,10 @@ class OfflineBanner extends ConsumerWidget {
                 color: isDark
                     ? theme.colorScheme.errorContainer.withValues(alpha: 0.6)
                     : theme.colorScheme.errorContainer,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

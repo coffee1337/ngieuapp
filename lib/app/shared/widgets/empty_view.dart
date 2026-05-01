@@ -26,12 +26,11 @@ class EmptyView extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: color),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: color),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),

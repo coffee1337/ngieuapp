@@ -4,33 +4,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../shared/widgets/app_components.dart';
 import '../../../shared/widgets/app_gradient_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../theme/app_theme.dart';
+import '../../../theme/app_tokens.dart';
 import '../data/schedule_providers.dart';
 import '../domain/classroom_availability.dart';
+import '../domain/utils/classroom_utils.dart';
+import '../domain/utils/floor_utils.dart';
 
-/// Глобальный лоадер — выживает между открытиями экрана.
+/// Background loader state -- survives between screen opens.
 class BackgroundLoaderState {
   const BackgroundLoaderState({
     required this.isLoading,
     required this.loaded,
     required this.total,
+    required this.lastRunTime,
+    required this.shouldAutoLoad,
   });
   final bool isLoading;
   final int loaded;
   final int total;
+  final DateTime? lastRunTime;
+  final bool shouldAutoLoad;
 
   double? get progress => total == 0 ? null : loaded / total;
+
+  bool get shouldRunAutomatically {
+    if (!shouldAutoLoad) return false;
+    if (isLoading) return false;
+    if (lastRunTime == null) return true;
+    final now = DateTime.now();
+    final elapsed = now.difference(lastRunTime!);
+    if (loaded < total * 0.5) return true;
+    if (elapsed > const Duration(hours: 2)) return true;
+    if (elapsed > const Duration(minutes: 30) && loaded < total) return true;
+    return false;
+  }
 }
 
 class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
   BackgroundLoaderNotifier(this._ref)
-      : super(const BackgroundLoaderState(
+    : super(
+        const BackgroundLoaderState(
           isLoading: false,
           loaded: 0,
           total: 0,
-        ));
+          lastRunTime: null,
+          shouldAutoLoad: true,
+        ),
+      );
 
   final Ref _ref;
   Completer<void>? _completer;
@@ -44,46 +69,88 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
       isLoading: true,
       loaded: 0,
       total: groups.length,
+      lastRunTime: state.lastRunTime,
+      shouldAutoLoad: state.shouldAutoLoad,
     );
 
     final apiDs = _ref.read(scheduleApiDataSourceProvider);
     final dbDs = _ref.read(scheduleDbDataSourceProvider);
+    _ref.invalidate(freeRoomsProvider);
 
-    const batchSize = 5;
-    for (var i = 0; i < groups.length; i += batchSize) {
-      final batch = groups.skip(i).take(batchSize).toList();
-      await Future.wait(batch.map((g) async {
-        try {
-          final lessons = await apiDs
-              .fetchSchedule(g.id)
-              .timeout(const Duration(seconds: 15));
-          await dbDs.replaceForActor(g.id, lessons);
-        } catch (_) {
-          // skip
-        }
-        state = BackgroundLoaderState(
-          isLoading: true,
-          loaded: state.loaded + 1,
-          total: state.total,
+    const batchSize = 3;
+    var loadedCount = 0;
+
+    await Future.doWhile(() async {
+      if (loadedCount >= groups.length) return false;
+      final batch = groups.skip(loadedCount).take(batchSize).toList();
+      try {
+        await Future.wait(
+          batch.map((g) async {
+            try {
+              final lessons = await apiDs
+                  .fetchSchedule(g.id)
+                  .timeout(const Duration(seconds: 10));
+              await dbDs.replaceForActor(g.id, lessons);
+            } catch (_) {}
+            loadedCount++;
+            state = BackgroundLoaderState(
+              isLoading: true,
+              loaded: loadedCount,
+              total: groups.length,
+              lastRunTime: state.lastRunTime,
+              shouldAutoLoad: state.shouldAutoLoad,
+            );
+          }),
         );
-      }));
-    }
+      } catch (_) {
+        loadedCount += batch.length;
+      }
+      await Future.delayed(const Duration(milliseconds: 50));
+      return true;
+    });
 
     state = BackgroundLoaderState(
       isLoading: false,
-      loaded: state.loaded,
-      total: state.total,
+      loaded: loadedCount,
+      total: groups.length,
+      lastRunTime: DateTime.now(),
+      shouldAutoLoad: state.shouldAutoLoad,
     );
     _ref.invalidate(freeRoomsProvider);
     _completer?.complete();
+  }
+
+  Future<void> runIfNeeded() async {
+    if (state.shouldRunAutomatically) await run();
+  }
+
+  void setAutoLoad(bool enabled) {
+    state = BackgroundLoaderState(
+      isLoading: state.isLoading,
+      loaded: state.loaded,
+      total: state.total,
+      lastRunTime: state.lastRunTime,
+      shouldAutoLoad: enabled,
+    );
+  }
+
+  void resetLastRunTime() {
+    state = BackgroundLoaderState(
+      isLoading: state.isLoading,
+      loaded: state.loaded,
+      total: state.total,
+      lastRunTime: null,
+      shouldAutoLoad: state.shouldAutoLoad,
+    );
   }
 }
 
 final backgroundLoaderProvider =
     StateNotifierProvider<BackgroundLoaderNotifier, BackgroundLoaderState>(
-        (ref) {
-  return BackgroundLoaderNotifier(ref);
-});
+  (ref) => BackgroundLoaderNotifier(ref),
+);
+
+// ---------------------------------------------------------------------------
 
 class FreeRoomsScreen extends ConsumerStatefulWidget {
   const FreeRoomsScreen({super.key});
@@ -97,9 +164,23 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   TimeOfDay _from = const TimeOfDay(hour: 10, minute: 0);
   TimeOfDay _to = const TimeOfDay(hour: 12, minute: 0);
   bool _searched = false;
-
   int _minDurationMinutes = 45;
-  String? _buildingFilter;
+  String? _instituteFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(backgroundLoaderProvider.notifier).runIfNeeded();
+    });
+  }
+
+  String _shortInstitute(String full) {
+    if (full.contains('экономики')) return 'ИЭиУ';
+    if (full.contains('информационных')) return 'ИИТиСС';
+    if (full.contains('Инженерный')) return 'ИИ';
+    return full;
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -118,18 +199,14 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       initialTime: isFrom ? _from : _to,
     );
     if (picked != null) {
-      setState(() {
-        if (isFrom) {
-          _from = picked;
-        } else {
-          _to = picked;
-        }
-      });
+      setState(() => isFrom ? _from = picked : _to = picked);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final semantic = theme.extension<AppSemanticColors>()!;
     final dateFmt = DateFormat('EEEE, d MMMM', 'ru_RU');
     final loader = ref.watch(backgroundLoaderProvider);
 
@@ -137,44 +214,52 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       appBar: AppBar(
         title: const Text('Свободные аудитории'),
         bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(4),
+          preferredSize: Size.fromHeight(AppSizes.gradientBarHeight),
           child: AppGradientBar(),
         ),
       ),
       body: Column(
         children: [
-          // Loading banner - more prominent with animation
+          // Loading banner
           AnimatedSize(
-            duration: const Duration(milliseconds: 300),
+            duration: AppDurations.normal,
             curve: Curves.easeOut,
             alignment: Alignment.topCenter,
             child: loader.isLoading
                 ? _LoadingBanner(loader: loader)
                 : const SizedBox.shrink(),
           ),
-          // Parameters card
-          Padding(
-            padding: const EdgeInsets.all(12),
+          // Filter panel
+          Container(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.lg,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(color: semantic.subtleDivider, width: 1),
+              ),
+            ),
             child: Column(
               children: [
-                _RowButton(
-                  icon: Icons.calendar_today_outlined,
+                AppCompactField(
+                  icon: Icons.calendar_today_rounded,
                   label: dateFmt.format(_date),
                   onTap: _pickDate,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     Expanded(
-                      child: _RowButton(
-                        icon: Icons.schedule,
+                      child: AppCompactField(
+                        icon: Icons.schedule_rounded,
                         label: 'С ${_from.format(context)}',
                         onTap: () => _pickTime(true),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: _RowButton(
+                      child: AppCompactField(
                         icon: Icons.schedule_outlined,
                         label: 'До ${_to.format(context)}',
                         onTap: () => _pickTime(false),
@@ -182,47 +267,86 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                // Filter chips
-                _FilterChips(
-                  minDuration: _minDurationMinutes,
-                  buildingFilter: _buildingFilter,
-                  onMinDurationChanged: (v) =>
-                      setState(() => _minDurationMinutes = v),
-                  onBuildingChanged: (v) =>
-                      setState(() => _buildingFilter = v),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppCompactField(
+                        icon: Icons.timer_outlined,
+                        label: 'От $_minDurationMinutes мин',
+                        onTap: () async {
+                          final picked = await showModalBottomSheet<int>(
+                            context: context,
+                            builder: (_) =>
+                                _MinDurationSheet(current: _minDurationMinutes),
+                          );
+                          if (picked != null) {
+                            setState(() => _minDurationMinutes = picked);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: AppCompactField(
+                        icon: Icons.school_outlined,
+                        label: _instituteFilter != null
+                            ? _shortInstitute(_instituteFilter!)
+                            : 'Институт',
+                        active: _instituteFilter != null,
+                        onTap: () async {
+                          final picked = await showModalBottomSheet<String?>(
+                            context: context,
+                            builder: (_) =>
+                                _InstituteSheet(current: _instituteFilter),
+                          );
+                          if (picked != null) {
+                            setState(
+                              () => _instituteFilter =
+                                  picked.isEmpty ? null : picked,
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: loader.isLoading
-                        ? null
-                        : () {
-                            setState(() => _searched = true);
-                          },
-                    icon: const Icon(Icons.search),
-                    label: const Text('Найти'),
-                  ),
+                const SizedBox(height: AppSpacing.md),
+                AppPrimaryButton(
+                  onPressed: () => setState(() => _searched = true),
+                  label: 'Найти аудитории',
+                  icon: Icons.search_rounded,
+                  enabled: !loader.isLoading,
                 ),
-                if (!loader.isLoading && loader.loaded == 0)
+                if (!loader.isLoading &&
+                    loader.loaded == 0 &&
+                    !loader.shouldAutoLoad)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
                     child: SizedBox(
                       width: double.infinity,
+                      height: AppSizes.buttonHeightSm,
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          ref.read(backgroundLoaderProvider.notifier).run();
-                        },
-                        icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                        label: const Text('Загрузить расписание всех групп'),
+                        onPressed: () =>
+                            ref.read(backgroundLoaderProvider.notifier).run(),
+                        icon: const Icon(Icons.cloud_download_rounded,
+                            size: AppSizes.iconSm),
+                        label: Text(
+                          'Загрузить расписание',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.mdBr,
+                          ),
+                        ),
                       ),
                     ),
                   ),
               ],
             ),
           ),
-          const Divider(height: 1),
           Expanded(child: _buildResults()),
         ],
       ),
@@ -243,7 +367,8 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       toHour: _to.hour,
       toMinute: _to.minute,
       minDurationMinutes: _minDurationMinutes,
-      buildingFilter: _buildingFilter ?? '',
+      buildingFilter: '',
+      instituteFilter: _instituteFilter ?? '',
     );
     final asyncValue = ref.watch(freeRoomsProvider(key));
     return asyncValue.when(
@@ -252,22 +377,29 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       data: (rooms) {
         if (rooms.isEmpty) {
           return const EmptyView(
-            text: 'Свободных аудиторий не найдено.\n'
-                'Попробуйте загрузить расписание\n'
-                'всех групп кнопкой выше.',
+            text:
+                'Свободных аудиторий не найдено.\n'
+                'Попробуйте изменить параметры поиска.',
             icon: Icons.meeting_room_outlined,
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xl,
+            right: AppSpacing.xl,
+            top: AppSpacing.md,
+            bottom: 80,
+          ),
           itemCount: rooms.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
           itemBuilder: (_, i) => _RoomCard(room: rooms[i]),
         );
       },
     );
   }
 }
+
+// ---------------------------------------------------------------------------
 
 class _LoadingBanner extends StatelessWidget {
   const _LoadingBanner({required this.loader});
@@ -276,159 +408,60 @@ class _LoadingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final progress = loader.progress ?? 0;
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5)
-            : theme.colorScheme.tertiaryContainer,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
+      color: theme.colorScheme.secondaryContainer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
       ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               SizedBox(
-                width: 16,
-                height: 16,
+                width: AppSizes.iconMd,
+                height: AppSizes.iconMd,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: theme.colorScheme.onTertiaryContainer,
+                  strokeWidth: 2,
+                  color: theme.colorScheme.onSecondaryContainer,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
-                  'Загрузка расписания: ${loader.loaded} из ${loader.total} групп',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer,
+                  'Загрузка расписания...',
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSecondaryContainer,
                   ),
                 ),
               ),
+              Text(
+                '${loader.loaded}/${loader.total}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSecondaryContainer,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: AppRadius.xsBr,
             child: LinearProgressIndicator(
-              value: loader.progress,
-              minHeight: 6,
+              value: progress,
+              minHeight: 3,
               backgroundColor:
-                  theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.15),
-              color: theme.colorScheme.onTertiaryContainer,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Данные загружаются в фоне. Вы можете искать аудитории\nпосле завершения загрузки для более точных результатов.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onTertiaryContainer.withValues(alpha: 0.7),
-              height: 1.3,
+                  theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.15),
+              color: theme.colorScheme.onSecondaryContainer,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FilterChips extends StatelessWidget {
-  const _FilterChips({
-    required this.minDuration,
-    required this.buildingFilter,
-    required this.onMinDurationChanged,
-    required this.onBuildingChanged,
-  });
-
-  final int minDuration;
-  final String? buildingFilter;
-  final ValueChanged<int> onMinDurationChanged;
-  final ValueChanged<String?> onBuildingChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _chip(
-            context,
-            label: 'От $minDuration мин',
-            icon: Icons.timer_outlined,
-            onTap: () async {
-              final picked = await showModalBottomSheet<int>(
-                context: context,
-                builder: (_) => _MinDurationSheet(current: minDuration),
-              );
-              if (picked != null) onMinDurationChanged(picked);
-            },
-          ),
-          const SizedBox(width: 8),
-          _chip(
-            context,
-            label: buildingFilter == null
-                ? 'Любой корпус'
-                : 'Корпус: $buildingFilter',
-            icon: Icons.apartment_outlined,
-            active: buildingFilter != null,
-            onTap: () async {
-              final picked = await showModalBottomSheet<String?>(
-                context: context,
-                builder: (_) => _BuildingSheet(current: buildingFilter),
-              );
-              // null means "didn't change", empty string = reset
-              if (picked != null) {
-                onBuildingChanged(picked.isEmpty ? null : picked);
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-    bool active = false,
-  }) {
-    final theme = Theme.of(context);
-    final bg = active
-        ? theme.colorScheme.primaryContainer
-        : theme.colorScheme.surfaceContainerHighest;
-    final fg = active
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurface;
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w500)),
-              const SizedBox(width: 4),
-              Icon(Icons.arrow_drop_down, size: 18, color: fg),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -447,12 +480,10 @@ class _MinDurationSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             child: Text(
               'Минимальная длительность',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleMedium,
             ),
           ),
           for (final m in options)
@@ -462,86 +493,54 @@ class _MinDurationSheet extends StatelessWidget {
               groupValue: current,
               onChanged: (v) => Navigator.pop(context, v),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
         ],
       ),
     );
   }
 }
 
-class _BuildingSheet extends StatelessWidget {
-  const _BuildingSheet({required this.current});
+class _InstituteSheet extends StatelessWidget {
+  const _InstituteSheet({required this.current});
   final String? current;
 
   @override
   Widget build(BuildContext context) {
-    const options = <String>['', 'А', 'Б', 'В', 'Г'];
+    final options = [
+      {'value': '', 'label': 'Любой институт'},
+      {
+        'value': 'Институт экономики и управления',
+        'label': 'Институт экономики и управления',
+      },
+      {
+        'value': 'Институт информационных технологий и систем связи',
+        'label': 'Институт информационных технологий и систем связи',
+      },
+      {'value': 'Инженерный институт', 'label': 'Инженерный институт'},
+    ];
+
     final theme = Theme.of(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Корпус',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Text('Институт', style: theme.textTheme.titleMedium),
           ),
-          for (final b in options)
+          for (final option in options)
             RadioListTile<String>(
-              title: Text(b.isEmpty ? 'Любой' : 'Корпус $b'),
-              value: b,
+              title: Text(
+                option['label']!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              value: option['value']!,
               groupValue: current ?? '',
               onChanged: (v) => Navigator.pop(context, v ?? ''),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
         ],
-      ),
-    );
-  }
-}
-
-class _RowButton extends StatelessWidget {
-  const _RowButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Icon(Icons.arrow_drop_down, color: theme.colorScheme.onSurfaceVariant),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -562,72 +561,101 @@ class _RoomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final fmt = DateFormat('HH:mm');
+    final isStandard = ClassroomUtils.isStandardRoomNumber(room.classroom);
+    final roomInfo = FloorUtils.getRoomLocationInfo(room.classroom);
+    final formattedFloor =
+        roomInfo.floor != null ? FloorUtils.formatFloor(roomInfo.floor!) : null;
 
     return Card(
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: isDark
-            ? BorderSide(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                width: 0.5,
-              )
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+      child: IntrinsicHeight(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Left: room number + floor
             Container(
-              width: 48,
-              height: 48,
+              width: isStandard
+                  ? AppSizes.roomNumberColumnWidth
+                  : AppSizes.roomNumberColumnWidthWide,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.lg),
+                  bottomLeft: Radius.circular(AppRadius.lg),
+                ),
               ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.meeting_room,
-                color: theme.colorScheme.onPrimaryContainer,
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.lg,
+                horizontal: AppSpacing.sm,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    room.building.isEmpty
-                        ? 'Ауд. ${room.classroom}'
-                        : 'Ауд. ${room.classroom} (${room.building})',
+                    room.classroom,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontSize: isStandard ? 17 : 12,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.primary,
+                      height: 1.2,
                     ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${fmt.format(room.freeFrom)} — ${fmt.format(room.freeUntil)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                  if (formattedFloor != null) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                        vertical: AppSpacing.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: AppRadius.xsBr,
+                      ),
+                      child: Text(
+                        formattedFloor,
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.primary,
+                          letterSpacing: 0.1,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _durationText(),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onTertiaryContainer,
-                  fontWeight: FontWeight.w700,
+            // Right: time, institute, duration
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${fmt.format(room.freeFrom)} — ${fmt.format(room.freeUntil)}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    if (roomInfo.institute != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        roomInfo.institute!,
+                        style: theme.textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    AvailabilityBadge(text: '${_durationText()} свободно'),
+                  ],
                 ),
               ),
             ),

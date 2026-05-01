@@ -16,7 +16,9 @@ class NewsCacheDataSource {
     await meta.put('page_${page}_at', DateTime.now().millisecondsSinceEpoch);
   }
 
-  Future<({List<NewsArticle> items, DateTime? updatedAt})> loadList(int page) async {
+  Future<({List<NewsArticle> items, DateTime? updatedAt})> loadList(
+    int page,
+  ) async {
     final box = await Hive.openBox<String>(HiveBoxes.newsList);
     final raw = box.get('page_$page');
     if (raw == null) return (items: <NewsArticle>[], updatedAt: null);

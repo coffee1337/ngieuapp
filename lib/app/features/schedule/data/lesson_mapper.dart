@@ -14,7 +14,8 @@ class LessonMapper {
     if (times == null) return const [];
 
     final pairNum = _parsePairNumber(j['classNumberName']);
-    final subject = (j['subjects'] is List && (j['subjects'] as List).isNotEmpty)
+    final subject =
+        (j['subjects'] is List && (j['subjects'] as List).isNotEmpty)
         ? (j['subjects'] as List).first.toString()
         : '';
     final note = (j['notes'] is List && (j['notes'] as List).isNotEmpty)
@@ -32,13 +33,16 @@ class LessonMapper {
 
     final type = isEvent ? LessonType.event : _parseType(note);
 
-    final explicitDate =
-        j['date'] != null ? DateTime.tryParse(j['date'].toString()) : null;
+    final explicitDate = j['date'] != null
+        ? DateTime.tryParse(j['date'].toString())
+        : null;
     final isUpperWeek = j['isUpperWeek'] as bool?;
 
     final List<DateTime> dates;
     if (isChange && explicitDate != null) {
-      dates = [DateTime(explicitDate.year, explicitDate.month, explicitDate.day)];
+      dates = [
+        DateTime(explicitDate.year, explicitDate.month, explicitDate.day),
+      ];
     } else {
       dates = _expandDates(dayIndex, isUpperWeek);
     }
@@ -48,33 +52,43 @@ class LessonMapper {
     final result = <Lesson>[];
     for (final date in dates) {
       final startDt = DateTime(
-        date.year, date.month, date.day, times.$1.hour, times.$1.minute,
+        date.year,
+        date.month,
+        date.day,
+        times.$1.hour,
+        times.$1.minute,
       );
       final endDt = DateTime(
-        date.year, date.month, date.day, times.$2.hour, times.$2.minute,
+        date.year,
+        date.month,
+        date.day,
+        times.$2.hour,
+        times.$2.minute,
       );
 
       final id = _stableId(date, pairNum, office, groups, subject, isChange);
 
-      result.add(Lesson(
-        id: id,
-        date: DateTime(date.year, date.month, date.day),
-        pairNumber: pairNum,
-        startTime: startDt,
-        endTime: endDt,
-        subject: subject,
-        type: type,
-        classroom: office,
-        building: '',
-        teacherIds: const [],
-        teacherNames: instructors,
-        groupIds: const [],
-        groupNames: groups,
-        parity: parity,
-        isChange: isChange,
-        isEvent: isEvent,
-        note: note.isEmpty ? null : note,
-      ));
+      result.add(
+        Lesson(
+          id: id,
+          date: DateTime(date.year, date.month, date.day),
+          pairNumber: pairNum,
+          startTime: startDt,
+          endTime: endDt,
+          subject: subject,
+          type: type,
+          classroom: office,
+          building: '',
+          teacherIds: const [],
+          teacherNames: instructors,
+          groupIds: const [],
+          groupNames: groups,
+          parity: parity,
+          isChange: isChange,
+          isEvent: isEvent,
+          note: note.isEmpty ? null : note,
+        ),
+      );
     }
     return result;
   }
@@ -94,7 +108,8 @@ class LessonMapper {
   static int _dayIndex(String s) => _daysMap[s.trim().toLowerCase()] ?? -1;
 
   static (({int hour, int minute}), ({int hour, int minute}))? _parseClassTime(
-      String raw) {
+    String raw,
+  ) {
     final parts = raw.split('/').map((s) => s.trim()).toList();
     if (parts.length != 2) return null;
     final start = _parseHm(parts[0]);
@@ -165,7 +180,9 @@ class LessonMapper {
       final date = monday.add(Duration(days: weekday - 1));
       if (isUpperWeek == null) {
         result.add(date);
-      } else if (date.isEvenWeek == isUpperWeek) {
+      } else {
+        // Вместо использования date.isEvenWeek, просто добавляем дату
+        // Фильтрация по четности недели будет выполнена позже через weekTypeProvider
         result.add(date);
       }
     }

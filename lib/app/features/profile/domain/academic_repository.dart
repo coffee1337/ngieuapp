@@ -18,10 +18,10 @@ class Grade {
   });
 
   final String subject;
-  final String semester;      // "1 семестр 2024/2025"
+  final String semester; // "1 семестр 2024/2025"
   final GradeKind kind;
   final GradeStatus status;
-  final int? score;           // 2..5 или null (зачёт)
+  final int? score; // 2..5 или null (зачёт)
   final DateTime? takenAt;
   final String? teacherName;
 }

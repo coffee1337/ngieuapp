@@ -8,4 +8,5 @@ class HiveBoxes {
   static const newsMeta = 'news_meta';
   static const profile = 'profile';
   static const actorsCache = 'actors_cache';
+  static const scheduleCache = 'schedule_cache';
 }

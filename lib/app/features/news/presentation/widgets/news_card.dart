@@ -46,8 +46,9 @@ class NewsCard extends StatelessWidget {
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.4),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                       ),
                     ),
@@ -68,7 +69,10 @@ class NewsCard extends StatelessWidget {
                 children: [
                   if (article.publishedAt != null) ...[
                     Text(
-                      DateFormat('d MMMM y', 'ru_RU').format(article.publishedAt!),
+                      DateFormat(
+                        'd MMMM y',
+                        'ru_RU',
+                      ).format(article.publishedAt!),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,

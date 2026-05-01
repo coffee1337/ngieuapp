@@ -21,8 +21,11 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       try {
         final fresh = await _api.fetchSchedule(actorId);
         await _db.replaceForActor(actorId, fresh);
-        yield fresh.where((l) =>
-            !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd)).toList();
+        yield fresh
+            .where(
+              (l) => !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd),
+            )
+            .toList();
       } catch (e) {
         if (cached.isEmpty) rethrow;
       }

@@ -46,11 +46,13 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   Future<void> _onActorTap(Actor a) async {
     if (a.type == ActorType.studentGroup) {
       final repo = ref.read(profileLocalDataSourceProvider);
-      await repo.save(StudentIdentity(
-        actorId: a.id,
-        groupName: a.name,
-        departmentId: a.departmentId,
-      ));
+      await repo.save(
+        StudentIdentity(
+          actorId: a.id,
+          groupName: a.name,
+          departmentId: a.departmentId,
+        ),
+      );
       ref.invalidate(studentIdentityProvider);
     }
     if (mounted) {
@@ -125,9 +127,7 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                 padding: WidgetStateProperty.all(
                   const EdgeInsets.symmetric(horizontal: 4),
                 ),
-                textStyle: WidgetStateProperty.all(
-                  theme.textTheme.bodyLarge,
-                ),
+                textStyle: WidgetStateProperty.all(theme.textTheme.bodyLarge),
               ),
             ),
             Divider(
@@ -186,10 +186,9 @@ class _ActorList extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Text(
                 'Ничего не найдено',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           );
@@ -215,10 +214,9 @@ class _ActorList extends StatelessWidget {
                     separatorBuilder: (_, __) => Divider(
                       height: 1,
                       indent: 16,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outlineVariant.withValues(alpha: 0.3),
                     ),
                     itemBuilder: (_, i) {
                       final a = grouped[id]![i];
@@ -245,7 +243,11 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 44;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

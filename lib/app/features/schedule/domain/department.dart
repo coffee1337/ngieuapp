@@ -23,9 +23,7 @@ class Departments {
     Department(id: 19, name: 'Технические системы и технологии'),
   ];
 
-  static final Map<int, Department> _byId = {
-    for (final d in _all) d.id: d,
-  };
+  static final Map<int, Department> _byId = {for (final d in _all) d.id: d};
 
   static List<Department> all() => List.unmodifiable(_all);
 

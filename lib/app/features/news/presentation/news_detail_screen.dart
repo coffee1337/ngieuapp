@@ -39,7 +39,8 @@ class NewsDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (preview.imageUrl != null && preview.imageUrl!.isNotEmpty)
+                    if (preview.imageUrl != null &&
+                        preview.imageUrl!.isNotEmpty)
                       AspectRatio(
                         aspectRatio: 16 / 9,
                         child: CachedNetworkImage(
@@ -57,8 +58,10 @@ class NewsDetailScreen extends ConsumerWidget {
                         children: [
                           if (preview.publishedAt != null)
                             Text(
-                              DateFormat('d MMMM y', 'ru_RU')
-                                  .format(preview.publishedAt!),
+                              DateFormat(
+                                'd MMMM y',
+                                'ru_RU',
+                              ).format(preview.publishedAt!),
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -85,9 +88,7 @@ class NewsDetailScreen extends ConsumerWidget {
                             margin: Margins.zero,
                             padding: HtmlPaddings.zero,
                           ),
-                          'p': Style(
-                            margin: Margins.only(bottom: 12),
-                          ),
+                          'p': Style(margin: Margins.only(bottom: 12)),
                           'a': Style(color: theme.colorScheme.primary),
                         },
                       ),

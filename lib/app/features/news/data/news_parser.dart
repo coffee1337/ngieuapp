@@ -7,8 +7,19 @@ class NewsParser {
   static final _idPattern = RegExp(r'/ngieu-news/(\d+)/');
 
   static const _monthMap = {
-    'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'май': 5, 'мая': 5,
-    'июн': 6, 'июл': 7, 'авг': 8, 'сен': 9, 'окт': 10, 'ноя': 11, 'дек': 12,
+    'янв': 1,
+    'фев': 2,
+    'мар': 3,
+    'апр': 4,
+    'май': 5,
+    'мая': 5,
+    'июн': 6,
+    'июл': 7,
+    'авг': 8,
+    'сен': 9,
+    'окт': 10,
+    'ноя': 11,
+    'дек': 12,
   };
 
   List<NewsArticle> parseList(String html) {
@@ -29,8 +40,9 @@ class NewsParser {
 
   NewsArticle? _parseCard(Element el) {
     // 1. Ссылка на новость: предпочитаем из h2, fallback на любую подходящую
-    final titleLink = el.querySelector('h2 a[href*="/ngieu-news/"]')
-        ?? el.querySelector('a[href*="/ngieu-news/"][title]');
+    final titleLink =
+        el.querySelector('h2 a[href*="/ngieu-news/"]') ??
+        el.querySelector('a[href*="/ngieu-news/"][title]');
     if (titleLink == null) return null;
 
     final href = titleLink.attributes['href'] ?? '';
@@ -107,9 +119,10 @@ class NewsParser {
   NewsArticleFull parseDetail(NewsArticle preview, String html) {
     final doc = parse(html);
     // На WP обычно контент в div.entry-content или article .post-content
-    final contentEl = doc.querySelector('.entry-content')
-        ?? doc.querySelector('article .post-content')
-        ?? doc.querySelector('article');
+    final contentEl =
+        doc.querySelector('.entry-content') ??
+        doc.querySelector('article .post-content') ??
+        doc.querySelector('article');
 
     final gallery = <String>[];
     if (contentEl != null) {
@@ -120,7 +133,8 @@ class NewsParser {
     }
 
     // Убираем скрипты и комментарии
-    contentEl?.querySelectorAll('script, style, .sharedaddy, #comments')
+    contentEl
+        ?.querySelectorAll('script, style, .sharedaddy, #comments')
         .forEach((e) => e.remove());
 
     return NewsArticleFull(

@@ -28,7 +28,10 @@ class SettingsScreen extends ConsumerWidget {
     try {
       final lessons = await rawAsync;
       // Берём только "живые" занятия — без отменённых/заменённых мероприятий
-      final relevant = _applyChanges(lessons, showChanges: settings.showChanges);
+      final relevant = _applyChanges(
+        lessons,
+        showChanges: settings.showChanges,
+      );
       await NotificationsService.instance.rescheduleFor(
         relevant,
         minutesBefore: settings.notificationMinutesBefore,
@@ -65,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Настройки'),
         bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(4),
+          preferredSize: Size.fromHeight(3),
           child: AppGradientBar(),
         ),
       ),
@@ -114,8 +117,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ],
               selected: {s.fontScale},
-              onSelectionChanged: (sel) =>
-                  notifier.setFontScale(sel.first),
+              onSelectionChanged: (sel) => notifier.setFontScale(sel.first),
             ),
           ),
           const SizedBox(height: 8),
@@ -144,8 +146,8 @@ class SettingsScreen extends ConsumerWidget {
             value: s.notificationsEnabled,
             onChanged: (v) async {
               if (v) {
-                final granted =
-                    await NotificationsService.instance.requestPermissions();
+                final granted = await NotificationsService.instance
+                    .requestPermissions();
                 if (!granted) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -169,8 +171,8 @@ class SettingsScreen extends ConsumerWidget {
               child: Text(
                 'За сколько минут напоминать',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             Padding(
@@ -208,10 +210,10 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
       ),
     );
   }
