@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../app/theme/app_tokens.dart';
 import '../providers/schedule_providers.dart';
+import '../domain/models/free_room.dart';
 
 part 'free_rooms_screen.freezed.dart';
 
