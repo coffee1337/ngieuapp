@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../theme/app_tokens.dart';
-import '../data/schedule_providers.dart';
-import 'free_rooms_screen.freezed.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../../app/theme/app_tokens.dart';
+import '../providers/schedule_providers.dart';
+
+part 'free_rooms_screen.freezed.dart';
 
 @freezed
 class FreeRoomsState with _$FreeRoomsState {
