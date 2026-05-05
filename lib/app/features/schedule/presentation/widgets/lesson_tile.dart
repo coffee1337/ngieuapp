@@ -1,230 +1,173 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/extensions.dart';
-import '../../schedule/domain/lesson.dart';
-import '../../schedule/providers/schedule_provider.dart';
-import '../widgets/lesson_type_badge.dart';
+import '../../../../theme/app_tokens.dart';
+import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({
     super.key,
     required this.lesson,
     this.onTap,
-    this.onLongPress,
   });
 
   final Lesson lesson;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final scheduleProvider = context.read<ScheduleProvider>();
-    final isCompact = scheduleProvider.isCompactMode;
 
-    return Material(
-      color: Colors.transparent,
+    if (lesson.subject.isEmpty) {
+      return _buildEmptyLessonCard(context);
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: AppRadius.lgBr,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: theme.brightness == Brightness.dark
-                  ? colorScheme.outlineVariant.withValues(alpha: 0.15)
-                  : colorScheme.outlineVariant.withValues(alpha: 0.25),
-              width: 0.5,
-            ),
-            borderRadius: AppRadius.lgBr,
-            color: lesson.isChange
-                ? colorScheme.errorContainer.withValues(alpha: 0.05)
-                : null,
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: isCompact ? AppSpacing.sm : AppSpacing.md,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _TimeColumn(lesson: lesson, isCompact: isCompact),
-                SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _ContentColumn(lesson: lesson, isCompact: isCompact),
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTimeColumn(context),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildContentColumn(context),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-class _TimeColumn extends StatelessWidget {
-  const _TimeColumn({required this.lesson, required this.isCompact});
+  Widget _buildEmptyLessonCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-  final Lesson lesson;
-  final bool isCompact;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.free_breakfast_outlined,
+              size: 20,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Нет пар',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTimeColumn(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return SizedBox(
-      width: 90,
+      width: 50,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            lesson.pairNumber.toString(),
+            _formatTime(lesson.startTime),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: lesson.isChange
-                  ? colorScheme.error
-                  : colorScheme.onSurface.withValues(alpha: 0.9),
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            _formatTime(lesson.startTime),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
             _formatTime(lesson.endTime),
-            style: theme.textTheme.labelSmall?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _ContentColumn extends StatelessWidget {
-  const _ContentColumn({required this.lesson, required this.isCompact});
-
-  final Lesson lesson;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    if (lesson.subject.isEmpty) {
-      return _buildEmptyLesson(context);
-    }
-
+  Widget _buildContentColumn(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                lesson.subject,
-                style: TextStyle(
-                  fontSize: isCompact ? 14 : 15,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                ),
-                maxLines: isCompact ? 1 : 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        if (!isCompact) ...[const SizedBox(height: 4), _buildBadges(context)],
-        const SizedBox(height: 6),
-        _buildMetadata(context),
+        _buildSubjectRow(context),
+        const SizedBox(height: 8),
+        _buildMetadataSection(context),
       ],
     );
   }
 
-  Widget _buildEmptyLesson(BuildContext context) {
+  Widget _buildSubjectRow(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          'Нет пар',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontStyle: FontStyle.italic,
-            color: colorScheme.onSurfaceVariant,
+        Expanded(
+          child: Text(
+            lesson.subject,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: lesson.isChange
+                  ? colorScheme.error
+                  : colorScheme.onSurface,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+        ),
+        const SizedBox(width: 8),
+        _Badge(
+          label: _lessonTypeLabel(lesson.type),
         ),
       ],
     );
   }
 
-  Widget _buildBadges(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: [
-        if (lesson.isChange)
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.errorContainer.withValues(alpha: 0.12),
-              borderRadius: AppRadius.xsBr,
-            ),
-            child: Text(
-              'Замена',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        if (lesson.type != LessonType.unknown)
-          LessonTypeBadge(type: lesson.type),
-      ],
-    );
-  }
-
-  Widget _buildMetadata(BuildContext context) {
+  Widget _buildMetadataSection(BuildContext context) {
     final locationText = _buildLocationText(lesson.classroom, lesson.building);
-    final teachersText = lesson.teacherNames.join(', ');
-    final groupsText = lesson.groupNames.join(', ');
+    final teachersText = lesson.teacherNames.isNotEmpty
+        ? lesson.teacherNames.join(', ')
+        : null;
+    final groupsText = lesson.groupNames.isNotEmpty
+        ? lesson.groupNames.join(', ')
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildMetadataSection(
-          context,
-          icon: Icons.location_on_outlined,
-          text: locationText,
-        ),
-        buildMetadataSection(
-          context,
-          icon: Icons.person_outline,
-          text: teachersText,
-        ),
-        buildMetadataSection(
-          context,
-          icon: Icons.group_outlined,
-          text: groupsText,
-        ),
+        if (locationText != null)
+          buildMetadataSection(
+            context,
+            icon: Icons.location_on_outlined,
+            text: locationText,
+          ),
+        if (teachersText != null)
+          buildMetadataSection(
+            context,
+            icon: Icons.person_outline,
+            text: teachersText,
+          ),
+        if (groupsText != null)
+          buildMetadataSection(
+            context,
+            icon: Icons.group_outlined,
+            text: groupsText,
+          ),
       ],
     );
   }
@@ -237,6 +180,35 @@ class _ContentColumn extends StatelessWidget {
     }
 
     return classroom;
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
   }
 }
 
@@ -256,7 +228,7 @@ Widget buildMetadataSection(
       children: [
         Icon(
           icon,
-          size: 18,
+          size: 16,
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         const SizedBox(width: 6),
