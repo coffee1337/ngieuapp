@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
-import 'package:ngieuapp/app/theme/app_spacing.dart';
-import 'package:ngieuapp/app/theme/app_sizes.dart';
-import 'package:ngieuapp/app/theme/app_radius.dart';
 
+import '../../../../theme/app_tokens.dart';
+import '../../domain/lesson.dart';
 class LessonTile extends StatelessWidget {
   const LessonTile({
     super.key,
