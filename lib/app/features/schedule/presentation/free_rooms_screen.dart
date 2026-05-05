@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../app/theme/app_tokens.dart';
 import '../providers/schedule_providers.dart';
 import '../domain/models/free_room.dart';
-
-part 'free_rooms_screen.freezed.dart';
-
-@freezed
-class FreeRoomsState with _$FreeRoomsState {
-  const factory FreeRoomsState({
-    @Default([]) List<FreeRoom> rooms,
-    @Default(false) bool isLoading,
-    String? error,
-  }) = _FreeRoomsState;
-}
 
 class FreeRoomsScreen extends ConsumerStatefulWidget {
   const FreeRoomsScreen({super.key});
