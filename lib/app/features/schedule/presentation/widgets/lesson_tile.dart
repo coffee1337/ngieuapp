@@ -17,14 +17,15 @@ class LessonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final brightness = Theme.of(context).brightness;
 
     // Special case for "No lessons"
     if (lesson.subject == 'Нет пар' || (lesson.isEvent == false && lesson.subject == 'Нет пар')) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
           borderRadius: AppRadius.lgBr,
         ),
         child: Text(
@@ -37,149 +38,166 @@ class LessonTile extends StatelessWidget {
       );
     }
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadius.lgBr,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: AppRadius.lgBr,
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: AppRadius.lgBr,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.45),
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Subject
-                  Text(
-                    lesson.subject,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Time column
+                SizedBox(
+                  width: 52,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lesson.startTimeFormatted,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        lesson.endTimeFormatted,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  
-                  // Badges
-                  _buildBadges(context),
-                  
-                  if (lesson.teacherNames.isNotEmpty || lesson.groupNames.isNotEmpty || _getLocationText().isNotEmpty) 
-                    const SizedBox(height: AppSpacing.sm),
-                  
-                  // Metadata
-                  _buildMetadata(context),
-                ],
-              ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                // Main content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Subject with badges
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              lesson.subject,
+                              style: textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          // Badges
+                          if (lesson.isReplacement)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xs,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.errorContainer.withValues(
+                                  alpha: brightness == Brightness.dark ? 0.35 : 0.55,
+                                ),
+                                borderRadius: AppRadius.smBr,
+                              ),
+                              child: Text(
+                                'Замена',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          if (lesson.isEvent && lesson.lessonType != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xs,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
+                                borderRadius: AppRadius.smBr,
+                              ),
+                              child: Text(
+                                lesson.lessonType!,
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      // Metadata
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (lesson.classroom.isNotEmpty || lesson.building.isNotEmpty)
+                            _buildMetadataRow(
+                              context,
+                              Icons.room_outlined,
+                              _formatLocation(lesson.classroom, lesson.building),
+                              colorScheme,
+                              textTheme,
+                            ),
+                          if (lesson.teacher.isNotEmpty)
+                            _buildMetadataRow(
+                              context,
+                              Icons.person_outline,
+                              lesson.teacher,
+                              colorScheme,
+                              textTheme,
+                            ),
+                          if (lesson.group.isNotEmpty)
+                            _buildMetadataRow(
+                              context,
+                              Icons.group_outlined,
+                              lesson.group,
+                              colorScheme,
+                              textTheme,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            
-            // Time block
-            _buildTimeBlock(context),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBadges(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    final badges = <Widget>[];
-    
-    // Change badge
-    if (lesson.isChange) {
-      badges.add(
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
-          decoration: BoxDecoration(
-            color: colorScheme.errorContainer,
-            borderRadius: AppRadius.smBr,
-          ),
-          child: Text(
-            'Замена',
-            style: textTheme.labelSmall?.copyWith(
-              color: colorScheme.onErrorContainer,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      );
-    }
-    
-    // Lesson type badge
-    badges.add(
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: AppRadius.smBr,
-        ),
-        child: Text(
-          _lessonTypeLabel(lesson.type),
-          style: textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-    
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: badges,
-    );
-  }
-
-  Widget _buildMetadata(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Location
-        if (_getLocationText().isNotEmpty)
-          _buildMetadataItem(
-            context,
-            Icons.location_on_outlined,
-            _getLocationText(),
-          ),
-        
-        // Teachers
-        if (lesson.teacherNames.isNotEmpty)
-          _buildMetadataItem(
-            context,
-            Icons.person_outline,
-            lesson.teacherNames.join(', '),
-          ),
-        
-        // Groups
-        if (lesson.groupNames.isNotEmpty)
-          _buildMetadataItem(
-            context,
-            Icons.group_outlined,
-            lesson.groupNames.join(', '),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildMetadataItem(BuildContext context, IconData icon, String text) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
+  Widget _buildMetadataRow(
+    BuildContext context,
+    IconData icon,
+    String text,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
           Icon(
@@ -187,14 +205,13 @@ class LessonTile extends StatelessWidget {
             size: 16,
             color: colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: 4),
           Expanded(
             child: Text(
               text,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
-              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -203,73 +220,10 @@ class LessonTile extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeBlock(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    return Container(
-      width: 60,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Start time (prominent)
-          Text(
-            _formatTime(lesson.startTime),
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 2),
-          // End time (calm)
-          Text(
-            _formatTime(lesson.endTime),
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getLocationText() {
-    if (lesson.classroom.isEmpty) {
-      return lesson.building;
-    }
-    
-    if (lesson.building.isEmpty) {
-      return lesson.classroom;
-    }
-    
-    if (lesson.classroom == 'Дистанционно') {
-      return lesson.classroom;
-    }
-    
-    return '${lesson.classroom} • ${lesson.building}';
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _lessonTypeLabel(LessonType type) {
-    switch (type) {
-      case LessonType.lecture:
-        return 'Лекция';
-      case LessonType.practice:
-        return 'Практика';
-      case LessonType.lab:
-        return 'Лаб.';
-      case LessonType.exam:
-        return 'Экзамен';
-      case LessonType.consultation:
-        return 'Консультация';
-      case LessonType.event:
-        return 'Событие';
-      case LessonType.unknown:
-        return 'Занятие';
-    }
+  String _formatLocation(String classroom, String building) {
+    if (classroom.isEmpty) return building;
+    if (building.isEmpty) return classroom;
+    if (classroom == building) return classroom;
+    return '$classroom, $building';
   }
 }
