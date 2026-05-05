@@ -1,91 +1,107 @@
 import 'package:flutter/material.dart';
-
-import '../../../../theme/app_tokens.dart';
-import '../../domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/theme/app_spacing.dart';
+import 'package:ngieuapp/app/theme/app_sizes.dart';
+import 'package:ngieuapp/app/theme/app_radius.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({
     super.key,
     required this.lesson,
-    this.onTap,
   });
 
   final Lesson lesson;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: colorScheme.outlineVariant,
-            width: 1,
-          ),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+          width: 1,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _TimeColumn(
-                  startTime: lesson.startTime,
-                  endTime: lesson.endTime,
-                  pairNumber: lesson.pairNumber,
-                  isChange: lesson.isChange,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          lesson.subject,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _InfoLine(
-                          icon: Icons.person_outline,
-                          text: lesson.teacherNames.join(', '),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        _InfoLine(
-                          icon: Icons.location_on_outlined,
-                          text: lesson.classroom,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        _InfoLine(
-                          icon: Icons.group_outlined,
-                          text: lesson.groupNames.join(', '),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _BadgesRow(
-                          lessonType: _lessonTypeLabel(lesson.type),
-                          isChange: lesson.isChange,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _TimeColumn(
+              startTime: lesson.startTime,
+              endTime: lesson.endTime,
+              pairNumber: lesson.pairNumber,
+              isChange: lesson.isChange,
             ),
-          ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lesson.subject,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _BadgesRow(
+                      lessonType: _lessonTypeLabel(lesson.type),
+                      isChange: lesson.isChange,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (lesson.teacherNames.isNotEmpty)
+                      _InfoLine(
+                        icon: Icons.person,
+                        text: lesson.teacherNames.join(', '),
+                      ),
+                    if (lesson.groupNames.isNotEmpty)
+                      _InfoLine(
+                        icon: Icons.group,
+                        text: lesson.groupNames.join(', '),
+                      ),
+                    if (lesson.classroom.isNotEmpty)
+                      _InfoLine(
+                        icon: Icons.location_on,
+                        text: lesson.classroom,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _lessonTypeLabel(LessonType type) {
+    switch (type) {
+      case LessonType.lecture:
+        return 'Лекция';
+      case LessonType.practice:
+        return 'Практика';
+      case LessonType.lab:
+        return 'Лабораторная';
+      case LessonType.exam:
+        return 'Экзамен';
+      case LessonType.consultation:
+        return 'Консультация';
+      case LessonType.event:
+        return 'Событие';
+      case LessonType.unknown:
+        return 'Занятие';
+    }
   }
 }
 
