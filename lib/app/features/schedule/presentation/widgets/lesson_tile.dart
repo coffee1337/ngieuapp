@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-  });
+  const LessonTile({super.key, required this.lesson});
 
   final Lesson lesson;
 
@@ -210,15 +207,27 @@ class LessonTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final location = lesson.classroom.isNotEmpty ? lesson.classroom : null;
-    final teachers = lesson.teacherNames.isNotEmpty ? lesson.teacherNames.join(', ') : null;
-    final groups = lesson.groupNames.isNotEmpty ? lesson.groupNames.join(', ') : null;
+    final teachers = lesson.teacherNames.isNotEmpty
+        ? lesson.teacherNames.join(', ')
+        : null;
+    final groups = lesson.groupNames.isNotEmpty
+        ? lesson.groupNames.join(', ')
+        : null;
 
     return Column(
       children: [
         if (location != null)
-          _buildMetadataRow(context, icon: Icons.location_on_outlined, text: location),
+          _buildMetadataRow(
+            context,
+            icon: Icons.location_on_outlined,
+            text: location,
+          ),
         if (teachers != null)
-          _buildMetadataRow(context, icon: Icons.person_outline, text: teachers),
+          _buildMetadataRow(
+            context,
+            icon: Icons.person_outline,
+            text: teachers,
+          ),
         if (groups != null)
           _buildMetadataRow(context, icon: Icons.group_outlined, text: groups),
       ],
