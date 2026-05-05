@@ -3,45 +3,58 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_tokens.dart';
 import '../../domain/lesson.dart';
 
-/// Карточка занятия для списка.
 class LessonTile extends StatelessWidget {
   const LessonTile({
     super.key,
     required this.lesson,
-    this.onTap,
   });
 
   final Lesson lesson;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.mdBr,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(lesson: lesson),
-              const SizedBox(height: AppSpacing.sm),
-              _InfoSection(lesson: lesson),
-            ],
-          ),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lesson.subject,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _BadgesRow(lesson: lesson),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                _TimeBlock(lesson: lesson),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _MetadataSection(lesson: lesson),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({
+class _TimeBlock extends StatelessWidget {
+  const _TimeBlock({
     required this.lesson,
   });
 
@@ -49,64 +62,41 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                lesson.subject,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              _BadgesRow(lesson: lesson),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _TimeColumn(
-          startTime: lesson.startTime,
-          endTime: lesson.endTime,
-        ),
-      ],
-    );
-  }
-}
+    final startTime = DateFormat('HH:mm').format(lesson.startTime);
+    final endTime = DateFormat('HH:mm').format(lesson.endTime);
 
-class _TimeColumn extends StatelessWidget {
-  const _TimeColumn({
-    required this.startTime,
-    required this.endTime,
-  });
-
-  final DateTime startTime;
-  final DateTime endTime;
-
-  String _formatTime(DateTime time) => '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-
-  @override
-  Widget build(BuildContext context) {
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          _formatTime(startTime),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w500,
+          startTime,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Text(
-          _formatTime(endTime),
+          endTime,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xs,
+            vertical: 2,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Text(
+            '${lesson.pairNumber} пара',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -114,40 +104,39 @@ class _TimeColumn extends StatelessWidget {
   }
 }
 
-class _InfoSection extends StatelessWidget {
-  const _InfoSection({
+class _MetadataSection extends StatelessWidget {
+  const _MetadataSection({
     required this.lesson,
   });
 
   final Lesson lesson;
 
+  bool _hasClassroom() => lesson.classroom?.isNotEmpty == true;
+  bool _hasTeacher() => lesson.teacherNames.isNotEmpty;
+  bool _hasGroup() => lesson.groupNames.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
-    
+    final isNoPairs = lesson.subject == "Нет пар";
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoLine(
-          icon: Icons.location_on_outlined,
-          text: lesson.building.isNotEmpty && lesson.classroom.isNotEmpty
-              ? '${lesson.building}, ${lesson.classroom}'
-              : lesson.building.isNotEmpty
-                  ? lesson.building
-                  : lesson.classroom,
-        ),
-        if (lesson.teacherNames.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.xs),
+        if (_hasClassroom() && !isNoPairs)
+          _InfoLine(
+            icon: Icons.location_on_outlined,
+            text: lesson.classroom!,
+          ),
+        if (_hasTeacher())
           _InfoLine(
             icon: Icons.person_outline,
             text: lesson.teacherNames.join(', '),
           ),
-        ],
-        if (lesson.groupNames.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.xs),
+        if (_hasGroup())
           _InfoLine(
             icon: Icons.group_outlined,
             text: lesson.groupNames.join(', '),
           ),
-        ],
       ],
     );
   }
@@ -175,7 +164,7 @@ class _BadgesRow extends StatelessWidget {
       case LessonType.event:
         return 'Событие';
       case LessonType.unknown:
-        return 'Занятие';
+        return '';
     }
   }
 
@@ -187,6 +176,12 @@ class _BadgesRow extends StatelessWidget {
     if (typeLabel.isNotEmpty) {
       badges.add(
         _Badge(text: typeLabel),
+      );
+    }
+
+    if (lesson.isReplacement) {
+      badges.add(
+        _ReplacementBadge(),
       );
     }
     
@@ -209,7 +204,6 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -217,12 +211,38 @@ class _Badge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: AppRadius.smBr,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+class _ReplacementBadge extends StatelessWidget {
+  const _ReplacementBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: isDark ? 0.35 : 0.55),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Text(
+        'Замена',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onErrorContainer,
         ),
       ),
     );
@@ -240,26 +260,28 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: AppSizes.iconSm,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: AppSizes.iconSm,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
