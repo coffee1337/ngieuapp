@@ -5,101 +5,167 @@ import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({
-    super.key,
     required this.lesson,
+    required this.isLast,
+    required this.isFirst,
+    super.key,
   });
 
   final Lesson lesson;
+  final bool isLast;
+  final bool isFirst;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        lesson.subject,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      _BadgesRow(lesson: lesson),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                _TimeBlock(lesson: lesson),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _MetadataSection(lesson: lesson),
-          ],
+    final isNoPairs = lesson.subject == 'Нет пар';
+
+    return Column(
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TimeBlock(
+                startTime: lesson.startTime,
+                endTime: lesson.endTime,
+                isFirst: isFirst,
+                isLast: isLast,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _ContentSection(lesson: lesson),
+              ),
+            ],
+          ),
         ),
-      ),
+        if (!isLast) const SizedBox(height: AppSpacing.sm),
+      ],
     );
   }
 }
 
 class _TimeBlock extends StatelessWidget {
   const _TimeBlock({
+    required this.startTime,
+    required this.endTime,
+    required this.isFirst,
+    required this.isLast,
+  });
+
+  final DateTime startTime;
+  final DateTime endTime;
+  final bool isFirst;
+  final bool isLast;
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (isFirst) _TimeLabel(text: _formatTime(startTime)),
+        Expanded(
+          child: Container(
+            width: AppSizes.lessonTimeColumnWidth,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.vertical(
+                top: isFirst ? const Radius.circular(AppRadius.md) : Radius.zero,
+                bottom: isLast ? const Radius.circular(AppRadius.md) : Radius.zero,
+              ),
+            ),
+          ),
+        ),
+        if (isLast) _TimeLabel(text: _formatTime(endTime)),
+      ],
+    );
+  }
+}
+
+class _TimeLabel extends StatelessWidget {
+  const _TimeLabel({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSizes.lessonTimeColumnWidth,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xs,
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class _ContentSection extends StatelessWidget {
+  const _ContentSection({
     required this.lesson,
   });
 
   final Lesson lesson;
 
+  bool get _hasAnyMetadata =>
+      (lesson.classroom?.isNotEmpty == true) ||
+      lesson.teacherNames.isNotEmpty ||
+      lesson.groupNames.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
-    final startTime = DateFormat('HH:mm').format(lesson.startTime);
-    final endTime = DateFormat('HH:mm').format(lesson.endTime);
+    final isNoPairs = lesson.subject == 'Нет пар';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          startTime,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
-        Text(
-          endTime,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lesson.subject,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (_hasAnyMetadata) const SizedBox(height: AppSpacing.xs),
+                    if (_hasAnyMetadata)
+                      _MetadataSection(lesson: lesson),
+                  ],
+                ),
+              ),
+              if (!isNoPairs) const SizedBox(width: AppSpacing.sm),
+              if (!isNoPairs) _BadgesRow(lesson: lesson),
+            ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xs,
-            vertical: 2,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Text(
-            '${lesson.pairNumber} пара',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -117,7 +183,7 @@ class _MetadataSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNoPairs = lesson.subject == "Нет пар";
+    final isNoPairs = lesson.subject == 'Нет пар';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +245,7 @@ class _BadgesRow extends StatelessWidget {
       );
     }
 
-    if (lesson.isReplacement) {
+    if (lesson.isChange) {
       badges.add(
         _ReplacementBadge(),
       );
