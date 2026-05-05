@@ -54,16 +54,10 @@ class LessonTile extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _TimeColumn(
-                  lesson: lesson,
-                  isCompact: isCompact,
-                ),
+                _TimeColumn(lesson: lesson, isCompact: isCompact),
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: _ContentColumn(
-                    lesson: lesson,
-                    isCompact: isCompact,
-                  ),
+                  child: _ContentColumn(lesson: lesson, isCompact: isCompact),
                 ),
               ],
             ),
@@ -75,10 +69,7 @@ class LessonTile extends StatelessWidget {
 }
 
 class _TimeColumn extends StatelessWidget {
-  const _TimeColumn({
-    required this.lesson,
-    required this.isCompact,
-  });
+  const _TimeColumn({required this.lesson, required this.isCompact});
 
   final Lesson lesson;
   final bool isCompact;
@@ -124,10 +115,7 @@ class _TimeColumn extends StatelessWidget {
 }
 
 class _ContentColumn extends StatelessWidget {
-  const _ContentColumn({
-    required this.lesson,
-    required this.isCompact,
-  });
+  const _ContentColumn({required this.lesson, required this.isCompact});
 
   final Lesson lesson;
   final bool isCompact;
@@ -157,10 +145,7 @@ class _ContentColumn extends StatelessWidget {
             ),
           ],
         ),
-        if (!isCompact) ...[
-          const SizedBox(height: 4),
-          _buildBadges(context),
-        ],
+        if (!isCompact) ...[const SizedBox(height: 4), _buildBadges(context)],
         const SizedBox(height: 6),
         _buildMetadata(context),
       ],
