@@ -1,47 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../../../../theme/app_tokens.dart';
-import '../../domain/lesson.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/extensions.dart';
+import '../../schedule/domain/lesson.dart';
+import '../../schedule/providers/schedule_provider.dart';
+import '../widgets/lesson_type_badge.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({super.key, required this.lesson});
+  const LessonTile({
+    super.key,
+    required this.lesson,
+    this.onTap,
+    this.onLongPress,
+  });
 
   final Lesson lesson;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isNoLesson = lesson.subject == 'Нет пар';
+    final scheduleProvider = context.read<ScheduleProvider>();
+    final isCompact = scheduleProvider.isCompactMode;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _TimeColumn(
-              startTime: lesson.startTime,
-              endTime: lesson.endTime,
-              pairNumber: lesson.pairNumber,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: AppRadius.lgBr,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: theme.brightness == Brightness.dark
+                  ? colorScheme.outlineVariant.withValues(alpha: 0.15)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.25),
+              width: 0.5,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _ContentColumn(lesson: lesson, isNoLesson: isNoLesson),
+            borderRadius: AppRadius.lgBr,
+            color: lesson.isChange
+                ? colorScheme.errorContainer.withValues(alpha: 0.05)
+                : null,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: isCompact ? AppSpacing.sm : AppSpacing.md,
             ),
-          ],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TimeColumn(
+                  lesson: lesson,
+                  isCompact: isCompact,
+                ),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _ContentColumn(
+                    lesson: lesson,
+                    isCompact: isCompact,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -50,14 +76,12 @@ class LessonTile extends StatelessWidget {
 
 class _TimeColumn extends StatelessWidget {
   const _TimeColumn({
-    required this.startTime,
-    required this.endTime,
-    required this.pairNumber,
+    required this.lesson,
+    required this.isCompact,
   });
 
-  final DateTime startTime;
-  final DateTime endTime;
-  final int pairNumber;
+  final Lesson lesson;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -65,40 +89,32 @@ class _TimeColumn extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return SizedBox(
-      width: 74,
+      width: 90,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _formatTime(startTime),
-            style: theme.textTheme.titleMedium?.copyWith(
+            lesson.pairNumber.toString(),
+            style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
+              color: lesson.isChange
+                  ? colorScheme.error
+                  : colorScheme.onSurface.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            _formatTime(endTime),
-            style: theme.textTheme.bodySmall?.copyWith(
+            _formatTime(lesson.startTime),
+            style: theme.textTheme.labelSmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xs,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Text(
-              '$pairNumber пара',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+          Text(
+            _formatTime(lesson.endTime),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -108,62 +124,68 @@ class _TimeColumn extends StatelessWidget {
 }
 
 class _ContentColumn extends StatelessWidget {
-  const _ContentColumn({required this.lesson, required this.isNoLesson});
+  const _ContentColumn({
+    required this.lesson,
+    required this.isCompact,
+  });
 
   final Lesson lesson;
-  final bool isNoLesson;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
+    if (lesson.subject.isEmpty) {
+      return _buildEmptyLesson(context);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                lesson.subject,
+                style: TextStyle(
+                  fontSize: isCompact ? 14 : 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+                maxLines: isCompact ? 1 : 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        if (!isCompact) ...[
+          const SizedBox(height: 4),
+          _buildBadges(context),
+        ],
+        const SizedBox(height: 6),
+        _buildMetadata(context),
+      ],
+    );
+  }
+
+  Widget _buildEmptyLesson(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Subject
         Text(
-          lesson.subject,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: isNoLesson
-                ? colorScheme.onSurfaceVariant.withOpacity(0.6)
-                : colorScheme.onSurface,
-            fontStyle: isNoLesson ? FontStyle.italic : null,
+          'Нет пар',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: colorScheme.onSurfaceVariant,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
-
-        if (!isNoLesson) ...[
-          const SizedBox(height: AppSpacing.sm),
-
-          // Badges
-          _BadgesSection(isChange: lesson.isChange, type: lesson.type),
-
-          const SizedBox(height: AppSpacing.sm),
-
-          // Metadata
-          _MetadataSection(
-            classroom: lesson.classroom,
-            building: lesson.building,
-            teacherNames: lesson.teacherNames,
-            groupNames: lesson.groupNames,
-          ),
-        ],
       ],
     );
   }
-}
 
-class _BadgesSection extends StatelessWidget {
-  const _BadgesSection({required this.isChange, required this.type});
-
-  final bool isChange;
-  final LessonType type;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildBadges(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -171,69 +193,37 @@ class _BadgesSection extends StatelessWidget {
       spacing: AppSpacing.xs,
       runSpacing: AppSpacing.xs,
       children: [
-        if (isChange)
+        if (lesson.isChange)
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
               vertical: 2,
             ),
             decoration: BoxDecoration(
-              color: colorScheme.error.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: colorScheme.errorContainer.withValues(alpha: 0.12),
+              borderRadius: AppRadius.xsBr,
             ),
             child: Text(
               'Замена',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.error.withOpacity(0.8),
-                fontWeight: FontWeight.w500,
+                color: colorScheme.error,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: 2,
-          ),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Text(
-            _lessonTypeLabel(type),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
+        if (lesson.type != LessonType.unknown)
+          LessonTypeBadge(type: lesson.type),
       ],
     );
   }
-}
 
-class _MetadataSection extends StatelessWidget {
-  const _MetadataSection({
-    required this.classroom,
-    required this.building,
-    required this.teacherNames,
-    required this.groupNames,
-  });
-
-  final String? classroom;
-  final String? building;
-  final List<String> teacherNames;
-  final List<String> groupNames;
-
-  @override
-  Widget build(BuildContext context) {
-    final locationText = _buildLocationText(classroom, building);
-    final teachersText = teacherNames.isNotEmpty
-        ? teacherNames.join(', ')
-        : null;
-    final groupsText = groupNames.isNotEmpty ? groupNames.join(', ') : null;
+  Widget _buildMetadata(BuildContext context) {
+    final locationText = _buildLocationText(lesson.classroom, lesson.building);
+    final teachersText = lesson.teacherNames.join(', ');
+    final groupsText = lesson.groupNames.join(', ');
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildMetadataSection(
           context,
@@ -276,20 +266,21 @@ Widget buildMetadataSection(
   final colorScheme = theme.colorScheme;
 
   return Padding(
-    padding: const EdgeInsets.only(bottom: 4),
+    padding: const EdgeInsets.only(bottom: 2),
     child: Row(
       children: [
         Icon(
           icon,
-          size: 16,
-          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+          size: 18,
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+              color: colorScheme.onSurfaceVariant,
+              height: 1.2,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
