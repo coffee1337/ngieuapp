@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_tokens.dart';
 import '../../domain/lesson.dart';
-
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-    this.onTap,
-  });
+  const LessonTile({super.key, required this.lesson, this.onTap});
 
   final Lesson lesson;
   final VoidCallback? onTap;
@@ -17,15 +11,14 @@ class LessonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final tokens = Theme.of(context).extension<AppTokens>()!;
 
     final subject = lesson.subject;
     final typeLabel = _lessonTypeLabel(lesson.type);
     final location = lesson.classroom.isNotEmpty && lesson.building.isNotEmpty
         ? '${lesson.classroom}, ${lesson.building}'
         : lesson.classroom.isNotEmpty
-            ? lesson.classroom
-            : lesson.building;
+        ? lesson.classroom
+        : lesson.building;
     final teachers = lesson.teacherNames.join(', ');
     final groups = lesson.groupNames.join(', ');
 
@@ -37,7 +30,7 @@ class LessonTile extends StatelessWidget {
       elevation: 0,
       color: cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusMd),
+        borderRadius: BorderRadius.circular(16.0),
         side: BorderSide(
           color: colorScheme.outline.withValues(alpha: 0.2),
           width: 0.5,
@@ -45,7 +38,7 @@ class LessonTile extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(tokens.radiusMd),
+        borderRadius: BorderRadius.circular(16.0),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -259,16 +252,8 @@ class _MetadataSection extends StatelessWidget {
           icon: Icons.location_on_outlined,
           text: location,
         ),
-        _buildMetadataRow(
-          context,
-          icon: Icons.person_outline,
-          text: teachers,
-        ),
-        _buildMetadataRow(
-          context,
-          icon: Icons.group_outlined,
-          text: groups,
-        ),
+        _buildMetadataRow(context, icon: Icons.person_outline, text: teachers),
+        _buildMetadataRow(context, icon: Icons.group_outlined, text: groups),
       ],
     );
   }
@@ -317,13 +302,12 @@ class NoLessonsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final tokens = Theme.of(context).extension<AppTokens>()!;
 
     return Card(
       elevation: 0,
       color: colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radiusMd),
+        borderRadius: BorderRadius.circular(16.0),
         side: BorderSide(
           color: colorScheme.outline.withValues(alpha: 0.15),
           width: 0.5,
