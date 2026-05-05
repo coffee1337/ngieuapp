@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../../../theme/app_tokens.dart';
-import '../../domain/lesson.dart';
+import 'package:timetable/gen/assets.gen.dart';
+import 'package:timetable/app/core/theme/app_colors.dart';
+import 'package:timetable/app/features/schedule/domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({
@@ -17,195 +17,168 @@ class LessonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    if (lesson.subject.isEmpty) {
-      return _buildEmptyLessonCard(context);
-    }
+    final isEmptyLesson = lesson.subject.trim().toLowerCase() == 'нет пар';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      elevation: 0,
+      color: colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.15),
+          width: 0.5,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTimeColumn(context),
+              // Time column
+              SizedBox(
+                width: 50,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatTime(lesson.startTime),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatTime(lesson.endTime),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${lesson.pairNumber} пара',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 12),
+              // Content column
               Expanded(
-                child: _buildContentColumn(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Subject with badges
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            lesson.subject,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!isEmptyLesson) ...[
+                          const SizedBox(width: 8),
+                          // Right side badges
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              // Replacement badge
+                              if (lesson.isChange)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.errorContainer.withValues(
+                                      alpha: isDark ? 0.35 : 0.55,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Замена',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onErrorContainer,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              // Lesson type badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _lessonTypeLabel(lesson.type),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Metadata
+                    if (!isEmptyLesson) ...[
+                      buildMetadataSection(
+                        context,
+                        icon: Icons.location_on_outlined,
+                        text: lesson.classroom.isNotEmpty
+                            ? '${lesson.classroom}, ${lesson.building}'
+                            : lesson.building,
+                      ),
+                      buildMetadataSection(
+                        context,
+                        icon: Icons.person_outline,
+                        text: lesson.teacherNames.join(', '),
+                      ),
+                      buildMetadataSection(
+                        context,
+                        icon: Icons.group_outlined,
+                        text: lesson.groupNames.join(', '),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyLessonCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              Icons.free_breakfast_outlined,
-              size: 20,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Нет пар',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeColumn(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SizedBox(
-      width: 50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _formatTime(lesson.startTime),
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            _formatTime(lesson.endTime),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContentColumn(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSubjectRow(context),
-        const SizedBox(height: 8),
-        _buildMetadataSection(context),
-      ],
-    );
-  }
-
-  Widget _buildSubjectRow(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            lesson.subject,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: lesson.isChange
-                  ? colorScheme.error
-                  : colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        _Badge(
-          label: _lessonTypeLabel(lesson.type),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMetadataSection(BuildContext context) {
-    final locationText = _buildLocationText(lesson.classroom, lesson.building);
-    final teachersText = lesson.teacherNames.isNotEmpty
-        ? lesson.teacherNames.join(', ')
-        : null;
-    final groupsText = lesson.groupNames.isNotEmpty
-        ? lesson.groupNames.join(', ')
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (locationText != null)
-          buildMetadataSection(
-            context,
-            icon: Icons.location_on_outlined,
-            text: locationText,
-          ),
-        if (teachersText != null)
-          buildMetadataSection(
-            context,
-            icon: Icons.person_outline,
-            text: teachersText,
-          ),
-        if (groupsText != null)
-          buildMetadataSection(
-            context,
-            icon: Icons.group_outlined,
-            text: groupsText,
-          ),
-      ],
-    );
-  }
-
-  String? _buildLocationText(String? classroom, String? building) {
-    if (classroom == null || classroom.isEmpty) return null;
-
-    if (building != null && building.isNotEmpty) {
-      return '$classroom, $building';
-    }
-
-    return classroom;
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -229,14 +202,14 @@ Widget buildMetadataSection(
         Icon(
           icon,
           size: 16,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
         ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
               height: 1.2,
             ),
             maxLines: 1,
