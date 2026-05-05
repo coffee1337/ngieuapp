@@ -30,7 +30,7 @@ class LessonTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _Header(lesson: lesson),
-              AppSpacing.smGap,
+              const SizedBox(height: AppSpacing.sm),
               _InfoSection(lesson: lesson),
             ],
           ),
@@ -64,12 +64,12 @@ class _Header extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              AppSpacing.xsGap,
+              const SizedBox(height: AppSpacing.xs),
               _BadgesRow(lesson: lesson),
             ],
           ),
         ),
-        AppSpacing.mdGap,
+        const SizedBox(height: AppSpacing.md),
         _TimeColumn(
           startTime: lesson.startTime,
           endTime: lesson.endTime,
@@ -92,7 +92,6 @@ class _TimeColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -101,13 +100,13 @@ class _TimeColumn extends StatelessWidget {
           _formatTime(startTime),
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w500,
-            color: colorScheme.primary,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Text(
           _formatTime(endTime),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -124,7 +123,6 @@ class _InfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     
     return Column(
       children: [
@@ -137,14 +135,14 @@ class _InfoSection extends StatelessWidget {
                   : lesson.classroom,
         ),
         if (lesson.teacherNames.isNotEmpty) ...[
-          AppSpacing.xsGap,
+          const SizedBox(height: AppSpacing.xs),
           _InfoLine(
             icon: Icons.person_outline,
             text: lesson.teacherNames.join(', '),
           ),
         ],
         if (lesson.groupNames.isNotEmpty) ...[
-          AppSpacing.xsGap,
+          const SizedBox(height: AppSpacing.xs),
           _InfoLine(
             icon: Icons.group_outlined,
             text: lesson.groupNames.join(', '),
@@ -183,7 +181,6 @@ class _BadgesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final badges = <Widget>[];
     
     final typeLabel = _lessonTypeLabel(lesson.type);
@@ -212,7 +209,6 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -220,13 +216,13 @@ class _Badge extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: AppRadius.smBr,
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -244,21 +240,20 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     
     return Row(
       children: [
         Icon(
           icon,
           size: AppSizes.iconSm,
-          color: colorScheme.onSurfaceVariant,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        AppSpacing.xsGap,
+        const SizedBox(height: AppSpacing.xs),
         Expanded(
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
