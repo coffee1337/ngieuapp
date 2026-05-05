@@ -64,51 +64,39 @@ class _TimeColumn extends StatelessWidget {
 
   final Lesson lesson;
 
-  String _formatTime(DateTime time) =>
-      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isNoPairs = lesson.subject == 'Нет пар';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: AppSizes.iconLg * 2.5,
-          padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.xs,
-            horizontal: AppSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: isNoPairs
-                ? colorScheme.surfaceContainerHighest
-                : colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Text(
-            _formatTime(lesson.startTime),
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: isNoPairs
-                  ? colorScheme.onSurfaceVariant
-                  : colorScheme.primary,
-              fontWeight: FontWeight.w600,
+    return SizedBox(
+      width: AppSizes.lessonTimeColumnWidth,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${lesson.startTime.hour.toString().padLeft(2, '0')}:${lesson.startTime.minute.toString().padLeft(2, '0')}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-        if (!isNoPairs) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
-            _formatTime(lesson.endTime),
-            style: theme.textTheme.labelSmall?.copyWith(
+            '${lesson.endTime.hour.toString().padLeft(2, '0')}:${lesson.endTime.minute.toString().padLeft(2, '0')}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${lesson.pairNumber} пара',
+            style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -122,17 +110,21 @@ class _ContentSection extends StatelessWidget {
   final Lesson lesson;
   final bool isCompact;
 
-  bool _hasAnyMetadata() {
-    return lesson.classroom?.isNotEmpty == true ||
-        lesson.teacherNames.isNotEmpty ||
-        lesson.groupNames.isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isNoPairs = lesson.subject == 'Нет пар';
+
+    if (isNoPairs) {
+      return Text(
+        'Нет пар',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,143 +133,135 @@ class _ContentSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                lesson.subject,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: isNoPairs
-                      ? colorScheme.onSurfaceVariant
-                      : colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          lesson.subject,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: isCompact ? 1 : 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (lesson.isChange) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        const _ReplacementBadge(),
+                      ],
+                    ],
+                  ),
+                  if (!isCompact) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    _LessonTypeLabel(type: lesson.type),
+                  ],
+                ],
               ),
             ),
-            if (!isNoPairs) const SizedBox(width: AppSpacing.sm),
-            if (!isNoPairs) _BadgesRow(lesson: lesson),
           ],
         ),
-        if (_hasAnyMetadata() && !isCompact) const SizedBox(height: AppSpacing.xs),
-        if (_hasAnyMetadata() && !isCompact)
-          _MetadataSection(lesson: lesson),
-      ],
-    );
-  }
-}
-
-class _MetadataSection extends StatelessWidget {
-  const _MetadataSection({
-    required this.lesson,
-  });
-
-  final Lesson lesson;
-
-  bool _hasClassroom() => lesson.classroom?.isNotEmpty == true;
-  bool _hasTeacher() => lesson.teacherNames.isNotEmpty;
-  bool _hasGroup() => lesson.groupNames.isNotEmpty;
-
-  @override
-  Widget build(BuildContext context) {
-    final isNoPairs = lesson.subject == 'Нет пар';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_hasClassroom() && !isNoPairs)
+        if (!isCompact) ...[
+          const SizedBox(height: AppSpacing.sm),
           _InfoLine(
             icon: Icons.location_on_outlined,
-            text: lesson.classroom!,
+            text: lesson.classroom.isNotEmpty
+                ? '${lesson.classroom}, ${lesson.building}'
+                : lesson.building,
           ),
-        if (_hasTeacher())
-          _InfoLine(
-            icon: Icons.person_outline,
-            text: lesson.teacherNames.join(', '),
-          ),
-        if (_hasGroup())
-          _InfoLine(
-            icon: Icons.group_outlined,
-            text: lesson.groupNames.join(', '),
-          ),
+          if (lesson.teacherNames.isNotEmpty)
+            _InfoLine(
+              icon: Icons.person_outline,
+              text: lesson.teacherNames.join(', '),
+            ),
+          if (lesson.groupNames.isNotEmpty)
+            _InfoLine(
+              icon: Icons.group_outlined,
+              text: lesson.groupNames.join(', '),
+            ),
+          if (lesson.subgroup != null)
+            _InfoLine(
+              icon: Icons.subdirectory_arrow_right_outlined,
+              text: 'Подгруппа ${lesson.subgroup}',
+            ),
+          if (lesson.note != null)
+            _InfoLine(
+              icon: Icons.info_outline,
+              text: lesson.note!,
+            ),
+        ],
       ],
     );
   }
 }
 
-class _BadgesRow extends StatelessWidget {
-  const _BadgesRow({
-    required this.lesson,
+class _LessonTypeLabel extends StatelessWidget {
+  const _LessonTypeLabel({
+    required this.type,
   });
 
-  final Lesson lesson;
+  final LessonType type;
 
-  String _lessonTypeLabel(LessonType type) {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    String label;
+    Color labelColor;
+
     switch (type) {
       case LessonType.lecture:
-        return 'Лекция';
+        label = 'Лекция';
+        labelColor = colorScheme.primary;
+        break;
       case LessonType.practice:
-        return 'Практика';
+        label = 'Практика';
+        labelColor = colorScheme.secondary;
+        break;
       case LessonType.lab:
-        return 'Лаб.';
+        label = 'Лабораторная';
+        labelColor = colorScheme.tertiary;
+        break;
       case LessonType.exam:
-        return 'Экзамен';
+        label = 'Экзамен';
+        labelColor = colorScheme.error;
+        break;
       case LessonType.consultation:
-        return 'Консультация';
+        label = 'Консультация';
+        labelColor = colorScheme.outline;
+        break;
       case LessonType.event:
-        return 'Событие';
+        label = 'Мероприятие';
+        labelColor = colorScheme.primary;
+        break;
       case LessonType.unknown:
-        return '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final badges = <Widget>[];
-    
-    final typeLabel = _lessonTypeLabel(lesson.type);
-    if (typeLabel.isNotEmpty) {
-      badges.add(
-        _Badge(text: typeLabel),
-      );
+        label = 'Неизвестный тип';
+        labelColor = colorScheme.outline;
+        break;
     }
 
-    if (lesson.isChange) {
-      badges.add(
-        _ReplacementBadge(),
-      );
-    }
-    
-    if (badges.isEmpty) return const SizedBox.shrink();
-    
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: badges,
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.text,
-  });
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: labelColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: labelColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
       ),
       child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: labelColor,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
