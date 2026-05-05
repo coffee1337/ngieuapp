@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ngieu_app/app/core/theme/app_colors.dart';
-import 'package:ngieu_app/app/core/theme/app_spacing.dart';
-import 'package:ngieu_app/app/core/theme/app_text_styles.dart';
-import 'package:ngieu_app/app/core/theme/app_sizes.dart';
-import 'package:ngieu_app/app/features/schedule/domain/models/lesson.dart';
+
+import '../../../../theme/app_tokens.dart';
+import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
   const LessonTile({
@@ -61,7 +59,7 @@ class LessonTile extends StatelessWidget {
                         const SizedBox(height: AppSpacing.sm),
                         _InfoLine(
                           icon: Icons.person_outline,
-                          text: lesson.teacherNames,
+                          text: lesson.teacherNames.join(', '),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         _InfoLine(
@@ -71,11 +69,11 @@ class LessonTile extends StatelessWidget {
                         const SizedBox(height: AppSpacing.xs),
                         _InfoLine(
                           icon: Icons.group_outlined,
-                          text: lesson.groupNames,
+                          text: lesson.groupNames.join(', '),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _BadgesRow(
-                          lessonType: lesson.type,
+                          lessonType: _lessonTypeLabel(lesson.type),
                           isChange: lesson.isChange,
                         ),
                       ],
