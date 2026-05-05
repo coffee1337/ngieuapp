@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:timetable/gen/assets.gen.dart';
-import 'package:timetable/app/core/theme/app_colors.dart';
-import 'package:timetable/app/features/schedule/domain/lesson.dart';
+
+import '../../../../theme/app_tokens.dart';
+import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-    this.onTap,
-  });
+  const LessonTile({super.key, required this.lesson, this.onTap});
 
   final Lesson lesson;
   final VoidCallback? onTap;
@@ -66,7 +62,9 @@ class LessonTile extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.3,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -117,9 +115,10 @@ class LessonTile extends StatelessWidget {
                                   ),
                                   margin: const EdgeInsets.only(bottom: 4),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.errorContainer.withValues(
-                                      alpha: isDark ? 0.35 : 0.55,
-                                    ),
+                                    color: colorScheme.errorContainer
+                                        .withValues(
+                                          alpha: isDark ? 0.35 : 0.55,
+                                        ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
