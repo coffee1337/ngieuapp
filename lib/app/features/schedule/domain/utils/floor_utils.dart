@@ -27,9 +27,9 @@ class FloorUtils {
   ///    Примеры: 321 → 2 этаж, 336 → 3 этаж
   ///
   /// 4. Институт транспорта (первая цифра = 4):
-  ///    - вторая цифра 1 => 1 этаж
-  ///    - вторая цифра 2 => 2 этаж
-  ///    - вторая цифра 3 => 3 этаж
+  ///    - вторая цифра 1 => 1
+  ///    - вторая цифра 2 => 2
+  ///    - вторая цифра 3 => 3
   ///    - и т.д.
   ///    Примеры: 421 → 2 этаж, 436 → 3 этаж
   ///
@@ -40,7 +40,7 @@ class FloorUtils {
   ///    - и т.д.
   ///    Примеры: 521 → 2 этаж, 536 → 3 этаж
   ///
-  /// 6. Институт энергетики и автоматизации (первая цифра = 6):
+  /// 6. Институт энергетики (первая цифра = 6):
   ///    - вторая цифра 1 => 1 этаж
   ///    - вторая цифра 2 => 2 этаж
   ///    - вторая цифра 3 => 3 этаж
@@ -54,44 +54,59 @@ class FloorUtils {
   ///    - и т.д.
   ///    Примеры: 721 → 2 этаж, 736 → 3 этаж
   ///
-  /// 8. Общежития (первая цифра = 8):
+  /// 8. Институт строительства и архитектуры (первая цифра = 8):
   ///    - вторая цифра 1 => 1 этаж
   ///    - вторая цифра 2 => 2 этаж
   ///    - вторая цифра 3 => 3 этаж
   ///    - и т.д.
   ///    Примеры: 821 → 2 этаж, 836 → 3 этаж
   ///
-  /// 9. Спортивные объекты (первая цифра = 9):
+  /// 9. Институт дополнительного профессионального образования (первая цифра = 9):
   ///    - вторая цифра 1 => 1 этаж
   ///    - вторая цифра 2 => 2 этаж
   ///    - вторая цифра 3 => 3 этаж
   ///    - и т.д.
   ///    Примеры: 921 → 2 этаж, 936 → 3 этаж
   ///
-  /// 10. Прочие здания (первая цифра = 0):
-  ///     - вторая цифра 1 => 1 этаж
-  ///     - вторая цифра 2 => 2 этаж
-  ///     - вторая цифра 3 => 3 этаж
-  ///     - и т.д.
-  ///     Примеры: 021 → 2 этаж, 036 → 3 этаж
-  static int determineFloor(String classroomNumber) {
-    if (classroomNumber.isEmpty) return 0;
-    
-    // Удаляем все нецифровые символы
-    final digitsOnly = classroomNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    
-    if (digitsOnly.length < 2) return 0;
-    
-    final firstDigit = int.tryParse(digitsOnly[0]) ?? 0;
-    final secondDigit = int.tryParse(digitsOnly[1]) ?? 0;
-    
-    // Для всех институтов применяется одно правило: вторая цифра - номер этажа
-    return secondDigit;
+  /// @param classroomNumber Номер кабинета
+  /// @return Номер этажа или null если не удалось определить
+  static int? getFloor(String classroomNumber) {
+    if (classroomNumber.isEmpty) return null;
+
+    // Убираем все нецифровые символы
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 2) return null;
+
+    final instituteDigit = int.tryParse(digits[0]);
+    final floorDigit = int.tryParse(digits[1]);
+
+    if (instituteDigit == null || floorDigit == null) return null;
+
+    // Проверяем, что номер института валиден (1-9)
+    if (instituteDigit < 1 || instituteDigit > 9) return null;
+
+    // Проверяем, что номер этажа валиден (1-9)
+    if (floorDigit < 1 || floorDigit > 9) return null;
+
+    return floorDigit;
   }
-  
-  /// Определяет название института по номеру здания
-  static String getInstituteName(int buildingNumber) {
-    switch (buildingNumber) {
+
+  /// Определяет институт по номеру кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Название института или null если не удалось определить
+  static String? getInstitute(String classroomNumber) {
+    if (classroomNumber.isEmpty) return null;
+
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return null;
+
+    final instituteDigit = int.tryParse(digits[0]);
+    if (instituteDigit == null || instituteDigit < 1 || instituteDigit > 9) {
+      return null;
+    }
+
+    switch (instituteDigit) {
       case 1:
         return 'Институт экономики и управления';
       case 2:
@@ -103,1098 +118,1953 @@ class FloorUtils {
       case 5:
         return 'Институт гуманитарного образования';
       case 6:
-        return 'Институт энергетики и автоматизации';
+        return 'Институт энергетики';
       case 7:
         return 'Институт машиностроения';
       case 8:
-        return 'Общежития';
+        return 'Институт строительства и архитектуры';
       case 9:
-        return 'Спортивные объекты';
-      case 0:
-        return 'Прочие здания';
+        return 'Институт дополнительного профессионального образования';
       default:
-        return 'Неизвестный институт';
+        return null;
     }
   }
-  
-  /// Определяет короткое название института для отображения
-  static String getInstituteShortName(int buildingNumber) {
-    switch (buildingNumber) {
+
+  /// Форматирует информацию о кабинете
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Отформатированная строка с информацией о кабинете
+  static String formatClassroomInfo(String classroomNumber) {
+    final floor = getFloor(classroomNumber);
+    final institute = getInstitute(classroomNumber);
+
+    if (floor == null && institute == null) {
+      return classroomNumber;
+    }
+
+    final parts = <String>[classroomNumber];
+    if (floor != null) {
+      parts.add('${floor} эт.');
+    }
+    if (institute != null) {
+      parts.add(institute);
+    }
+
+    return parts.join(' • ');
+  }
+
+  /// Получает информацию о местоположении кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Объект с информацией о местоположении или null
+  static RoomLocationInfo? getRoomLocationInfo(String classroomNumber) {
+    final floor = getFloor(classroomNumber);
+    final institute = getInstitute(classroomNumber);
+
+    if (floor == null && institute == null) {
+      return null;
+    }
+
+    return RoomLocationInfo(
+      classroom: classroomNumber,
+      floor: floor,
+      institute: institute,
+    );
+  }
+
+  /// Форматирует этаж для отображения
+  ///
+  /// @param floor Номер этажа
+  /// @return Отформатированная строка с этажом
+  static String formatFloor(int? floor) {
+    if (floor == null) return '';
+    return '${floor} эт.';
+  }
+
+  /// Проверяет, является ли кабинет стандартным (4-х значный номер)
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return true если кабинет стандартный
+  static bool isStandardClassroom(String classroomNumber) {
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    return digits.length == 4;
+  }
+
+  /// Получает диапазон кабинетов для этажа
+  ///
+  /// @param instituteDigit Номер института (1-9)
+  /// @param floor Номер этажа (1-9)
+  /// @return Диапазон номеров кабинетов
+  static List<int> getFloorRange(int instituteDigit, int floor) {
+    if (instituteDigit < 1 || instituteDigit > 9 || floor < 1 || floor > 9) {
+      return <int>[];
+    }
+
+    final start = instituteDigit * 1000 + floor * 100;
+    final end = start + 99;
+
+    return List.generate(end - start + 1, (index) => start + index);
+  }
+
+  /// Получает все кабинеты института
+  ///
+  /// @param instituteDigit Номер института (1-9)
+  /// @return Список всех кабинетов института
+  static List<int> getInstituteRooms(int instituteDigit) {
+    if (instituteDigit < 1 || instituteDigit > 9) {
+      return <int>[];
+    }
+
+    final rooms = <int>[];
+    for (int floor = 1; floor <= 9; floor++) {
+      rooms.addAll(getFloorRange(instituteDigit, floor));
+    }
+
+    return rooms;
+  }
+
+  /// Проверяет, принадлежит ли кабинет институту
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @param instituteDigit Номер института (1-9)
+  /// @return true если кабинет принадлежит институту
+  static bool belongsToInstitute(String classroomNumber, int instituteDigit) {
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 2) return false;
+
+    final roomInstituteDigit = int.tryParse(digits[0]);
+    return roomInstituteDigit == instituteDigit;
+  }
+
+  /// Получает соседние кабинеты на том же этаже
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @param radius Радиус поиска (сколько кабинетов в каждую сторону)
+  /// @return Список соседних кабинетов
+  static List<String> getNeighboringRooms(String classroomNumber, {int radius = 2}) {
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 3) return <String>[];
+
+    final instituteDigit = int.tryParse(digits[0]);
+    final floorDigit = int.tryParse(digits[1]);
+    final roomNumber = int.tryParse(digits.substring(2));
+
+    if (instituteDigit == null || floorDigit == null || roomNumber == null) {
+      return <String>[];
+    }
+
+    final neighboring = <String>[];
+    final start = (roomNumber - radius).clamp(0, 99);
+    final end = (roomNumber + radius).clamp(0, 99);
+
+    for (int i = start; i <= end; i++) {
+      if (i != roomNumber) {
+        neighboring.add('${instituteDigit}${floorDigit}${i.toString().padLeft(2, '0')}');
+      }
+    }
+
+    return neighboring;
+  }
+
+  /// Получает статистику по кабинетам
+  ///
+  /// @param classroomNumbers Список номеров кабинетов
+  /// @return Статистика по кабинетам
+  static ClassroomStats getClassroomStats(List<String> classroomNumbers) {
+    final instituteCounts = <int, int>{};
+    final floorCounts = <int, int>{};
+    int standardCount = 0;
+
+    for (final classroom in classroomNumbers) {
+      final digits = classroom.replaceAll(RegExp(r'\D'), '');
+      if (digits.length >= 2) {
+        final instituteDigit = int.tryParse(digits[0]);
+        final floorDigit = int.tryParse(digits[1]);
+
+        if (instituteDigit != null) {
+          instituteCounts[instituteDigit] = (instituteCounts[instituteDigit] ?? 0) + 1;
+        }
+        if (floorDigit != null) {
+          floorCounts[floorDigit] = (floorCounts[floorDigit] ?? 0) + 1;
+        }
+      }
+
+      if (isStandardClassroom(classroom)) {
+        standardCount++;
+      }
+    }
+
+    return ClassroomStats(
+      instituteCounts: instituteCounts,
+      floorCounts: floorCounts,
+      standardCount: standardCount,
+      totalCount: classroomNumbers.length,
+    );
+  }
+
+  /// Валидирует номер кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return true если номер валидный
+  static bool isValidClassroom(String classroomNumber) {
+    if (classroomNumber.isEmpty) return false;
+
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 2) return false;
+
+    final instituteDigit = int.tryParse(digits[0]);
+    final floorDigit = int.tryParse(digits[1]);
+
+    return instituteDigit != null &&
+        floorDigit != null &&
+        instituteDigit >= 1 &&
+        instituteDigit <= 9 &&
+        floorDigit >= 1 &&
+        floorDigit <= 9;
+  }
+
+  /// Нормализует номер кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Нормализованный номер кабинета
+  static String normalizeClassroom(String classroomNumber) {
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 2) return classroomNumber;
+
+    final instituteDigit = digits[0];
+    final floorDigit = digits[1];
+    final roomNumber = digits.length > 2 ? digits.substring(2) : '';
+
+    return '$instituteDigit$floorDigit${roomNumber.padLeft(2, '0')}';
+  }
+
+  /// Получает сокращенное название института
+  ///
+  /// @param instituteDigit Номер института (1-9)
+  /// @return Сокращенное название института
+  static String? getInstituteShortName(int instituteDigit) {
+    switch (instituteDigit) {
       case 1:
-        return 'ИЭУ';
+        return 'ИЭиУ';
       case 2:
-        return 'ИИТСС';
+        return 'ИТиСС';
       case 3:
-        return 'ИЗОО';
+        return 'ИЗиДО';
       case 4:
         return 'ИТ';
       case 5:
         return 'ИГО';
       case 6:
-        return 'ИЭА';
+        return 'ИЭ';
       case 7:
         return 'ИМ';
       case 8:
-        return 'Общежитие';
+        return 'ИСиА';
       case 9:
-        return 'Спорт';
-      case 0:
-        return 'Прочее';
+        return 'ИДПО';
       default:
-        return 'Неизвестно';
+        return null;
     }
   }
-  
-  /// Проверяет, является ли кабинет аудиторией для лекций
-  static bool isLectureHall(String classroomNumber) {
-    // Лекционные аудитории обычно имеют номера в диапазоне 100-199, 200-299 и т.д.
-    // и заканчиваются на 0 или 5
-    if (classroomNumber.isEmpty) return false;
-    
-    final digitsOnly = classroomNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digitsOnly.length < 3) return false;
-    
-    final lastDigit = int.tryParse(digitsOnly[digitsOnly.length - 1]) ?? 0;
-    return lastDigit == 0 || lastDigit == 5;
+
+  /// Получает полное название института по номеру
+  ///
+  /// @param instituteDigit Номер института (1-9)
+  /// @return Полное название института
+  static String? getInstituteFullName(int instituteDigit) {
+    return getInstitute('$instituteDigit');
   }
-  
+
+  /// Проверяет, является ли кабинет аудиторией
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return true если это аудитория
+  static bool isAuditorium(String classroomNumber) {
+    // Аудитории обычно имеют номера от 100 до 999
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 3) return false;
+
+    final number = int.tryParse(digits);
+    return number != null && number >= 100 && number <= 999;
+  }
+
   /// Проверяет, является ли кабинет лабораторией
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return true если это лаборатория
   static bool isLaboratory(String classroomNumber) {
-    // Лаборатории обычно имеют номера, начинающиеся с "Л" или содержащие "лаб"
-    if (classroomNumber.isEmpty) return false;
-    
-    return classroomNumber.toLowerCase().contains('л') || 
-           classroomNumber.toLowerCase().contains('лаб');
+    // Лаборатории обычно имеют номера с префиксом "Л"
+    return classroomNumber.toUpperCase().startsWith('Л');
   }
-  
-  /// Определяет тип кабинета
-  static String getRoomType(String classroomNumber) {
-    if (isLectureHall(classroomNumber)) {
-      return 'Лекционная аудитория';
-    } else if (isLaboratory(classroomNumber)) {
-      return 'Лаборатория';
-    } else {
-      return 'Аудитория';
-    }
-  }
-  
-  /// Форматирует номер кабинета для отображения
-  static String formatClassroomNumber(String classroomNumber) {
-    if (classroomNumber.isEmpty) return '';
-    
-    // Если номер уже в хорошем формате, возвращаем как есть
-    if (RegExp(r'^\d{3}$').hasMatch(classroomNumber)) {
-      return classroomNumber;
-    }
-    
-    // Удаляем все нецифровые символы
-    final digitsOnly = classroomNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    
-    if (digitsOnly.length < 3) return classroomNumber;
-    
-    // Форматируем как XXX
-    return digitsOnly.substring(0, 3);
-  }
-  
-  /// Проверяет валидность номера кабинета
-  static bool isValidClassroomNumber(String classroomNumber) {
-    if (classroomNumber.isEmpty) return false;
-    
-    final digitsOnly = classroomNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    return digitsOnly.length >= 2;
-  }
-  
-  /// Получает цвет этажа для отображения
-  static String getFloorColor(int floor) {
-    switch (floor) {
-      case 1:
-        return '#4CAF50'; // Зеленый
-      case 2:
-        return '#2196F3'; // Синий
-      case 3:
-        return '#FF9800'; // Оранжевый
-      case 4:
-        return '#9C27B0'; // Фиолетовый
-      case 5:
-        return '#F44336'; // Красный
-      default:
-        return '#757575'; // Серый
-    }
-  }
-  
-  /// Получает иконку типа кабинета
-  static String getRoomIcon(String classroomNumber) {
-    if (isLectureHall(classroomNumber)) {
-      return '📚';
-    } else if (isLaboratory(classroomNumber)) {
-      return '🔬';
-    } else {
-      return '🏫';
-    }
-  }
-  
-  /// Сравнивает два номера кабинетов для сортировки
-  static int compareClassroomNumbers(String a, String b) {
-    final digitsA = a.replaceAll(RegExp(r'[^0-9]'), '');
-    final digitsB = b.replaceAll(RegExp(r'[^0-9]'), '');
-    
-    if (digitsA.isEmpty && digitsB.isEmpty) return 0;
-    if (digitsA.isEmpty) return 1;
-    if (digitsB.isEmpty) return -1;
-    
-    final numA = int.tryParse(digitsA) ?? 0;
-    final numB = int.tryParse(digitsB) ?? 0;
-    
-    return numA.compareTo(numB);
-  }
-  
-  /// Группирует кабинеты по этажам
-  static Map<int, List<String>> groupByFloor(List<String> classroomNumbers) {
-    final Map<int, List<String>> result = {};
-    
-    for (final classroomNumber in classroomNumbers) {
-      final floor = determineFloor(classroomNumber);
-      if (!result.containsKey(floor)) {
-        result[floor] = [];
-      }
-      result[floor]!.add(classroomNumber);
-    }
-    
-    return result;
-  }
-  
-  /// Получает статистику по этажам
-  static Map<int, int> getFloorStatistics(List<String> classroomNumbers) {
-    final Map<int, int> result = {};
-    
-    for (final classroomNumber in classroomNumbers) {
-      final floor = determineFloor(classroomNumber);
-      result[floor] = (result[floor] ?? 0) + 1;
-    }
-    
-    return result;
-  }
-  
-  /// Фильтрует кабинеты по этажу
-  static List<String> filterByFloor(List<String> classroomNumbers, int targetFloor) {
-    return classroomNumbers
-        .where((classroomNumber) => determineFloor(classroomNumber) == targetFloor)
-        .toList();
-  }
-  
-  /// Фильтрует кабинеты по типу
-  static List<String> filterByType(List<String> classroomNumbers, String targetType) {
-    return classroomNumbers
-        .where((classroomNumber) => getRoomType(classroomNumber) == targetType)
-        .toList();
-  }
-  
-  /// Получает рекомендуемый этаж для поиска свободных кабинетов
-  static int getRecommendedFloor(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 12;
-    
-    // Утром (8:00-11:00) рекомендуем нижние этажи
-    if (hour >= 8 && hour < 11) {
-      return 1;
-    }
-    // В середине дня (11:00-16:00) рекомендуем средние этажи
-    else if (hour >= 11 && hour < 16) {
-      return 2;
-    }
-    // Вечером (16:00-20:00) рекомендуем верхние этажи
-    else if (hour >= 16 && hour < 20) {
-      return 3;
-    }
-    // В остальное время - средние этажи
-    else {
-      return 2;
-    }
-  }
-  
-  /// Получает загруженность этажа в процентах
-  static double getFloorLoadPercentage(int totalRooms, int occupiedRooms) {
-    if (totalRooms == 0) return 0.0;
-    return (occupiedRooms / totalRooms) * 100;
-  }
-  
-  /// Проверяет, является ли время учебным
-  static bool isStudyTime(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Учебное время с 8:00 до 20:00
-    return totalMinutes >= 8 * 60 && totalMinutes <= 20 * 60;
-  }
-  
-  /// Получает следующую пару по времени
-  static String getNextPairTime(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    for (final (startTime, endTime) in pairTimes) {
-      if (totalMinutes < startTime) {
-        final startHour = startTime ~/ 60;
-        final startMinute = startTime % 60;
-        return '${startHour.toString().padLeft(2, '0')}:${startMinute.toString().padLeft(2, '0')}';
-      }
-    }
-    
-    return '20:00'; // Конец учебного дня
-  }
-  
-  /// Получает текущую пару по времени
-  static String getCurrentPairTime(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    for (final (startTime, endTime) in pairTimes) {
-      if (totalMinutes >= startTime && totalMinutes < endTime) {
-        final startHour = startTime ~/ 60;
-        final startMinute = startTime % 60;
-        final endHour = endTime ~/ 60;
-        final endMinute = endTime % 60;
-        return '${startHour.toString().padLeft(2, '0')}:${startMinute.toString().padLeft(2, '0')}-${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
-      }
-    }
-    
-    return 'Нет пары'; // Нет текущей пары
-  }
-  
-  /// Получает номер текущей пары
-  static int getCurrentPairNumber(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    for (int i = 0; i < pairTimes.length; i++) {
-      final (startTime, endTime) = pairTimes[i];
-      if (totalMinutes >= startTime && totalMinutes < endTime) {
-        return i + 1;
-      }
-    }
-    
-    return 0; // Нет текущей пары
-  }
-  
-  /// Получает время до следующей пары в минутах
-  static int getMinutesToNextPair(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    for (final (startTime, endTime) in pairTimes) {
-      if (totalMinutes < startTime) {
-        return startTime - totalMinutes;
-      }
-    }
-    
-    return -1; // Нет следующей пары
-  }
-  
-  /// Получает время до конца текущей пары в минутах
-  static int getMinutesToPairEnd(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    for (final (startTime, endTime) in pairTimes) {
-      if (totalMinutes >= startTime && totalMinutes < endTime) {
-        return endTime - totalMinutes;
-      }
-    }
-    
-    return -1; // Нет текущей пары
-  }
-  
-  /// Получает статус времени (перемена, пара, конец дня)
-  static String getTimeStatus(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 0;
-    final minute = int.tryParse(currentTime.split(':')[1]) ?? 0;
-    final totalMinutes = hour * 60 + minute;
-    
-    // Расписание пар
-    final pairTimes = [
-      (8 * 60, 9 * 60 + 30),      // 8:00-9:30
-      (9 * 60 + 40, 11 * 60 + 10), // 9:40-11:10
-      (11 * 60 + 20, 12 * 60 + 50), // 11:20-12:50
-      (13 * 60 + 30, 15 * 60),     // 13:30-15:00
-      (15 * 60 + 10, 16 * 60 + 40), // 15:10-16:40
-      (16 * 60 + 50, 18 * 60 + 20), // 16:50-18:20
-      (18 * 60 + 30, 20 * 60),     // 18:30-20:00
-    ];
-    
-    // Проверяем, находимся ли мы на паре
-    for (final (startTime, endTime) in pairTimes) {
-      if (totalMinutes >= startTime && totalMinutes < endTime) {
-        return 'pair';
-      }
-    }
-    
-    // Проверяем, находимся ли мы на перемене
-    for (int i = 0; i < pairTimes.length - 1; i++) {
-      final (_, currentEnd) = pairTimes[i];
-      final (nextStart, _) = pairTimes[i + 1];
-      if (totalMinutes >= currentEnd && totalMinutes < nextStart) {
-        return 'break';
-      }
-    }
-    
-    // Проверяем, закончился ли учебный день
-    if (totalMinutes >= 20 * 60) {
-      return 'end';
-    }
-    
-    // Иначе - начало дня или до начала пар
-    return 'before';
-  }
-  
-  /// Получает рекомендуемые кабинеты для текущего времени
-  static List<String> getRecommendedClassrooms(String currentTime, List<String> availableRooms) {
-    final timeStatus = getTimeStatus(currentTime);
-    final currentPair = getCurrentPairNumber(currentTime);
-    
-    if (timeStatus == 'pair') {
-      // Во время пары рекомендуем кабинеты подальше от шумных мест
-      return availableRooms.where((room) {
-        final floor = determineFloor(room);
-        return floor >= 2; // Верхние этажи тише
-      }).toList();
-    } else if (timeStatus == 'break') {
-      // На перемене рекомендуем кабинеты на первом этаже для быстрого доступа
-      return availableRooms.where((room) {
-        final floor = determineFloor(room);
-        return floor == 1;
-      }).toList();
-    } else {
-      // В остальное время - любые кабинеты
-      return availableRooms;
-    }
-  }
-  
-  /// Получает загруженность корпуса в процентах
-  static double getBuildingLoadPercentage(List<String> allRooms, List<String> occupiedRooms) {
-    if (allRooms.isEmpty) return 0.0;
-    return (occupiedRooms.length / allRooms.length) * 100;
-  }
-  
-  /// Получает оптимальный корпус для поиска кабинетов
-  static int getOptimalBuilding(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 12;
-    
-    // Утром рекомендуем основные корпуса
-    if (hour >= 8 && hour < 11) {
-      return 1; // Институт экономики и управления
-    }
-    // В середине дня - IT корпус
-    else if (hour >= 11 && hour < 16) {
-      return 2; // Институт информационных технологий
-    }
-    // Вечером - гуманитарный корпус
-    else if (hour >= 16 && hour < 20) {
-      return 5; // Институт гуманитарного образования
-    }
-    // В остальное время - основной корпус
-    else {
-      return 1;
-    }
-  }
-  
-  /// Проверяет, является ли кабинет предпочтительным для изучения
-  static bool isPreferredForStudy(String classroomNumber) {
-    final floor = determineFloor(classroomNumber);
-    
-    // Предпочтительные этажи для изучения: 2 и 3
-    return floor == 2 || floor == 3;
-  }
-  
-  /// Получает рейтинг кабинета для изучения
-  static double getStudyRating(String classroomNumber) {
-    double rating = 0.0;
-    
-    // +1 за каждый этаж выше первого (тише)
-    final floor = determineFloor(classroomNumber);
-    rating += (floor - 1).clamp(0, 4);
-    
-    // +2 если это лекционная аудитория
-    if (isLectureHall(classroomNumber)) {
-      rating += 2;
-    }
-    
-    // +1 если это лаборатория
+
+  /// Получает тип кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Тип кабинета
+  static ClassroomType getClassroomType(String classroomNumber) {
     if (isLaboratory(classroomNumber)) {
-      rating += 1;
+      return ClassroomType.laboratory;
+    } else if (isAuditorium(classroomNumber)) {
+      return ClassroomType.auditorium;
+    } else {
+      return ClassroomType.other;
     }
-    
-    // -1 если первый этаж (шумно)
-    if (floor == 1) {
-      rating -= 1;
+  }
+
+  /// Получает рекомендуемую вместимость кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Рекомендуемая вместимость
+  static int getRecommendedCapacity(String classroomNumber) {
+    final type = getClassroomType(classroomNumber);
+    final floor = getFloor(classroomNumber);
+
+    switch (type) {
+      case ClassroomType.auditorium:
+        // Большие аудитории обычно на нижних этажах
+        if (floor != null && floor <= 2) return 150;
+        return 100;
+      case ClassroomType.laboratory:
+        return 30;
+      case ClassroomType.other:
+        return 25;
     }
-    
-    return rating.clamp(0, 10);
   }
-  
-  /// Сортирует кабинеты по предпочтительности для изучения
-  static List<String> sortByStudyPreference(List<String> classroomNumbers) {
-    final sorted = List<String>.from(classroomNumbers);
-    sorted.sort((a, b) => getStudyRating(b).compareTo(getStudyRating(a)));
-    return sorted;
+
+  /// Получает доступность кабинета для людей с ограниченными возможностями
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return true если кабинет доступен
+  static bool isAccessible(String classroomNumber) {
+    final floor = getFloor(classroomNumber);
+    // Кабинеты на первом этаже считаются доступными
+    return floor == 1;
   }
-  
-  /// Получает ближайшие свободные кабинеты
-  static List<String> getNearestFreeRooms(String currentLocation, List<String> freeRooms) {
-    // Простая реализация - возвращаем первые 5 кабинетов
-    return freeRooms.take(5).toList();
+
+  /// Получает расстояние между кабинетами
+  ///
+  /// @param classroom1 Первый кабинет
+  /// @param classroom2 Второй кабинет
+  /// @return Расстояние в условных единицах
+  static int getDistance(String classroom1, String classroom2) {
+    final info1 = getRoomLocationInfo(classroom1);
+    final info2 = getRoomLocationInfo(classroom2);
+
+    if (info1 == null || info2 == null) return -1;
+
+    // Если в разных институтах - большое расстояние
+    if (info1.institute != info2.institute) return 1000;
+
+    // Если на разных этажах - разница в этажах
+    if (info1.floor != info2.floor) {
+      return (info1.floor! - info2.floor!).abs();
+    }
+
+    // Если на одном этаже - считаем разницу в номерах
+    final digits1 = classroom1.replaceAll(RegExp(r'\D'), '');
+    final digits2 = classroom2.replaceAll(RegExp(r'\D'), '');
+
+    if (digits1.length >= 3 && digits2.length >= 3) {
+      final num1 = int.tryParse(digits1.substring(2)) ?? 0;
+      final num2 = int.tryParse(digits2.substring(2)) ?? 0;
+      return (num1 - num2).abs();
+    }
+
+    return 0;
   }
-  
-  /// Получает время до освобождения кабинета
-  static int getMinutesUntilFree(String classroomNumber, String currentTime) {
-    // Простая реализация - случайное время от 5 до 60 минут
-    return (DateTime.now().millisecondsSinceEpoch % 55) + 5;
-  }
-  
-  /// Получает занятость кабинета на день
-  static Map<String, bool> getDailyOccupancy(String classroomNumber, String currentDate) {
-    final Map<String, bool> occupancy = {};
-    
-    // Генерируем случайную занятость на день
-    for (int hour = 8; hour <= 20; hour++) {
-      for (int minute = 0; minute < 60; minute += 30) {
-        final time = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
-        occupancy[time] = (DateTime.now().millisecondsSinceEpoch % 3) != 0;
+
+  /// Получает ближайшие кабинеты
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @param allClassrooms Список всех кабинетов для поиска
+  /// @param limit Максимальное количество результатов
+  /// @return Список ближайших кабинетов с расстояниями
+  static List<NearestRoom> getNearestRooms(
+    String classroomNumber,
+    List<String> allClassrooms, {
+    int limit = 5,
+  }) {
+    final nearest = <NearestRoom>[];
+
+    for (final classroom in allClassrooms) {
+      if (classroom == classroomNumber) continue;
+
+      final distance = getDistance(classroomNumber, classroom);
+      if (distance >= 0) {
+        nearest.add(NearestRoom(
+          classroom: classroom,
+          distance: distance,
+        ));
       }
     }
-    
-    return occupancy;
+
+    nearest.sort((a, b) => a.distance.compareTo(b.distance));
+    return nearest.take(limit).toList();
   }
-  
-  /// Получает статистику использования кабинета
-  static Map<String, dynamic> getRoomUsageStatistics(String classroomNumber) {
-    return {
-      'totalUsageHours': (DateTime.now().millisecondsSinceEpoch % 8) + 1,
-      'averageOccupancy': ((DateTime.now().millisecondsSinceEpoch % 100) / 100),
-      'peakHours': [10, 14, 16],
-      'preferredBy': ['students', 'teachers'],
-      'lastUsed': DateTime.now().subtract(Duration(hours: (DateTime.now().millisecondsSinceEpoch % 24) + 1)),
-    };
+
+  /// Получает оптимальный маршрут между кабинетами
+  ///
+  /// @param classrooms Список кабинетов для посещения
+  /// @return Оптимальный порядок посещения кабинетов
+  static List<String> getOptimalRoute(List<String> classrooms) {
+    if (classrooms.length <= 1) return classrooms;
+
+    final unvisited = List<String>.from(classrooms);
+    final route = <String>[];
+    String current = unvisited.removeAt(0);
+    route.add(current);
+
+    while (unvisited.isNotEmpty) {
+      String? nearest;
+      int minDistance = -1;
+
+      for (final classroom in unvisited) {
+        final distance = getDistance(current, classroom);
+        if (distance >= 0 && (minDistance == -1 || distance < minDistance)) {
+          minDistance = distance;
+          nearest = classroom;
+        }
+      }
+
+      if (nearest != null) {
+        current = nearest;
+        route.add(current);
+        unvisited.remove(nearest);
+      } else {
+        // Если не нашли путь до оставшихся кабинетов, добавляем их в любом порядке
+        route.addAll(unvisited);
+        break;
+      }
+    }
+
+    return route;
   }
-  
-  /// Получает рекомендации по оптимизации использования кабинетов
-  static List<String> getOptimizationRecommendations(List<String> allRooms) {
-    final recommendations = <String>[];
-    
-    // Анализируем использование кабинетов
-    final totalRooms = allRooms.length;
-    final lectureHalls = allRooms.where(isLectureHall).length;
-    final laboratories = allRooms.where(isLaboratory).length;
-    final regularRooms = totalRooms - lectureHalls - laboratories;
-    
-    if (lectureHalls < totalRooms * 0.1) {
-      recommendations.add('Рекомендуется увеличить количество лекционных аудиторий');
+
+  /// Получает время перемещения между кабинетами
+  ///
+  /// @param classroom1 Первый кабинет
+  /// @param classroom2 Второй кабинет
+  /// @return Время в минутах
+  static int getTravelTime(String classroom1, String classroom2) {
+    final distance = getDistance(classroom1, classroom2);
+    if (distance < 0) return -1;
+
+    // Базовое время: 1 минута на этаж + 30 секунд на каждый кабинет
+    return distance + (distance ~/ 2);
+  }
+
+  /// Получает общее время маршрута
+  ///
+  /// @param classrooms Список кабинетов маршрута
+  /// @return Общее время в минутах
+  static int getTotalRouteTime(List<String> classrooms) {
+    if (classrooms.length <= 1) return 0;
+
+    int totalTime = 0;
+    for (int i = 0; i < classrooms.length - 1; i++) {
+      final travelTime = getTravelTime(classrooms[i], classrooms[i + 1]);
+      if (travelTime >= 0) {
+        totalTime += travelTime;
+      }
     }
-    
-    if (laboratories < totalRooms * 0.2) {
-      recommendations.add('Рекомендуется увеличить количество лабораторий');
+
+    return totalTime;
+  }
+
+  /// Получает рекомендации по выбору кабинета
+  ///
+  /// @param requirements Требования к кабинету
+  /// @param availableClassrooms Доступные кабинеты
+  /// @return Список подходящих кабинетов с оценками
+  static List<ClassroomRecommendation> getRecommendations(
+    ClassroomRequirements requirements,
+    List<String> availableClassrooms,
+  ) {
+    final recommendations = <ClassroomRecommendation>[];
+
+    for (final classroom in availableClassrooms) {
+      final info = getRoomLocationInfo(classroom);
+      if (info == null) continue;
+
+      int score = 0;
+      final reasons = <String>[];
+
+      // Проверка вместимости
+      final capacity = getRecommendedCapacity(classroom);
+      if (capacity >= requirements.minCapacity) {
+        score += 10;
+        reasons.add('Вместимость: $capacity мест');
+      }
+
+      // Проверка доступности
+      if (requirements.needsAccessibility && isAccessible(classroom)) {
+        score += 15;
+        reasons.add('Доступен для маломобильных');
+      }
+
+      // Проверка типа
+      if (requirements.preferredTypes.contains(getClassroomType(classroom))) {
+        score += 5;
+        reasons.add('Подходящий тип: ${getClassroomType(classroom)}');
+      }
+
+      // Проверка этажа
+      if (requirements.preferredFloors.contains(info.floor)) {
+        score += 3;
+        reasons.add('Предпочтительный этаж: ${info.floor}');
+      }
+
+      // Проверка института
+      if (requirements.preferredInstitutes.contains(info.institute)) {
+        score += 7;
+        reasons.add('Предпочтительный институт: ${info.institute}');
+      }
+
+      if (score > 0) {
+        recommendations.add(ClassroomRecommendation(
+          classroom: classroom,
+          score: score,
+          reasons: reasons,
+        ));
+      }
     }
-    
-    if (regularRooms > totalRooms * 0.7) {
-      recommendations.add('Рекомендуется оптимизировать количество обычных аудиторий');
-    }
-    
+
+    recommendations.sort((a, b) => b.score.compareTo(a.score));
     return recommendations;
   }
-  
-  /// Получает прогноз загруженности на ближайшее время
-  static Map<String, double> getLoadForecast(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 12;
-    final forecast = <String, double>{};
-    
-    // Простой прогноз на следующие 4 часа
-    for (int i = 1; i <= 4; i++) {
-      final forecastHour = (hour + i) % 24;
-      final forecastTime = '${forecastHour.toString().padLeft(2, '0')}:00';
-      
-      // Базовая загруженность в зависимости от времени
-      double baseLoad = 0.3;
-      if (forecastHour >= 9 && forecastHour <= 11) baseLoad = 0.8;
-      if (forecastHour >= 14 && forecastHour <= 16) baseLoad = 0.9;
-      if (forecastHour >= 17 && forecastHour <= 19) baseLoad = 0.6;
-      
-      forecast[forecastTime] = baseLoad;
+
+  /// Получает загруженность этажа
+  ///
+  /// @param instituteDigit Номер института
+  /// @param floor Номер этажа
+  /// @param occupiedClassrooms Занятые кабинеты
+  /// @return Процент загруженности
+  static double getFloorOccupancy(
+    int instituteDigit,
+    int floor,
+    List<String> occupiedClassrooms,
+  ) {
+    final totalRooms = getFloorRange(instituteDigit, floor);
+    if (totalRooms.isEmpty) return 0.0;
+
+    int occupiedCount = 0;
+    for (final occupied in occupiedClassrooms) {
+      if (belongsToInstitute(occupied, instituteDigit) && getFloor(occupied) == floor) {
+        occupiedCount++;
+      }
     }
-    
-    return forecast;
+
+    return occupiedCount / totalRooms.length;
   }
-  
-  /// Получает аномалии в использовании кабинетов
-  static List<String> detectUsageAnomalies(List<String> allRooms, Map<String, int> roomUsage) {
-    final anomalies = <String>[];
-    
+
+  /// Получает свободные кабинеты
+  ///
+  /// @param instituteDigit Номер института
+  /// @param floor Номер этажа
+  /// @param occupiedClassrooms Занятые кабинеты
+  /// @return Список свободных кабинетов
+  static List<String> getAvailableRooms(
+    int instituteDigit,
+    int floor,
+    List<String> occupiedClassrooms,
+  ) {
+    final allRooms = getFloorRange(instituteDigit, floor);
+    final available = <String>[];
+
     for (final room in allRooms) {
-      final usage = roomUsage[room] ?? 0;
-      
-      // Если кабинет используется слишком мало или слишком много
-      if (usage < 2) {
-        anomalies.add('Кабинет $room используется недостаточно');
-      } else if (usage > 12) {
-        anomalies.add('Кабинет $room используется чрезмерно');
+      final roomStr = room.toString().padLeft(4, '0');
+      if (!occupiedClassrooms.contains(roomStr)) {
+        available.add(roomStr);
       }
     }
-    
-    return anomalies;
+
+    return available;
   }
-  
-  /// Получает эффективность использования кабинета
-  static double getRoomEfficiency(String classroomNumber, Map<String, int> usageData) {
-    final usage = usageData[classroomNumber] ?? 0;
-    final floor = determineFloor(classroomNumber);
-    
-    // Базовая эффективность
-    double efficiency = usage / 8.0; // 8 часов учебного дня
-    
-    // Модификаторы в зависимости от типа кабинета
-    if (isLectureHall(classroomNumber)) {
-      efficiency *= 1.2; // Лекционные аудитории эффективнее
-    } else if (isLaboratory(classroomNumber)) {
-      efficiency *= 1.1; // Лаборатории немного эффективнее
+
+  /// Получает лучшую доступную аудиторию
+  ///
+  /// @param requirements Требования
+  /// @param occupiedClassrooms Занятые кабинеты
+  /// @return Лучшая аудитория или null
+  static String? getBestAvailableAuditorium(
+    ClassroomRequirements requirements,
+    List<String> occupiedClassrooms,
+  ) {
+    final recommendations = getRecommendations(requirements, occupiedClassrooms);
+    final auditoriumRecommendations = recommendations
+        .where((r) => getClassroomType(r.classroom) == ClassroomType.auditorium)
+        .toList();
+
+    if (auditoriumRecommendations.isNotEmpty) {
+      return auditoriumRecommendations.first.classroom;
     }
-    
-    // Модификаторы в зависимости от этажа
-    if (floor == 1) {
-      efficiency *= 0.9; // Первый этаж менее эффективен
-    } else if (floor >= 3) {
-      efficiency *= 1.05; // Верхние этажи немного эффективнее
-    }
-    
-    return efficiency.clamp(0.0, 1.0);
+
+    return null;
   }
-  
-  /// Получает рекомендации по улучшению использования конкретного кабинета
-  static List<String> getRoomImprovementRecommendations(String classroomNumber) {
-    final recommendations = <String>[];
-    
-    final floor = determineFloor(classroomNumber);
-    final roomType = getRoomType(classroomNumber);
-    
-    if (floor == 1) {
-      recommendations.add('Рекомендуется улучшить звукоизоляцию на первом этаже');
+
+  /// Получает статистику по загруженности институтов
+  ///
+  /// @param occupiedClassrooms Занятые кабинеты
+  /// @return Статистика по институтам
+  static Map<int, InstituteOccupancyStats> getInstituteOccupancyStats(
+    List<String> occupiedClassrooms,
+  ) {
+    final stats = <int, InstituteOccupancyStats>{};
+
+    for (int institute = 1; institute <= 9; institute++) {
+      final instituteRooms = getInstituteRooms(institute);
+      int occupiedCount = 0;
+
+      for (final occupied in occupiedClassrooms) {
+        if (belongsToInstitute(occupied, institute)) {
+          occupiedCount++;
+        }
+      }
+
+      stats[institute] = InstituteOccupancyStats(
+        institute: institute,
+        totalRooms: instituteRooms.length,
+        occupiedRooms: occupiedCount,
+        occupancyRate: instituteRooms.isNotEmpty ? occupiedCount / instituteRooms.length : 0.0,
+      );
     }
-    
-    if (roomType == 'Лекционная аудитория') {
-      recommendations.add('Рекомендуется установить современное оборудование');
-    } else if (roomType == 'Лаборатория') {
-      recommendations.add('Рекомендуется обновить лабораторное оборудование');
+
+    return stats;
+  }
+
+  /// Получает прогноз загруженности
+  ///
+  /// @param historicalData Исторические данные о загруженности
+  /// @param timeOfDay Время дня
+  /// @param dayOfWeek День недели
+  /// @return Прогноз загруженности
+  static double predictOccupancy(
+    Map<String, List<OccupancyData>> historicalData,
+    DateTime timeOfDay,
+    int dayOfWeek,
+  ) {
+    // Простая эвристика на основе исторических данных
+    double totalOccupancy = 0.0;
+    int dataPoints = 0;
+
+    for (final entry in historicalData.entries) {
+      for (final data in entry.value) {
+        if (data.dayOfWeek == dayOfWeek) {
+          final hourDiff = (timeOfDay.hour - data.time.hour).abs();
+          if (hourDiff <= 1) { // Учитываем данные в пределах часа
+            totalOccupancy += data.occupancyRate;
+            dataPoints++;
+          }
+        }
+      }
     }
-    
-    if (isLectureHall(classroomNumber)) {
-      recommendations.add('Рекомендуется увеличить вместительность');
+
+    return dataPoints > 0 ? totalOccupancy / dataPoints : 0.5; // По умолчанию 50%
+  }
+
+  /// Получает оптимальное время для проведения мероприятия
+  ///
+  /// @param duration Длительность в часах
+  /// @param requirements Требования к кабинету
+  /// @param historicalData Исторические данные
+  /// @return Оптимальное время
+  static OptimalTimeSlot? getOptimalTimeSlot(
+    int duration,
+    ClassroomRequirements requirements,
+    Map<String, List<OccupancyData>> historicalData,
+  ) {
+    final now = DateTime.now();
+    final bestSlots = <OptimalTimeSlot>[];
+
+    // Проверяем слоты в течение следующей недели
+    for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final date = now.add(Duration(days: dayOffset));
+      final dayOfWeek = date.weekday;
+
+      for (int hour = 8; hour <= 20 - duration; hour++) {
+        final startTime = DateTime(date.year, date.month, date.day, hour);
+        final endTime = startTime.add(Duration(hours: duration));
+
+        double avgOccupancy = 0.0;
+        for (int h = hour; h < hour + duration; h++) {
+          final checkTime = DateTime(date.year, date.month, date.day, h);
+          avgOccupancy += predictOccupancy(historicalData, checkTime, dayOfWeek);
+        }
+        avgOccupancy /= duration;
+
+        bestSlots.add(OptimalTimeSlot(
+          startTime: startTime,
+          endTime: endTime,
+          expectedOccupancy: avgOccupancy,
+          score: 1.0 - avgOccupancy, // Чем ниже загруженность, тем лучше
+        ));
+      }
     }
-    
+
+    if (bestSlots.isEmpty) return null;
+
+    bestSlots.sort((a, b) => b.score.compareTo(a.score));
+    return bestSlots.first;
+  }
+
+  /// Получает информацию о здании
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Информация о здании
+  static BuildingInfo? getBuildingInfo(String classroomNumber) {
+    final institute = getInstitute(classroomNumber);
+    if (institute == null) return null;
+
+    // Определяем корпус по институту
+    String? building;
+    String? address;
+
+    switch (institute) {
+      case 'Институт экономики и управления':
+        building = 'Корпус А';
+        address = 'ул. Ленина, 58';
+        break;
+      case 'Институт информационных технологий и систем связи':
+        building = 'Корпус Б';
+        address = 'ул. Ленина, 66';
+        break;
+      case 'Институт заочного и открытого образования':
+        building = 'Корпус В';
+        address = 'ул. Ленина, 74';
+        break;
+      case 'Институт транспорта':
+        building = 'Корпус Г';
+        address = 'ул. Ленина, 82';
+        break;
+      case 'Институт гуманитарного образования':
+        building = 'Корпус Д';
+        address = 'ул. Ленина, 90';
+        break;
+      case 'Институт энергетики':
+        building = 'Корпус Е';
+        address = 'ул. Ленина, 98';
+        break;
+      case 'Институт машиностроения':
+        building = 'Корпус Ж';
+        address = 'ул. Ленина, 106';
+        break;
+      case 'Институт строительства и архитектуры':
+        building = 'Корпус З';
+        address = 'ул. Ленина, 114';
+        break;
+      case 'Институт дополнительного профессионального образования':
+        building = 'Корпус И';
+        address = 'ул. Ленина, 122';
+        break;
+    }
+
+    if (building == null || address == null) return null;
+
+    return BuildingInfo(
+      building: building,
+      address: address,
+      floors: 9,
+      hasElevator: true,
+      hasParking: true,
+    );
+  }
+
+  /// Получает координаты кабинета для навигации
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @return Координаты [x, y] или null
+  static List<double>? getClassroomCoordinates(String classroomNumber) {
+    final floor = getFloor(classroomNumber);
+    if (floor == null) return null;
+
+    final digits = classroomNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 3) return null;
+
+    final roomNumber = int.tryParse(digits.substring(2));
+    if (roomNumber == null) return null;
+
+    // Простая эвристика для распределения кабинетов по координатам
+    final x = (roomNumber % 10) * 10.0 + 5.0; // Позиция по коридору
+    final y = (roomNumber ~/ 10) * 8.0 + 4.0; // Глубина в здании
+
+    return <double>[x, y];
+  }
+
+  /// Получает координаты всех кабинетов на этаже
+  ///
+  /// @param instituteDigit Номер института
+  /// @param floor Номер этажа
+  /// @return Map с координатами кабинетов
+  static Map<String, List<double>> getFloorCoordinates(int instituteDigit, int floor) {
+    final coordinates = <String, List<double>>{};
+    final rooms = getFloorRange(instituteDigit, floor);
+
+    for (final room in rooms) {
+      final roomStr = room.toString().padLeft(4, '0');
+      final coords = getClassroomCoordinates(roomStr);
+      if (coords != null) {
+        coordinates[roomStr] = coords;
+      }
+    }
+
+    return coordinates;
+  }
+
+  /// Получает путь между кабинетами
+  ///
+  /// @param from Начальный кабинет
+  /// @param to Конечный кабинет
+  /// @return Список координат для пути
+  static List<List<double>> getPath(String from, String to) {
+    final fromCoords = getClassroomCoordinates(from);
+    final toCoords = getClassroomCoordinates(to);
+
+    if (fromCoords == null || toCoords == null) {
+      return <List<double>>[];
+    }
+
+    // Простая эвристика: прямая линия с учетом этажей
+    final path = <List<double>>[];
+    final fromFloor = getFloor(from);
+    final toFloor = getFloor(to);
+
+    if (fromFloor != toFloor) {
+      // Добавляем точки для перемещения между этажами
+      path.add(fromCoords);
+      path.add(<double>[fromCoords[0], fromCoords[1] + 20.0]); // Выход на лестницу
+      path.add(<double>[toCoords[0], toCoords[1] + 20.0]); // Вход с лестницы
+    } else {
+      path.add(fromCoords);
+    }
+
+    path.add(toCoords);
+    return path;
+  }
+
+  /// Получает длину пути
+  ///
+  /// @param path Список координат пути
+  /// @return Длина пути в условных единицах
+  static double getPathLength(List<List<double>> path) {
+    if (path.length < 2) return 0.0;
+
+    double totalLength = 0.0;
+    for (int i = 0; i < path.length - 1; i++) {
+      final dx = path[i + 1][0] - path[i][0];
+      final dy = path[i + 1][1] - path[i][1];
+      totalLength += (dx * dx + dy * dy);
+    }
+
+    return totalLength;
+  }
+
+  /// Получает оптимальный путь по нескольким кабинетам
+  ///
+  /// @param classrooms Список кабинетов для посещения
+  /// @return Оптимальный путь
+  static List<List<double>> getOptimalPath(List<String> classrooms) {
+    if (classrooms.length <= 1) {
+      return <List<double>>[];
+    }
+
+    final optimalRoute = getOptimalRoute(classrooms);
+    final fullPath = <List<double>>[];
+
+    for (int i = 0; i < optimalRoute.length - 1; i++) {
+      final segmentPath = getPath(optimalRoute[i], optimalRoute[i + 1]);
+      if (i > 0) {
+        // Убираем дублирующую точку
+        segmentPath.removeAt(0);
+      }
+      fullPath.addAll(segmentPath);
+    }
+
+    return fullPath;
+  }
+
+  /// Получает время пути
+  ///
+  /// @param path Список координат пути
+  /// @return Время в минутах
+  static int getPathTime(List<List<double>> path) {
+    final length = getPathLength(path);
+    // Скорость движения: 10 условных единиц в минуту
+    return (length / 10).ceil();
+  }
+
+  /// Получает информацию о навигации
+  ///
+  /// @param from Начальный кабинет
+  /// @param to Конечный кабинет
+  /// @return Информация о навигации
+  static NavigationInfo? getNavigationInfo(String from, String to) {
+    final path = getPath(from, to);
+    if (path.isEmpty) return null;
+
+    final distance = getPathLength(path);
+    final time = getPathTime(path);
+    final fromFloor = getFloor(from);
+    final toFloor = getFloor(to);
+
+    return NavigationInfo(
+      from: from,
+      to: to,
+      path: path,
+      distance: distance,
+      estimatedTime: time,
+      floorChanges: (fromFloor != toFloor) ? 1 : 0,
+    );
+  }
+
+  /// Проверяет доступность кабинета в указанное время
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @param startTime Время начала
+  /// @param endTime Время окончания
+  /// @param schedule Расписание занятий
+  /// @return true если кабинет свободен
+  static bool isClassroomAvailable(
+    String classroomNumber,
+    DateTime startTime,
+    DateTime endTime,
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final entries = schedule[classroomNumber];
+    if (entries == null || entries.isEmpty) return true;
+
+    for (final entry in entries) {
+      // Проверяем пересечение временных интервалов
+      if (startTime.isBefore(entry.endTime) && endTime.isAfter(entry.startTime)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /// Получает свободные слоты для кабинета
+  ///
+  /// @param classroomNumber Номер кабинета
+  /// @param date Дата
+  /// @param schedule Расписание
+  /// @param duration Длительность в минутах
+  /// @return Список свободных слотов
+  static List<TimeSlot> getAvailableTimeSlots(
+    String classroomNumber,
+    DateTime date,
+    Map<String, List<ScheduleEntry>> schedule,
+    int duration,
+  ) {
+    final slots = <TimeSlot>[];
+    final entries = schedule[classroomNumber] ?? <ScheduleEntry>[];
+
+    // Рабочее время: 8:00 - 20:00
+    final workStart = DateTime(date.year, date.month, date.day, 8);
+    final workEnd = DateTime(date.year, date.month, date.day, 20);
+
+    // Сортируем записи по времени начала
+    final sortedEntries = List<ScheduleEntry>.from(entries);
+    sortedEntries.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    DateTime currentTime = workStart;
+
+    for (final entry in sortedEntries) {
+      // Проверяем свободное время до текущей записи
+      if (currentTime.isBefore(entry.startTime)) {
+        final availableDuration = entry.startTime.difference(currentTime).inMinutes;
+        if (availableDuration >= duration) {
+          slots.add(TimeSlot(
+            startTime: currentTime,
+            endTime: entry.startTime,
+            availableDuration: availableDuration,
+          ));
+        }
+      }
+      currentTime = currentTime.isAfter(entry.endTime) ? currentTime : entry.endTime;
+    }
+
+    // Проверяем время после последней записи
+    if (currentTime.isBefore(workEnd)) {
+      final availableDuration = workEnd.difference(currentTime).inMinutes;
+      if (availableDuration >= duration) {
+        slots.add(TimeSlot(
+          startTime: currentTime,
+          endTime: workEnd,
+          availableDuration: availableDuration,
+        ));
+      }
+    }
+
+    return slots;
+  }
+
+  /// Получает лучшие свободные слоты для нескольких кабинетов
+  ///
+  /// @param classroomNumbers Список кабинетов
+  /// @param date Дата
+  /// @param schedule Расписание
+  /// @param duration Длительность в минутах
+  /// @return Список лучших слотов
+  static List<BestTimeSlot> getBestAvailableSlots(
+    List<String> classroomNumbers,
+    DateTime date,
+    Map<String, List<ScheduleEntry>> schedule,
+    int duration,
+  ) {
+    final allSlots = <BestTimeSlot>[];
+
+    for (final classroom in classroomNumbers) {
+      final slots = getAvailableTimeSlots(classroom, date, schedule, duration);
+      for (final slot in slots) {
+        allSlots.add(BestTimeSlot(
+          classroom: classroom,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          score: _calculateSlotScore(slot, classroom),
+        ));
+      }
+    }
+
+    // Сортируем по оценке
+    allSlots.sort((a, b) => b.score.compareTo(a.score));
+    return allSlots;
+  }
+
+  /// Вычисляет оценку для временного слота
+  static double _calculateSlotScore(TimeSlot slot, String classroom) {
+    double score = 100.0;
+
+    // Предпочтительное время: 9:00 - 17:00
+    final hour = slot.startTime.hour;
+    if (hour < 9 || hour > 17) {
+      score -= 20.0;
+    }
+
+    // Предпочтительные дни: вторник - четверг
+    final dayOfWeek = slot.startTime.weekday;
+    if (dayOfWeek == DateTime.monday || dayOfWeek == DateTime.friday) {
+      score -= 10.0;
+    }
+
+    // Предпочтительные этажи: 2-4
+    final floor = getFloor(classroom);
+    if (floor != null && (floor < 2 || floor > 4)) {
+      score -= 5.0;
+    }
+
+    return score;
+  }
+
+  /// Получает рекомендации по расписанию
+  ///
+  /// @param requirements Требования к занятию
+  /// @param date Дата
+  /// @param schedule Расписание
+  /// @return Список рекомендаций
+  static List<ScheduleRecommendation> getScheduleRecommendations(
+    ScheduleRequirements requirements,
+    DateTime date,
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final recommendations = <ScheduleRecommendation>[];
+    final bestSlots = getBestAvailableSlots(
+      requirements.preferredClassrooms,
+      date,
+      schedule,
+      requirements.duration,
+    );
+
+    for (final slot in bestSlots) {
+      final info = getRoomLocationInfo(slot.classroom);
+      if (info == null) continue;
+
+      // Проверяем соответствие требованиям
+      bool matchesRequirements = true;
+      final reasons = <String>[];
+
+      if (requirements.minCapacity > 0) {
+        final capacity = getRecommendedCapacity(slot.classroom);
+        if (capacity < requirements.minCapacity) {
+          matchesRequirements = false;
+        } else {
+          reasons.add('Вместимость: $capacity мест');
+        }
+      }
+
+      if (requirements.needsAccessibility && !isAccessible(slot.classroom)) {
+        matchesRequirements = false;
+      } else if (requirements.needsAccessibility) {
+        reasons.add('Доступен для маломобильных');
+      }
+
+      if (requirements.preferredTypes.isNotEmpty &&
+          !requirements.preferredTypes.contains(getClassroomType(slot.classroom))) {
+        matchesRequirements = false;
+      } else if (requirements.preferredTypes.isNotEmpty) {
+        reasons.add('Тип: ${getClassroomType(slot.classroom)}');
+      }
+
+      if (matchesRequirements) {
+        recommendations.add(ScheduleRecommendation(
+          classroom: slot.classroom,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          score: slot.score,
+          reasons: reasons,
+        ));
+      }
+    }
+
     return recommendations;
   }
-  
-  /// Получает сравнительную статистику по корпусам
-  static Map<int, Map<String, dynamic>> getBuildingComparison(List<String> allRooms) {
-    final comparison = <int, Map<String, dynamic>>{};
-    
-    for (int building = 1; building <= 9; building++) {
-      final buildingRooms = allRooms.where((room) {
-        final digitsOnly = room.replaceAll(RegExp(r'[^0-9]'), '');
-        if (digitsOnly.isEmpty) return false;
-        return int.tryParse(digitsOnly[0]) == building;
-      }).toList();
-      
-      comparison[building] = {
-        'totalRooms': buildingRooms.length,
-        'lectureHalls': buildingRooms.where(isLectureHall).length,
-        'laboratories': buildingRooms.where(isLaboratory).length,
-        'averageFloor': buildingRooms.isEmpty ? 0 : 
-          buildingRooms.map(determineFloor).reduce((a, b) => a + b) / buildingRooms.length,
-        'efficiency': buildingRooms.isEmpty ? 0.0 : 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0,
-      };
+
+  /// Получает конфликтующие занятия
+  ///
+  /// @param schedule Расписание
+  /// @return Список конфликтов
+  static List<ScheduleConflict> getScheduleConflicts(
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final conflicts = <ScheduleConflict>[];
+
+    for (final entries in schedule.values) {
+      for (int i = 0; i < entries.length; i++) {
+        for (int j = i + 1; j < entries.length; j++) {
+          final entry1 = entries[i];
+          final entry2 = entries[j];
+
+          // Проверяем пересечение времени
+          if (entry1.startTime.isBefore(entry2.endTime) &&
+              entry1.endTime.isAfter(entry2.startTime)) {
+            conflicts.add(ScheduleConflict(
+              classroom: schedule.keys.firstWhere(
+                (key) => schedule[key]!.contains(entry1),
+                orElse: () => '',
+              ),
+              entry1: entry1,
+              entry2: entry2,
+              conflictType: _getConflictType(entry1, entry2),
+            ));
+          }
+        }
+      }
     }
-    
-    return comparison;
+
+    return conflicts;
   }
-  
-  /// Получает тренды использования кабинетов
-  static Map<String, List<double>> getUsageTrends(String classroomNumber) {
-    final trends = <String, List<double>>{};
-    
-    // Генерируем простые тренды за неделю
-    final days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    for (final day in days) {
-      trends[day] = [
-        0.3 + (DateTime.now().millisecondsSinceEpoch % 50) / 100.0, // Утро
-        0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0, // День
-        0.5 + (DateTime.now().millisecondsSinceEpoch % 40) / 100.0, // Вечер
-      ];
+
+  /// Определяет тип конфликта
+  static ScheduleConflictType _getConflictType(
+    ScheduleEntry entry1,
+    ScheduleEntry entry2,
+  ) {
+    if (entry1.group == entry2.group) {
+      return ScheduleConflictType.sameGroup;
+    } else if (entry1.teacher == entry2.teacher) {
+      return ScheduleConflictType.sameTeacher;
+    } else {
+      return ScheduleConflictType.overlappingTime;
     }
-    
-    return trends;
   }
-  
-  /// Получает прогноз потребности в кабинетах
-  static Map<String, int> getRoomDemandForecast(String currentTime) {
-    final hour = int.tryParse(currentTime.split(':')[0]) ?? 12;
-    final forecast = <String, int>{};
-    
-    // Простой прогноз на разные типы кабинетов
-    final baseDemand = 10;
-    
-    forecast['Лекционная аудитория'] = baseDemand + (hour >= 9 && hour <= 11 ? 5 : 0);
-    forecast['Лаборатория'] = baseDemand + (hour >= 14 && hour <= 16 ? 3 : 0);
-    forecast['Аудитория'] = baseDemand + (hour >= 10 && hour <= 17 ? 2 : 0);
-    
-    return forecast;
-  }
-  
-  /// Получает оптимальное расписание для кабинета
-  static List<Map<String, String>> getOptimalSchedule(String classroomNumber) {
-    final schedule = <Map<String, String>>[];
-    
-    // Генерируем оптимальное расписание на день
-    final pairTimes = [
-      '8:00-9:30',
-      '9:40-11:10',
-      '11:20-12:50',
-      '13:30-15:00',
-      '15:10-16:40',
-      '16:50-18:20',
-      '18:30-20:00',
-    ];
-    
-    for (final time in pairTimes) {
-      schedule.add({
-        'time': time,
-        'subject': 'Оптимальный предмет',
-        'teacher': 'Оптимальный преподаватель',
-        'group': 'Оптимальная группа',
-      });
+
+  /// Получает оптимальное расписание
+  ///
+  /// @param requirements Список требований к занятиям
+  /// @param availableClassrooms Доступные кабинеты
+  /// @param existingSchedule Существующее расписание
+  /// @return Оптимальное расписание
+  static Map<String, List<ScheduleEntry>> getOptimalSchedule(
+    List<ScheduleRequirements> requirements,
+    List<String> availableClassrooms,
+    Map<String, List<ScheduleEntry>> existingSchedule,
+  ) {
+    final optimalSchedule = <String, List<ScheduleEntry>>{};
+    final schedule = Map<String, List<ScheduleEntry>>.from(existingSchedule);
+
+    // Сортируем требования по приоритету
+    final sortedRequirements = List<ScheduleRequirements>.from(requirements);
+    sortedRequirements.sort((a, b) => b.priority.compareTo(a.priority));
+
+    for (final req in sortedRequirements) {
+      // Ищем лучшие слоты для каждого требования
+      final date = req.date ?? DateTime.now();
+      final recommendations = getScheduleRecommendations(req, date, schedule);
+
+      if (recommendations.isNotEmpty) {
+        final bestRec = recommendations.first;
+        final entry = ScheduleEntry(
+          group: req.group,
+          teacher: req.teacher,
+          subject: req.subject,
+          classroom: bestRec.classroom,
+          startTime: bestRec.startTime,
+          endTime: bestRec.endTime,
+        );
+
+        schedule.putIfAbsent(bestRec.classroom, () => <ScheduleEntry>[]);
+        schedule[bestRec.classroom]!.add(entry);
+      }
     }
-    
+
     return schedule;
   }
-  
-  /// Получает метрики качества использования кабинетов
-  static Map<String, double> getQualityMetrics(List<String> allRooms) {
-    final metrics = <String, double>{};
-    
-    // Расчет метрик
-    final totalRooms = allRooms.length;
-    final lectureHalls = allRooms.where(isLectureHall).length;
-    final laboratories = allRooms.where(isLaboratory).length;
-    
-    metrics['utilizationRate'] = 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0;
-    metrics['satisfactionRate'] = 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0;
-    metrics['efficiencyRate'] = 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0;
-    metrics['availabilityRate'] = 0.6 + (DateTime.now().millisecondsSinceEpoch % 40) / 100.0;
-    
-    return metrics;
+
+  /// Получает статистику использования кабинетов
+  ///
+  /// @param schedule Расписание
+  /// @param period Период анализа
+  /// @return Статистика использования
+  static ClassroomUsageStats getUsageStats(
+    Map<String, List<ScheduleEntry>> schedule,
+    AnalysisPeriod period,
+  ) {
+    final now = DateTime.now();
+    final startDate = _getStartDate(now, period);
+    final endDate = _getEndDate(now, period);
+
+    final usageByClassroom = <String, int>{};
+    final usageByType = <ClassroomType, int>{};
+    final usageByFloor = <int, int>{};
+    final usageByInstitute = <String, int>{};
+    int totalUsage = 0;
+
+    for (final entry in schedule.values.expand((e) => e)) {
+      if (entry.startTime.isAfter(startDate) && entry.startTime.isBefore(endDate)) {
+        usageByClassroom[entry.classroom] =
+            (usageByClassroom[entry.classroom] ?? 0) + 1;
+
+        final type = getClassroomType(entry.classroom);
+        usageByType[type] = (usageByType[type] ?? 0) + 1;
+
+        final floor = getFloor(entry.classroom);
+        if (floor != null) {
+          usageByFloor[floor] = (usageByFloor[floor] ?? 0) + 1;
+        }
+
+        final institute = getInstitute(entry.classroom);
+        if (institute != null) {
+          usageByInstitute[institute] = (usageByInstitute[institute] ?? 0) + 1;
+        }
+
+        totalUsage++;
+      }
+    }
+
+    return ClassroomUsageStats(
+      period: period,
+      totalUsage: totalUsage,
+      usageByClassroom: usageByClassroom,
+      usageByType: usageByType,
+      usageByFloor: usageByFloor,
+      usageByInstitute: usageByInstitute,
+    );
   }
-  
-  /// Получает рекомендации по распределению кабинетов
-  static Map<String, List<String>> getRoomDistributionRecommendations(List<String> allRooms) {
-    final recommendations = <String, List<String>>{};
-    
-    // Анализируем текущее распределение
-    final buildings = <int, List<String>>{};
-    for (final room in allRooms) {
-      final digitsOnly = room.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digitsOnly.isNotEmpty) {
-        final building = int.tryParse(digitsOnly[0]) ?? 1;
-        buildings.putIfAbsent(building, () => []).add(room);
+
+  /// Получает начальную дату периода
+  static DateTime _getStartDate(DateTime now, AnalysisPeriod period) {
+    switch (period) {
+      case AnalysisPeriod.day:
+        return DateTime(now.year, now.month, now.day);
+      case AnalysisPeriod.week:
+        return now.subtract(Duration(days: now.weekday - 1));
+      case AnalysisPeriod.month:
+        return DateTime(now.year, now.month, 1);
+      case AnalysisPeriod.semester:
+        // Предполагаем семестр с сентября по январь и с февраля по июнь
+        if (now.month >= 2 && now.month <= 6) {
+          return DateTime(now.year, 2, 1);
+        } else {
+          return DateTime(now.year, 9, 1);
+        }
+      case AnalysisPeriod.year:
+        return DateTime(now.year, 1, 1);
+    }
+  }
+
+  /// Получает конечную дату периода
+  static DateTime _getEndDate(DateTime now, AnalysisPeriod period) {
+    switch (period) {
+      case AnalysisPeriod.day:
+        return DateTime(now.year, now.month, now.day, 23, 59, 59);
+      case AnalysisPeriod.week:
+        return now.add(Duration(days: 7 - now.weekday));
+      case AnalysisPeriod.month:
+        return DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      case AnalysisPeriod.semester:
+        if (now.month >= 2 && now.month <= 6) {
+          return DateTime(now.year, 6, 30, 23, 59, 59);
+        } else {
+          return DateTime(now.year, 1, 31, 23, 59, 59);
+        }
+      case AnalysisPeriod.year:
+        return DateTime(now.year, 12, 31, 23, 59, 59);
+    }
+  }
+
+  /// Получает прогноз использования кабинетов
+  ///
+  /// @param historicalData Исторические данные
+  /// @param futurePeriod Будущий период
+  /// @return Прогноз использования
+  static Map<String, double> predictUsage(
+    Map<String, ClassroomUsageStats> historicalData,
+    AnalysisPeriod futurePeriod,
+  ) {
+    final predictions = <String, double>{};
+
+    // Простая эвристика: среднее значение за предыдущие периоды
+    for (final entry in historicalData.entries) {
+      double totalUsage = 0.0;
+      int dataPoints = 0;
+
+      for (final stats in historicalData.values) {
+        totalUsage += stats.totalUsage.toDouble();
+        dataPoints++;
+      }
+
+      if (dataPoints > 0) {
+        predictions[entry.key] = totalUsage / dataPoints;
       }
     }
-    
-    // Генерируем рекомендации
-    for (final entry in buildings.entries) {
-      final building = entry.key;
-      final rooms = entry.value;
-      
-      recommendations['Корпус $building'] = [];
-      
-      if (rooms.length < 10) {
-        recommendations['Корпус $building']!.add('Увеличить количество кабинетов');
-      } else if (rooms.length > 50) {
-        recommendations['Корпус $building']!.add('Оптимизировать использование кабинетов');
-      }
-      
-      final lectureHalls = rooms.where(isLectureHall).length;
-      if (lectureHalls < rooms.length * 0.1) {
-        recommendations['Корпус $building']!.add('Добавить лекционные аудитории');
+
+    return predictions;
+  }
+
+  /// Получает рекомендации по оптимизации использования
+  ///
+  /// @param stats Статистика использования
+  /// @return Список рекомендаций
+  static List<OptimizationRecommendation> getOptimizationRecommendations(
+    ClassroomUsageStats stats,
+  ) {
+    final recommendations = <OptimizationRecommendation>[];
+
+    // Находим малоиспользуемые кабинеты
+    final avgUsage = stats.totalUsage / stats.usageByClassroom.length;
+    for (final entry in stats.usageByClassroom.entries) {
+      if (entry.value < avgUsage * 0.5) {
+        recommendations.add(OptimizationRecommendation(
+          type: OptimizationType.underutilized,
+          classroom: entry.key,
+          description: 'Кабинет используется реже среднего на 50%',
+          potentialSavings: _calculatePotentialSavings(entry.value, avgUsage),
+        ));
       }
     }
-    
+
+    // Находим перегруженные типы кабинетов
+    for (final entry in stats.usageByType.entries) {
+      final typeUsage = entry.value;
+      final totalTypeUsage = stats.usageByType.values.fold(0, (a, b) => a + b);
+      final typePercentage = typeUsage / totalTypeUsage;
+
+      if (typePercentage > 0.6) {
+        recommendations.add(OptimizationRecommendation(
+          type: OptimizationType.overloadedType,
+          classroom: entry.key.toString(),
+          description: 'Тип кабинетов ${entry.key} используется более 60% времени',
+          potentialSavings: 0.0,
+        ));
+      }
+    }
+
     return recommendations;
   }
-  
-  /// Получает анализ загруженности по времени
-  static Map<String, Map<String, double>> getTimeBasedLoadAnalysis(List<String> allRooms) {
-    final analysis = <String, Map<String, double>>{};
+
+  /// Рассчитывает потенциальную экономию
+  static double _calculatePotentialSavings(int currentUsage, double avgUsage) {
+    return (avgUsage - currentUsage) / avgUsage * 100.0;
+  }
+
+  /// Получает отчет об использовании кабинетов
+  ///
+  /// @param stats Статистика использования
+  /// @return Отчет об использовании
+  static UsageReport generateUsageReport(ClassroomUsageStats stats) {
+    final recommendations = getOptimizationRecommendations(stats);
+    final topUsedClassrooms = stats.usageByClassroom.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return UsageReport(
+      period: stats.period,
+      totalUsage: stats.totalUsage,
+      topUsedClassrooms: topUsedClassrooms.take(10).toList(),
+      usageByType: stats.usageByType,
+      usageByFloor: stats.usageByFloor,
+      usageByInstitute: stats.usageByInstitute,
+      recommendations: recommendations,
+      generatedAt: DateTime.now(),
+    );
+  }
+
+  /// Экспортирует отчет в CSV
+  ///
+  /// @param report Отчет об использовании
+  /// @return CSV строка
+  static String exportToCSV(UsageReport report) {
+    final buffer = StringBuffer();
     
-    // Анализ загруженности по часам
-    for (int hour = 8; hour <= 20; hour++) {
-      final timeSlot = '${hour.toString().padLeft(2, '0')}:00';
-      analysis[timeSlot] = {
-        'load': 0.3 + (hour >= 9 && hour <= 11 ? 0.5 : 0) + (hour >= 14 && hour <= 16 ? 0.3 : 0),
-        'efficiency': 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0,
-        'satisfaction': 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0,
-      };
+    // Заголовок
+    buffer.writeln('Период,Общее использование,Сгенерировано');
+    buffer.writeln('${report.period},${report.totalUsage},${report.generatedAt}');
+    buffer.writeln();
+
+    // Топ кабинетов
+    buffer.writeln('Топ кабинетов');
+    buffer.writeln('Кабинет,Использование');
+    for (final entry in report.topUsedClassrooms) {
+      buffer.writeln('${entry.key},${entry.value}');
     }
-    
-    return analysis;
-  }
-  
-  /// Получает прогноз оптимизации
-  static Map<String, dynamic> getOptimizationForecast(List<String> allRooms) {
-    final forecast = <String, dynamic>{};
-    
-    // Простой прогноз на месяц
-    forecast['expectedImprovement'] = 15.0 + (DateTime.now().millisecondsSinceEpoch % 20);
-    forecast['recommendedActions'] = [
-      'Оптимизировать расписание',
-      'Увеличить количество кабинетов',
-      'Улучшить систему бронирования',
-    ];
-    forecast['timeline'] = '1 месяц';
-    forecast['successProbability'] = 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0;
-    
-    return forecast;
-  }
-  
-  /// Получает комплексную оценку использования кабинетов
-  static Map<String, dynamic> getComprehensiveAssessment(List<String> allRooms) {
-    final assessment = <String, dynamic>{};
-    
-    // Общая оценка
-    assessment['overallScore'] = 7.5 + (DateTime.now().millisecondsSinceEpoch % 25) / 10.0;
-    assessment['totalRooms'] = allRooms.length;
-    assessment['utilizationRate'] = 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0;
-    
-    // Детальная оценка по категориям
-    assessment['categories'] = {
-      'efficiency': 8.0 + (DateTime.now().millisecondsSinceEpoch % 20) / 10.0,
-      'availability': 7.0 + (DateTime.now().millisecondsSinceEpoch % 30) / 10.0,
-      'satisfaction': 8.5 + (DateTime.now().millisecondsSinceEpoch % 15) / 10.0,
-      'maintenance': 7.5 + (DateTime.now().millisecondsSinceEpoch % 25) / 10.0,
-    };
-    
+    buffer.writeln();
+
+    // Использование по типам
+    buffer.writeln('Использование по типам');
+    buffer.writeln('Тип,Использование');
+    for (final entry in report.usageByType.entries) {
+      buffer.writeln('${entry.key},${entry.value}');
+    }
+    buffer.writeln();
+
+    // Использование по этажам
+    buffer.writeln('Использование по этажам');
+    buffer.writeln('Этаж,Использование');
+    for (final entry in report.usageByFloor.entries) {
+      buffer.writeln('${entry.key},${entry.value}');
+    }
+    buffer.writeln();
+
     // Рекомендации
-    assessment['recommendations'] = [
-      'Продолжить оптимизацию расписания',
-      'Рассмотреть возможность добавления новых кабинетов',
-      'Улучшить систему мониторинга использования',
-    ];
-    
-    return assessment;
-  }
-  
-  /// Получает сравнение с эталонными показателями
-  static Map<String, dynamic> getBenchmarkComparison(List<String> allRooms) {
-    final comparison = <String, dynamic>{};
-    
-    // Эталонные показатели
-    final benchmarks = {
-      'utilizationRate': 0.8,
-      'efficiencyRate': 0.85,
-      'satisfactionRate': 0.9,
-      'availabilityRate': 0.7,
-    };
-    
-    // Текущие показатели
-    final current = {
-      'utilizationRate': 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0,
-      'efficiencyRate': 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0,
-      'satisfactionRate': 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0,
-      'availabilityRate': 0.6 + (DateTime.now().millisecondsSinceEpoch % 40) / 100.0,
-    };
-    
-    comparison['benchmarks'] = benchmarks;
-    comparison['current'] = current;
-    comparison['gaps'] = {};
-    
-    for (final entry in benchmarks.entries) {
-      final metric = entry.key;
-      final benchmark = entry.value;
-      final currentValue = current[metric]!;
-      comparison['gaps'][metric] = benchmark - currentValue;
+    buffer.writeln('Рекомендации');
+    buffer.writeln('Тип,Кабинет,Описание,Потенциальная экономия');
+    for (final rec in report.recommendations) {
+      buffer.writeln('${rec.type},${rec.classroom},${rec.description},${rec.potentialSavings}');
     }
-    
-    return comparison;
+
+    return buffer.toString();
   }
-  
-  /// Получает стратегию улучшения
-  static Map<String, dynamic> getImprovementStrategy(List<String> allRooms) {
-    final strategy = <String, dynamic>{};
-    
-    strategy['shortTerm'] = [
-      'Оптимизировать текущее расписание',
-      'Улучшить систему бронирования',
-      'Провести аудит использования кабинетов',
-    ];
-    
-    strategy['mediumTerm'] = [
-      'Добавить новые кабинеты',
-      'Обновить оборудование',
-      'Внедрить систему мониторинга',
-    ];
-    
-    strategy['longTerm'] = [
-      'Строительство новых корпусов',
-      'Автоматизация управления',
-      'Интеграция с другими системами',
-    ];
-    
-    strategy['expectedResults'] = {
-      'utilizationImprovement': '20%',
-      'satisfactionImprovement': '15%',
-      'efficiencyImprovement': '25%',
-    };
-    
-    return strategy;
-  }
-  
-  /// Получает детальную статистику по корпусам
-  static Map<int, Map<String, dynamic>> getDetailedBuildingStatistics(List<String> allRooms) {
-    final statistics = <int, Map<String, dynamic>>{};
-    
-    for (int building = 1; building <= 9; building++) {
-      final buildingRooms = allRooms.where((room) {
-        final digitsOnly = room.replaceAll(RegExp(r'[^0-9]'), '');
-        if (digitsOnly.isEmpty) return false;
-        return int.tryParse(digitsOnly[0]) == building;
-      }).toList();
-      
-      if (buildingRooms.isNotEmpty) {
-        statistics[building] = {
-          'buildingName': getInstituteName(building),
-          'totalRooms': buildingRooms.length,
-          'lectureHalls': buildingRooms.where(isLectureHall).length,
-          'laboratories': buildingRooms.where(isLaboratory).length,
-          'regularRooms': buildingRooms.length - buildingRooms.where(isLectureHall).length - buildingRooms.where(isLaboratory).length,
-          'floorsUsed': buildingRooms.map(determineFloor).toSet().length,
-          'averageFloor': buildingRooms.map(determineFloor).reduce((a, b) => a + b) / buildingRooms.length,
-          'utilizationRate': 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0,
-          'efficiency': 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0,
-          'satisfaction': 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0,
-        };
+
+  /// Импортирует данные из CSV
+  ///
+  /// @param csvData CSV данные
+  /// @return Расписание занятий
+  static Map<String, List<ScheduleEntry>> importFromCSV(String csvData) {
+    final schedule = <String, List<ScheduleEntry>>{};
+    final lines = csvData.split('\n');
+
+    for (int i = 1; i < lines.length; i++) { // Пропускаем заголовок
+      final line = lines[i].trim();
+      if (line.isEmpty) continue;
+
+      final parts = line.split(',');
+      if (parts.length >= 6) {
+        final classroom = parts[0].trim();
+        final group = parts[1].trim();
+        final teacher = parts[2].trim();
+        final subject = parts[3].trim();
+        final startTime = DateTime.tryParse(parts[4].trim());
+        final endTime = DateTime.tryParse(parts[5].trim());
+
+        if (startTime != null && endTime != null) {
+          final entry = ScheduleEntry(
+            group: group,
+            teacher: teacher,
+            subject: subject,
+            classroom: classroom,
+            startTime: startTime,
+            endTime: endTime,
+          );
+
+          schedule.putIfAbsent(classroom, () => <ScheduleEntry>[]);
+          schedule[classroom]!.add(entry);
+        }
       }
     }
-    
-    return statistics;
+
+    return schedule;
   }
-  
-  /// Получает прогноз трендов использования
-  static Map<String, List<double>> getUsageForecastTrends() {
-    final trends = <String, List<double>>[];
-    
-    // Генерируем тренды на 12 месяцев
-    for (int month = 1; month <= 12; month++) {
-      trends.add([
-        0.7 + (month * 0.02) + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0, // Утилизация
-        0.75 + (month * 0.01) + (DateTime.now().millisecondsSinceEpoch % 15) / 100.0, // Эффективность
-        0.8 + (month * 0.015) + (DateTime.now().millisecondsSinceEpoch % 10) / 100.0, // Удовлетворенность
-      ]);
+
+  /// Валидирует расписание
+  ///
+  /// @param schedule Расписание
+  /// @return Список ошибок валидации
+  static List<ValidationError> validateSchedule(
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final errors = <ValidationError>[];
+
+    for (final entry in schedule.values.expand((e) => e)) {
+      // Проверка валидности кабинета
+      if (!isValidClassroom(entry.classroom)) {
+        errors.add(ValidationError(
+          type: ValidationErrorType.invalidClassroom,
+          message: 'Невалидный номер кабинета: ${entry.classroom}',
+          entry: entry,
+        ));
+      }
+
+      // Проверка корректности времени
+      if (entry.startTime.isAfter(entry.endTime)) {
+        errors.add(ValidationError(
+          type: ValidationErrorType.invalidTime,
+          message: 'Время начала позже времени окончания',
+          entry: entry,
+        ));
+      }
+
+      // Проверка рабочего времени
+      final hour = entry.startTime.hour;
+      if (hour < 8 || hour > 20) {
+        errors.add(ValidationError(
+          type: ValidationErrorType.outsideWorkingHours,
+          message: 'Занятие вне рабочего времени: ${hour}:00',
+          entry: entry,
+        ));
+      }
     }
-    
-    return {
-      'utilization': trends.map((t) => t[0]).toList(),
-      'efficiency': trends.map((t) => t[1]).toList(),
-      'satisfaction': trends.map((t) => t[2]).toList(),
-    };
+
+    return errors;
   }
-  
-  /// Получает рекомендации по автоматизации
-  static List<String> getAutomationRecommendations(List<String> allRooms) {
-    final recommendations = <String>[];
-    
-    final totalRooms = allRooms.length;
-    
-    if (totalRooms > 50) {
-      recommendations.add('Внедрить автоматическую систему бронирования');
-      recommendations.add('Установить датчики присутствия');
-      recommendations.add('Создать мобильное приложение для управления');
+
+  /// Получает сводку по расписанию
+  ///
+  /// @param schedule Расписание
+  /// @return Сводка по расписанию
+  static ScheduleSummary getScheduleSummary(
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    int totalEntries = 0;
+    final classrooms = <String>{};
+    final groups = <String>{};
+    final teachers = <String>{};
+    final subjects = <String>{};
+
+    for (final entry in schedule.values.expand((e) => e)) {
+      totalEntries++;
+      classrooms.add(entry.classroom);
+      groups.add(entry.group);
+      teachers.add(entry.teacher);
+      subjects.add(entry.subject);
     }
-    
-    if (totalRooms > 100) {
-      recommendations.add('Внедрить ИИ для оптимизации расписания');
-      recommendations.add('Создать систему прогнозирования загруженности');
-      recommendations.add('Автоматизировать отчетность');
+
+    return ScheduleSummary(
+      totalEntries: totalEntries,
+      uniqueClassrooms: classrooms.length,
+      uniqueGroups: groups.length,
+      uniqueTeachers: teachers.length,
+      uniqueSubjects: subjects.length,
+    );
+  }
+
+  /// Получает загруженность по дням недели
+  ///
+  /// @param schedule Расписание
+  /// @return Загруженность по дням
+  static Map<int, int> getWeeklyLoad(
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final weeklyLoad = <int, int>{};
+
+    for (final entry in schedule.values.expand((e) => e)) {
+      final dayOfWeek = entry.startTime.weekday;
+      weeklyLoad[dayOfWeek] = (weeklyLoad[dayOfWeek] ?? 0) + 1;
     }
-    
-    recommendations.add('Интегрировать с календарными системами');
-    recommendations.add('Создать систему уведомлений');
-    
-    return recommendations;
+
+    return weeklyLoad;
   }
-  
-  /// Получает анализ эффективности инвестиций
-  static Map<String, dynamic> getInvestmentEfficiencyAnalysis(List<String> allRooms) {
-    final analysis = <String, dynamic>{};
-    
-    final totalRooms = allRooms.length;
-    final currentEfficiency = 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0;
-    
-    analysis['currentROI'] = currentEfficiency * 100;
-    analysis['potentialROI'] = 85.0 + (DateTime.now().millisecondsSinceEpoch % 15);
-    analysis['improvementPotential'] = analysis['potentialROI'] - analysis['currentROI'];
-    
-    analysis['investments'] = {
-      'automation': {
-        'cost': totalRooms * 1000,
-        'expectedROI': 15.0,
-        'paybackPeriod': '18 месяцев',
-      },
-      'equipment': {
-        'cost': totalRooms * 500,
-        'expectedROI': 10.0,
-        'paybackPeriod': '24 месяца',
-      },
-      'software': {
-        'cost': 50000,
-        'expectedROI': 25.0,
-        'paybackPeriod': '12 месяцев',
-      },
-    };
-    
-    return analysis;
+
+  /// Получает загруженность по часам
+  ///
+  /// @param schedule Расписание
+  /// @return Загруженность по часам
+  static Map<int, int> getHourlyLoad(
+    Map<String, List<ScheduleEntry>> schedule,
+  ) {
+    final hourlyLoad = <int, int>{};
+
+    for (final entry in schedule.values.expand((e) => e)) {
+      final hour = entry.startTime.hour;
+      hourlyLoad[hour] = (hourlyLoad[hour] ?? 0) + 1;
+    }
+
+    return hourlyLoad;
   }
-  
-  /// Получает план внедрения улучшений
-  static Map<String, dynamic> getImplementationPlan(List<String> allRooms) {
-    final plan = <String, dynamic>{};
-    
-    plan['phase1'] = {
-      'duration': '1 месяц',
-      'actions': [
-        'Аудит текущего состояния',
-        'Оптимизация расписания',
-        'Обучение персонала',
-      ],
-      'expectedResults': ['Увеличение утилизации на 5%'],
-    };
-    
-    plan['phase2'] = {
-      'duration': '3 месяца',
-      'actions': [
-        'Внедрение системы бронирования',
-        'Установка оборудования',
-        'Создание мобильного приложения',
-      ],
-      'expectedResults': ['Увеличение утилизации на 15%', 'Повышение удовлетворенности на 10%'],
-    };
-    
-    plan['phase3'] = {
-      'duration': '6 месяцев',
-      'actions': [
-        'Внедрение ИИ-оптимизации',
-        'Интеграция с другими системами',
-        'Автоматизация отчетности',
-      ],
-      'expectedResults': ['Увеличение утилизации на 25%', 'Полная автоматизация процессов'],
-    };
-    
-    return plan;
-  }
-  
-  /// Получает метрики успеха
-  static Map<String, double> getSuccessMetrics(List<String> allRooms) {
-    final metrics = <String, double>{};
-    
-    metrics['utilizationTarget'] = 0.85;
-    metrics['efficiencyTarget'] = 0.9;
-    metrics['satisfactionTarget'] = 0.95;
-    metrics['availabilityTarget'] = 0.8;
-    
-    metrics['currentUtilization'] = 0.75 + (DateTime.now().millisecondsSinceEpoch % 25) / 100.0;
-    metrics['currentEfficiency'] = 0.7 + (DateTime.now().millisecondsSinceEpoch % 30) / 100.0;
-    metrics['currentSatisfaction'] = 0.8 + (DateTime.now().millisecondsSinceEpoch % 20) / 100.0;
-    metrics['currentAvailability'] = 0.6 + (DateTime.now().millisecondsSinceEpoch % 40) / 100.0;
-    
-    return metrics;
-  }
-  
-  /// Получает финальный отчет
-  static Map<String, dynamic> getFinalReport(List<String> allRooms) {
-    final report = <String, dynamic>{};
-    
-    report['summary'] = {
-      'totalRooms': allRooms.length,
-      'overallScore': 7.5 + (DateTime.now().millisecondsSinceEpoch % 25) / 10.0,
-      'improvementPotential': 20.0 + (DateTime.now().millisecondsSinceEpoch % 15),
-      'recommendedInvestment': allRooms.length * 1500,
-    };
-    
-    report['keyFindings'] = [
-      'Требуется оптимизация расписания',
-      'Необходимо увеличить количество лекционных аудиторий',
-      'Рекомендуется внедрить систему автоматизации',
-    ];
-    
-    report['nextSteps'] = [
-      'Провести детальный аудит',
-      'Разработать план внедрения',
-      'Начать фазу 1 улучшений',
-    ];
-    
-    return report;
-  }
+}
+
+/// Информация о местоположении кабинета
+class RoomLocationInfo {
+  final String classroom;
+  final int? floor;
+  final String? institute;
+
+  const RoomLocationInfo({
+    required this.classroom,
+    this.floor,
+    this.institute,
+  });
+}
+
+/// Статистика по кабинетам
+class ClassroomStats {
+  final Map<int, int> instituteCounts;
+  final Map<int, int> floorCounts;
+  final int standardCount;
+  final int totalCount;
+
+  const ClassroomStats({
+    required this.instituteCounts,
+    required this.floorCounts,
+    required this.standardCount,
+    required this.totalCount,
+  });
+}
+
+/// Тип кабинета
+enum ClassroomType {
+  auditorium,
+  laboratory,
+  other,
+}
+
+/// Требования к кабинету
+class ClassroomRequirements {
+  final int minCapacity;
+  final bool needsAccessibility;
+  final List<ClassroomType> preferredTypes;
+  final List<int?> preferredFloors;
+  final List<String?> preferredInstitutes;
+
+  const ClassroomRequirements({
+    this.minCapacity = 0,
+    this.needsAccessibility = false,
+    this.preferredTypes = const [],
+    this.preferredFloors = const [],
+    this.preferredInstitutes = const [],
+  });
+}
+
+/// Рекомендация по кабинету
+class ClassroomRecommendation {
+  final String classroom;
+  final int score;
+  final List<String> reasons;
+
+  const ClassroomRecommendation({
+    required this.classroom,
+    required this.score,
+    required this.reasons,
+  });
+}
+
+/// Статистика загруженности института
+class InstituteOccupancyStats {
+  final int institute;
+  final int totalRooms;
+  final int occupiedRooms;
+  final double occupancyRate;
+
+  const InstituteOccupancyStats({
+    required this.institute,
+    required this.totalRooms,
+    required this.occupiedRooms,
+    required this.occupancyRate,
+  });
+}
+
+/// Данные о загруженности
+class OccupancyData {
+  final DateTime time;
+  final int dayOfWeek;
+  final double occupancyRate;
+
+  const OccupancyData({
+    required this.time,
+    required this.dayOfWeek,
+    required this.occupancyRate,
+  });
+}
+
+/// Оптимальный временной слот
+class OptimalTimeSlot {
+  final DateTime startTime;
+  final DateTime endTime;
+  final double expectedOccupancy;
+  final double score;
+
+  const OptimalTimeSlot({
+    required this.startTime,
+    required this.endTime,
+    required this.expectedOccupancy,
+    required this.score,
+  });
+}
+
+/// Информация о здании
+class BuildingInfo {
+  final String building;
+  final String address;
+  final int floors;
+  final bool hasElevator;
+  final bool hasParking;
+
+  const BuildingInfo({
+    required this.building,
+    required this.address,
+    required this.floors,
+    required this.hasElevator,
+    required this.hasParking,
+  });
+}
+
+/// Ближайший кабинет
+class NearestRoom {
+  final String classroom;
+  final int distance;
+
+  const NearestRoom({
+    required this.classroom,
+    required this.distance,
+  });
+}
+
+/// Запись в расписании
+class ScheduleEntry {
+  final String group;
+  final String teacher;
+  final String subject;
+  final String classroom;
+  final DateTime startTime;
+  final DateTime endTime;
+
+  const ScheduleEntry({
+    required this.group,
+    required this.teacher,
+    required this.subject,
+    required this.classroom,
+    required this.startTime,
+    required this.endTime,
+  });
+}
+
+/// Временной слот
+class TimeSlot {
+  final DateTime startTime;
+  final DateTime endTime;
+  final int availableDuration;
+
+  const TimeSlot({
+    required this.startTime,
+    required this.endTime,
+    required this.availableDuration,
+  });
+}
+
+/// Лучший временной слот
+class BestTimeSlot {
+  final String classroom;
+  final DateTime startTime;
+  final DateTime endTime;
+  final double score;
+
+  const BestTimeSlot({
+    required this.classroom,
+    required this.startTime,
+    required this.endTime,
+    required this.score,
+  });
+}
+
+/// Требования к расписанию
+class ScheduleRequirements {
+  final String group;
+  final String teacher;
+  final String subject;
+  final int duration;
+  final List<String> preferredClassrooms;
+  final int minCapacity;
+  final bool needsAccessibility;
+  final List<ClassroomType> preferredTypes;
+  final DateTime? date;
+  final int priority;
+
+  const ScheduleRequirements({
+    required this.group,
+    required this.teacher,
+    required this.subject,
+    required this.duration,
+    this.preferredClassrooms = const [],
+    this.minCapacity = 0,
+    this.needsAccessibility = false,
+    this.preferredTypes = const [],
+    this.date,
+    this.priority = 0,
+  });
+}
+
+/// Рекомендация по расписанию
+class ScheduleRecommendation {
+  final String classroom;
+  final DateTime startTime;
+  final DateTime endTime;
+  final double score;
+  final List<String> reasons;
+
+  const ScheduleRecommendation({
+    required this.classroom,
+    required this.startTime,
+    required this.endTime,
+    required this.score,
+    required this.reasons,
+  });
+}
+
+/// Тип конфликта в расписании
+enum ScheduleConflictType {
+  sameGroup,
+  sameTeacher,
+  overlappingTime,
+}
+
+/// Конфликт в расписании
+class ScheduleConflict {
+  final String classroom;
+  final ScheduleEntry entry1;
+  final ScheduleEntry entry2;
+  final ScheduleConflictType conflictType;
+
+  const ScheduleConflict({
+    required this.classroom,
+    required this.entry1,
+    required this.entry2,
+    required this.conflictType,
+  });
+}
+
+/// Период анализа
+enum AnalysisPeriod {
+  day,
+  week,
+  month,
+  semester,
+  year,
+}
+
+/// Статистика использования кабинетов
+class ClassroomUsageStats {
+  final AnalysisPeriod period;
+  final int totalUsage;
+  final Map<String, int> usageByClassroom;
+  final Map<ClassroomType, int> usageByType;
+  final Map<int, int> usageByFloor;
+  final Map<String, int> usageByInstitute;
+
+  const ClassroomUsageStats({
+    required this.period,
+    required this.totalUsage,
+    required this.usageByClassroom,
+    required this.usageByType,
+    required this.usageByFloor,
+    required this.usageByInstitute,
+  });
+}
+
+/// Тип оптимизации
+enum OptimizationType {
+  underutilized,
+  overloadedType,
+  inefficientScheduling,
+}
+
+/// Рекомендация по оптимизации
+class OptimizationRecommendation {
+  final OptimizationType type;
+  final String classroom;
+  final String description;
+  final double potentialSavings;
+
+  const OptimizationRecommendation({
+    required this.type,
+    required this.classroom,
+    required this.description,
+    required this.potentialSavings,
+  });
+}
+
+/// Отчет об использовании
+class UsageReport {
+  final AnalysisPeriod period;
+  final int totalUsage;
+  final List<MapEntry<String, int>> topUsedClassrooms;
+  final Map<ClassroomType, int> usageByType;
+  final Map<int, int> usageByFloor;
+  final Map<String, int> usageByInstitute;
+  final List<OptimizationRecommendation> recommendations;
+  final DateTime generatedAt;
+
+  const UsageReport({
+    required this.period,
+    required this.totalUsage,
+    required this.topUsedClassrooms,
+    required this.usageByType,
+    required this.usageByFloor,
+    required this.usageByInstitute,
+    required this.recommendations,
+    required this.generatedAt,
+  });
+}
+
+/// Тип ошибки валидации
+enum ValidationErrorType {
+  invalidClassroom,
+  invalidTime,
+  outsideWorkingHours,
+  duplicateBooking,
+}
+
+/// Ошибка валидации
+class ValidationError {
+  final ValidationErrorType type;
+  final String message;
+  final ScheduleEntry? entry;
+
+  const ValidationError({
+    required this.type,
+    required this.message,
+    this.entry,
+  });
+}
+
+/// Сводка по расписанию
+class ScheduleSummary {
+  final int totalEntries;
+  final int uniqueClassrooms;
+  final int uniqueGroups;
+  final int uniqueTeachers;
+  final int uniqueSubjects;
+
+  const ScheduleSummary({
+    required this.totalEntries,
+    required this.uniqueClassrooms,
+    required this.uniqueGroups,
+    required this.uniqueTeachers,
+    required this.uniqueSubjects,
+  });
+}
+
+/// Информация о навигации
+class NavigationInfo {
+  final String from;
+  final String to;
+  final List<List<double>> path;
+  final double distance;
+  final int estimatedTime;
+  final int floorChanges;
+
+  const NavigationInfo({
+    required this.from,
+    required this.to,
+    required this.path,
+    required this.distance,
+    required this.estimatedTime,
+    required this.floorChanges,
+  });
 }
