@@ -4,10 +4,7 @@ import '../../../../theme/app_tokens.dart';
 import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-  });
+  const LessonTile({super.key, required this.lesson});
 
   final Lesson lesson;
 
@@ -18,7 +15,10 @@ class LessonTile extends StatelessWidget {
     final isNoLesson = lesson.subject == 'Нет пар';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -39,10 +39,7 @@ class LessonTile extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: _ContentColumn(
-                lesson: lesson,
-                isNoLesson: isNoLesson,
-              ),
+              child: _ContentColumn(lesson: lesson, isNoLesson: isNoLesson),
             ),
           ],
         ),
@@ -111,10 +108,7 @@ class _TimeColumn extends StatelessWidget {
 }
 
 class _ContentColumn extends StatelessWidget {
-  const _ContentColumn({
-    required this.lesson,
-    required this.isNoLesson,
-  });
+  const _ContentColumn({required this.lesson, required this.isNoLesson});
 
   final Lesson lesson;
   final bool isNoLesson;
@@ -132,7 +126,7 @@ class _ContentColumn extends StatelessWidget {
           lesson.subject,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: isNoLesson 
+            color: isNoLesson
                 ? colorScheme.onSurfaceVariant.withOpacity(0.6)
                 : colorScheme.onSurface,
             fontStyle: isNoLesson ? FontStyle.italic : null,
@@ -140,18 +134,15 @@ class _ContentColumn extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         if (!isNoLesson) ...[
           const SizedBox(height: AppSpacing.sm),
-          
+
           // Badges
-          _BadgesSection(
-            isChange: lesson.isChange,
-            type: lesson.type,
-          ),
-          
+          _BadgesSection(isChange: lesson.isChange, type: lesson.type),
+
           const SizedBox(height: AppSpacing.sm),
-          
+
           // Metadata
           _MetadataSection(
             classroom: lesson.classroom,
@@ -166,10 +157,7 @@ class _ContentColumn extends StatelessWidget {
 }
 
 class _BadgesSection extends StatelessWidget {
-  const _BadgesSection({
-    required this.isChange,
-    required this.type,
-  });
+  const _BadgesSection({required this.isChange, required this.type});
 
   final bool isChange;
   final LessonType type;
@@ -201,7 +189,7 @@ class _BadgesSection extends StatelessWidget {
               ),
             ),
           ),
-        
+
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.sm,
@@ -240,7 +228,9 @@ class _MetadataSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locationText = _buildLocationText(classroom, building);
-    final teachersText = teacherNames.isNotEmpty ? teacherNames.join(', ') : null;
+    final teachersText = teacherNames.isNotEmpty
+        ? teacherNames.join(', ')
+        : null;
     final groupsText = groupNames.isNotEmpty ? groupNames.join(', ') : null;
 
     return Column(
@@ -266,11 +256,11 @@ class _MetadataSection extends StatelessWidget {
 
   String? _buildLocationText(String? classroom, String? building) {
     if (classroom == null || classroom.isEmpty) return null;
-    
+
     if (building != null && building.isNotEmpty) {
       return '$classroom, $building';
     }
-    
+
     return classroom;
   }
 }
