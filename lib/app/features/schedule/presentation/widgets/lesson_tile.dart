@@ -4,11 +4,7 @@ import '../../../../theme/app_tokens.dart';
 import '../../domain/lesson.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-    this.onTap,
-  });
+  const LessonTile({super.key, required this.lesson, this.onTap});
 
   final Lesson lesson;
   final VoidCallback? onTap;
@@ -17,9 +13,10 @@ class LessonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    final isNoLesson = lesson.subject == 'Нет пар' || 
-                      lesson.subject.toLowerCase().contains('нет пар');
+
+    final isNoLesson =
+        lesson.subject == 'Нет пар' ||
+        lesson.subject.toLowerCase().contains('нет пар');
     final showReplacementBadge = lesson.isChange && !isNoLesson;
 
     return Card(
@@ -27,12 +24,9 @@ class LessonTile extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
+        side: BorderSide(color: colorScheme.outline.withOpacity(0.2), width: 1),
       ),
-      color: isNoLesson 
+      color: isNoLesson
           ? colorScheme.surfaceVariant.withOpacity(0.5)
           : colorScheme.surface,
       child: InkWell(
@@ -53,7 +47,7 @@ class LessonTile extends StatelessWidget {
                       _formatTime(lesson.startTime),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isNoLesson 
+                        color: isNoLesson
                             ? colorScheme.onSurfaceVariant.withOpacity(0.6)
                             : colorScheme.onSurface,
                       ),
@@ -62,7 +56,7 @@ class LessonTile extends StatelessWidget {
                     Text(
                       _formatTime(lesson.endTime),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isNoLesson 
+                        color: isNoLesson
                             ? colorScheme.onSurfaceVariant.withOpacity(0.5)
                             : colorScheme.onSurfaceVariant,
                       ),
@@ -74,7 +68,7 @@ class LessonTile extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: isNoLesson 
+                        color: isNoLesson
                             ? colorScheme.outline.withOpacity(0.2)
                             : colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -82,7 +76,7 @@ class LessonTile extends StatelessWidget {
                       child: Text(
                         '${lesson.pairNumber} пара',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: isNoLesson 
+                          color: isNoLesson
                               ? colorScheme.onSurfaceVariant.withOpacity(0.7)
                               : colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -108,8 +102,10 @@ class LessonTile extends StatelessWidget {
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               fontStyle: isNoLesson ? FontStyle.italic : null,
-                              color: isNoLesson 
-                                  ? colorScheme.onSurfaceVariant.withOpacity(0.7)
+                              color: isNoLesson
+                                  ? colorScheme.onSurfaceVariant.withOpacity(
+                                      0.7,
+                                    )
                                   : colorScheme.onSurface,
                             ),
                             maxLines: 2,
@@ -141,7 +137,8 @@ class LessonTile extends StatelessWidget {
                                   ),
                                 ),
                               if (!isNoLesson) ...[
-                                if (showReplacementBadge) const SizedBox(height: 4),
+                                if (showReplacementBadge)
+                                  const SizedBox(height: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -172,23 +169,23 @@ class LessonTile extends StatelessWidget {
                       _buildMetadataSection(
                         context,
                         icon: Icons.location_on_outlined,
-                        text: lesson.classroom.isNotEmpty 
-                            ? lesson.building.isNotEmpty 
-                                ? '${lesson.classroom}, ${lesson.building}'
-                                : lesson.classroom
+                        text: lesson.classroom.isNotEmpty
+                            ? lesson.building.isNotEmpty
+                                  ? '${lesson.classroom}, ${lesson.building}'
+                                  : lesson.classroom
                             : null,
                       ),
                       _buildMetadataSection(
                         context,
                         icon: Icons.person_outline,
-                        text: lesson.teacherNames.isNotEmpty 
+                        text: lesson.teacherNames.isNotEmpty
                             ? lesson.teacherNames.join(', ')
                             : null,
                       ),
                       _buildMetadataSection(
                         context,
                         icon: Icons.group_outlined,
-                        text: lesson.groupNames.isNotEmpty 
+                        text: lesson.groupNames.isNotEmpty
                             ? lesson.groupNames.join(', ')
                             : null,
                       ),
@@ -209,10 +206,10 @@ class LessonTile extends StatelessWidget {
     required String? text,
   }) {
     if (text == null || text.isEmpty) return const SizedBox.shrink();
-    
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
