@@ -6,113 +6,88 @@ import '../../domain/lesson.dart';
 class LessonTile extends StatelessWidget {
   const LessonTile({
     required this.lesson,
-    required this.isLast,
-    required this.isFirst,
+    required this.startTime,
+    required this.endTime,
+    this.isCompact = false,
+    this.onTap,
     super.key,
   });
 
   final Lesson lesson;
-  final bool isLast;
-  final bool isFirst;
+  final String startTime;
+  final String endTime;
+  final bool isCompact;
+  final VoidCallback? onTap;
+
+  bool get _hasAnyMetadata =>
+      (lesson.classroom?.isNotEmpty == true) ||
+      lesson.teacherNames.isNotEmpty ||
+      lesson.groupNames.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    final isNoPairs = lesson.subject == 'Нет пар';
-
-    return Column(
-      children: [
-        IntrinsicHeight(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TimeBlock(
-                startTime: lesson.startTime,
-                endTime: lesson.endTime,
-                isFirst: isFirst,
-                isLast: isLast,
+              _TimeColumn(
+                startTime: startTime,
+                endTime: endTime,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: _ContentSection(lesson: lesson),
+                child: _LessonContent(lesson: lesson),
               ),
             ],
           ),
         ),
-        if (!isLast) const SizedBox(height: AppSpacing.sm),
-      ],
+      ),
     );
   }
 }
 
-class _TimeBlock extends StatelessWidget {
-  const _TimeBlock({
+class _TimeColumn extends StatelessWidget {
+  const _TimeColumn({
     required this.startTime,
     required this.endTime,
-    required this.isFirst,
-    required this.isLast,
   });
 
-  final DateTime startTime;
-  final DateTime endTime;
-  final bool isFirst;
-  final bool isLast;
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
+  final String startTime;
+  final String endTime;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (isFirst) _TimeLabel(text: _formatTime(startTime)),
-        Expanded(
-          child: Container(
-            width: AppSizes.lessonTimeColumnWidth,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.vertical(
-                top: isFirst ? const Radius.circular(AppRadius.md) : Radius.zero,
-                bottom: isLast ? const Radius.circular(AppRadius.md) : Radius.zero,
-              ),
+    return SizedBox(
+      width: AppSizes.lessonTimeColumnWidth,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            startTime,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ),
-        if (isLast) _TimeLabel(text: _formatTime(endTime)),
-      ],
-    );
-  }
-}
-
-class _TimeLabel extends StatelessWidget {
-  const _TimeLabel({
-    required this.text,
-  });
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: AppSizes.lessonTimeColumnWidth,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: AppSpacing.xs,
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.w500,
-        ),
+          Text(
+            endTime,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ContentSection extends StatelessWidget {
-  const _ContentSection({
+class _LessonContent extends StatelessWidget {
+  const _LessonContent({
     required this.lesson,
   });
 
@@ -127,45 +102,30 @@ class _ContentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNoPairs = lesson.subject == 'Нет пар';
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      lesson.subject,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (_hasAnyMetadata) const SizedBox(height: AppSpacing.xs),
-                    if (_hasAnyMetadata)
-                      _MetadataSection(lesson: lesson),
-                  ],
+              Text(
+                lesson.subject,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              if (!isNoPairs) const SizedBox(width: AppSpacing.sm),
-              if (!isNoPairs) _BadgesRow(lesson: lesson),
+              if (_hasAnyMetadata) const SizedBox(height: AppSpacing.xs),
+              if (_hasAnyMetadata)
+                _MetadataSection(lesson: lesson),
             ],
           ),
-        ],
-      ),
+        ),
+        if (!isNoPairs) const SizedBox(width: AppSpacing.sm),
+        if (!isNoPairs) _BadgesRow(lesson: lesson),
+      ],
     );
   }
 }
