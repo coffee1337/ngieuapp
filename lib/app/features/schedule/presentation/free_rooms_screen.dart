@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -91,7 +92,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
             duration: AppDurations.normal,
             curve: Curves.easeOut,
             alignment: Alignment.topCenter,
-            child: loader.isLoading
+            child: kDebugMode && loader.isLoading
                 ? LoadingBanner(loader: loader)
                 : const SizedBox.shrink(),
           ),
@@ -127,6 +128,10 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
         text: 'Выберите параметры\nи нажмите «Найти»',
         icon: Icons.search,
       );
+    }
+    final loader = ref.watch(backgroundLoaderProvider);
+    if (loader.isLoading) {
+      return FreeRoomsLoadingView(loader: kDebugMode ? loader : null);
     }
     final minDurationMinutes =
         _minDurationMinutes ??
@@ -166,6 +171,69 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
           itemBuilder: (_, i) => RoomCard(room: rooms[i]),
         );
       },
+    );
+  }
+}
+
+class FreeRoomsLoadingView extends StatelessWidget {
+  const FreeRoomsLoadingView({super.key, this.loader});
+
+  final BackgroundLoaderState? loader;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurfaceVariant;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              'Загружаем расписание',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Проверяем занятость аудиторий\n'
+              'и формируем список свободных',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: color),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            ClipRRect(
+              borderRadius: AppRadius.xsBr,
+              child: LinearProgressIndicator(
+                minHeight: 4,
+                value: loader?.progress,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            if (loader != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '${loader!.loaded}/${loader!.total}',
+                style: theme.textTheme.labelSmall?.copyWith(color: color),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
