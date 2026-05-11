@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../core/cache/hive_boxes.dart';
-import '../domain/week_type.dart';
+import 'package:ngieuapp/app/core/cache/hive_boxes.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 
 class WeekTypeCacheDataSource {
   static const _cacheKey = 'week_type_cache';

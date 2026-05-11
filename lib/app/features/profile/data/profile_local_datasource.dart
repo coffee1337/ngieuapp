@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../core/cache/hive_boxes.dart';
-import '../domain/student_identity.dart';
+import 'package:ngieuapp/app/core/cache/hive_boxes.dart';
+import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
 
 class ProfileLocalDataSource {
   static const _key = 'student_identity';

@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/network/providers.dart';
-import '../domain/news_repository.dart';
-import 'news_api_datasource.dart';
-import 'news_cache_datasource.dart';
-import 'news_parser.dart';
-import 'news_repository_impl.dart';
+import 'package:ngieuapp/app/core/network/providers.dart';
+import 'package:ngieuapp/app/features/news/data/news_api_datasource.dart';
+import 'package:ngieuapp/app/features/news/data/news_cache_datasource.dart';
+import 'package:ngieuapp/app/features/news/data/news_parser.dart';
+import 'package:ngieuapp/app/features/news/data/news_repository_impl.dart';
+import 'package:ngieuapp/app/features/news/domain/news_repository.dart';
 
 final newsParserProvider = Provider<NewsParser>((ref) {
   return NewsParser();

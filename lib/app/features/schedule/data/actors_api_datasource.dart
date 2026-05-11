@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 
 class ActorsApiDataSource {
   ActorsApiDataSource(this._dio);
@@ -34,9 +34,9 @@ class ActorsApiDataSource {
       cancelToken: ct,
     );
     final data = resp.data;
-    final List raw = switch (data) {
-      List l => l,
-      Map m when m['data'] is List => m['data'] as List,
+    final raw = switch (data) {
+      final List l => l,
+      final Map m when m['data'] is List => m['data'] as List,
       _ => const [],
     };
     return raw.whereType<Map<String, dynamic>>().map((j) {

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
-
-import '../domain/lesson.dart';
-import 'lesson_mapper.dart';
+import 'package:ngieuapp/app/features/schedule/data/lesson_mapper.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class ScheduleApiDataSource {
   ScheduleApiDataSource(this._dio);
@@ -14,10 +13,10 @@ class ScheduleApiDataSource {
       cancelToken: ct,
     );
     final data = resp.data;
-    final List raw = switch (data) {
-      List l => l,
-      Map m when m['data'] is List => m['data'] as List,
-      Map m when m['schedule'] is List => m['schedule'] as List,
+    final raw = switch (data) {
+      final List l => l,
+      final Map m when m['data'] is List => m['data'] as List,
+      final Map m when m['schedule'] is List => m['schedule'] as List,
       _ => const [],
     };
     return raw

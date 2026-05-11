@@ -1,8 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:ngieuapp/app/core/network/api_endpoints.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-
-import 'api_endpoints.dart';
 
 class DioClient {
   DioClient._();
@@ -39,7 +38,7 @@ class DioClient {
   static void _attachCommon(Dio dio) {
     if (kDebugMode) {
       dio.interceptors.add(
-        PrettyDioLogger(requestHeader: false, responseBody: false, error: true),
+        PrettyDioLogger(responseBody: false),
       );
     }
     dio.interceptors.add(

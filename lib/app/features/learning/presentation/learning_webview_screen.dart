@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import '../../../shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/core/network/api_endpoints.dart';
+import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 
 class LearningWebViewScreen extends StatefulWidget {
   const LearningWebViewScreen({super.key});
-  static const _initialUrl = 'https://ngiei.mcdir.ru/';
+  static const _initialUrl = ApiEndpoints.learningUrl;
 
   @override
   State<LearningWebViewScreen> createState() => _LearningWebViewScreenState();
@@ -79,12 +80,8 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 ),
                 initialSettings: InAppWebViewSettings(
                   transparentBackground: true,
-                  javaScriptEnabled: true,
-                  supportZoom: true,
                   useOnDownloadStart: true,
-                  thirdPartyCookiesEnabled: true,
                   useShouldOverrideUrlLoading: true,
-                  allowsBackForwardNavigationGestures: true,
                   userAgent:
                       'Mozilla/5.0 (Linux; Android 13) NGIEU-Mobile/1.0 Mobile Safari/537.36',
                 ),
@@ -104,7 +101,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   if (mounted) setState(() {});
                 },
                 onReceivedError: (_, request, error) {
-                  if (request.isForMainFrame == true) {
+                  if (request.isForMainFrame ?? false) {
                     setState(() {
                       _hasError = true;
                       _errorText = 'Ошибка: ${error.description}';
@@ -113,7 +110,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   _pullToRefresh.endRefreshing();
                 },
                 onReceivedHttpError: (_, request, response) {
-                  if (request.isForMainFrame == true &&
+                  if ((request.isForMainFrame ?? false) &&
                       (response.statusCode ?? 0) >= 500) {
                     setState(() {
                       _hasError = true;

@@ -1,7 +1,7 @@
-import '../domain/lesson.dart';
-import '../domain/schedule_repository.dart';
-import 'schedule_api_datasource.dart';
-import 'schedule_db_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
   ScheduleRepositoryImpl(this._api, this._db);

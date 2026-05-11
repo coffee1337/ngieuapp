@@ -1,63 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../shared/widgets/app_gradient_bar.dart';
-import '../../notifications/notifications_service.dart';
-import '../../profile/data/profile_providers.dart';
-import '../../schedule/data/schedule_providers.dart';
-import '../../schedule/domain/lesson.dart';
-import '../../../core/utils/date_ext.dart';
-import '../data/settings_providers.dart';
-import '../domain/app_settings.dart';
+import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
+import 'package:ngieuapp/app/features/notifications/reschedule_notifications.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
-
-  Future<void> _rescheduleNotifications(WidgetRef ref) async {
-    final settings = ref.read(appSettingsProvider);
-    if (!settings.notificationsEnabled) {
-      await NotificationsService.instance.cancelAll();
-      return;
-    }
-    final identity = await ref.read(studentIdentityProvider.future);
-    if (identity == null) return;
-
-    final weekStart = DateTime.now().startOfWeek;
-    final key = (actorId: identity.actorId, weekStart: weekStart);
-    final rawAsync = ref.read(rawWeekScheduleProvider(key).future);
-    try {
-      final lessons = await rawAsync;
-      // Берём только "живые" занятия — без отменённых/заменённых мероприятий
-      final relevant = _applyChanges(
-        lessons,
-        showChanges: settings.showChanges,
-      );
-      await NotificationsService.instance.rescheduleFor(
-        relevant,
-        minutesBefore: settings.notificationMinutesBefore,
-        enabled: true,
-      );
-    } catch (_) {}
-  }
-
-  List<Lesson> _applyChanges(List<Lesson> all, {required bool showChanges}) {
-    final byCell = <String, List<Lesson>>{};
-    for (final l in all) {
-      final k = '${l.date.toIso8601String()}|${l.pairNumber}';
-      byCell.putIfAbsent(k, () => []).add(l);
-    }
-    final result = <Lesson>[];
-    for (final cell in byCell.values) {
-      final changes = cell.where((l) => l.isChange).toList();
-      final regulars = cell.where((l) => !l.isChange).toList();
-      if (showChanges && changes.isNotEmpty) {
-        result.addAll(changes.where((l) => !l.isEvent));
-      } else {
-        result.addAll(regulars);
-      }
-    }
-    return result;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -131,7 +81,7 @@ class SettingsScreen extends ConsumerWidget {
             value: s.showChanges,
             onChanged: (v) async {
               await notifier.setShowChanges(v);
-              await _rescheduleNotifications(ref);
+              await rescheduleNotifications(ref);
             },
           ),
           const Divider(),
@@ -146,7 +96,8 @@ class SettingsScreen extends ConsumerWidget {
             value: s.notificationsEnabled,
             onChanged: (v) async {
               if (v) {
-                final granted = await NotificationsService.instance
+                final granted = await ref
+                    .read(notificationsServiceProvider)
                     .requestPermissions();
                 if (!granted) {
                   if (context.mounted) {
@@ -162,7 +113,7 @@ class SettingsScreen extends ConsumerWidget {
                 }
               }
               await notifier.setNotificationsEnabled(v);
-              await _rescheduleNotifications(ref);
+              await rescheduleNotifications(ref);
             },
           ),
           if (s.notificationsEnabled) ...[
@@ -187,7 +138,7 @@ class SettingsScreen extends ConsumerWidget {
                 selected: {s.notificationMinutesBefore},
                 onSelectionChanged: (sel) async {
                   await notifier.setNotificationMinutes(sel.first);
-                  await _rescheduleNotifications(ref);
+                  await rescheduleNotifications(ref);
                 },
               ),
             ),

@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'features/learning/presentation/learning_webview_screen.dart';
-import 'features/news/presentation/news_detail_screen.dart';
-import 'features/news/presentation/news_list_screen.dart';
-import 'features/profile/presentation/profile_screen.dart';
-import 'features/schedule/presentation/actor_picker_screen.dart';
-import 'features/schedule/presentation/free_rooms_screen.dart';
-import 'features/schedule/presentation/schedule_search_screen.dart';
-import 'features/schedule/presentation/week_schedule_screen.dart';
-import 'features/settings/presentation/settings_screen.dart';
-import 'shared/widgets/app_gradient_bar.dart';
-import 'shared/widgets/offline_banner.dart';
-import 'theme/app_tokens.dart';
+import 'package:ngieuapp/app/features/learning/presentation/learning_webview_screen.dart';
+import 'package:ngieuapp/app/features/news/presentation/news_detail_screen.dart';
+import 'package:ngieuapp/app/features/news/presentation/news_list_screen.dart';
+import 'package:ngieuapp/app/features/profile/presentation/profile_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/free_rooms_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
+import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
+import 'package:ngieuapp/app/shared/widgets/offline_banner.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
   child: child,
@@ -114,10 +114,30 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
   bool _initialized = false;
 
   static const _tabs = [
-    (path: '/news', icon: Icons.article_outlined, activeIcon: Icons.article_rounded, label: 'Новости'),
-    (path: '/schedule', icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today_rounded, label: 'Расписание'),
-    (path: '/profile', icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Профиль'),
-    (path: '/learning', icon: Icons.school_outlined, activeIcon: Icons.school_rounded, label: 'Обучение'),
+    (
+      path: '/news',
+      icon: Icons.article_outlined,
+      activeIcon: Icons.article_rounded,
+      label: 'Новости',
+    ),
+    (
+      path: '/schedule',
+      icon: Icons.calendar_today_outlined,
+      activeIcon: Icons.calendar_today_rounded,
+      label: 'Расписание',
+    ),
+    (
+      path: '/profile',
+      icon: Icons.person_outline,
+      activeIcon: Icons.person_rounded,
+      label: 'Профиль',
+    ),
+    (
+      path: '/learning',
+      icon: Icons.school_outlined,
+      activeIcon: Icons.school_rounded,
+      label: 'Обучение',
+    ),
   ];
 
   @override
@@ -152,7 +172,7 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
       _initialized = true;
       _animController.value = 1.0;
     } else {
-      _animController.forward(from: 0.0);
+      _animController.forward(from: 0);
     }
 
     return Scaffold(
@@ -177,7 +197,9 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
             height: AppSizes.navBarHeight,
             backgroundColor: theme.colorScheme.surface,
             surfaceTintColor: Colors.transparent,
-            indicatorColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            indicatorColor: theme.colorScheme.primaryContainer.withValues(
+              alpha: 0.3,
+            ),
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: [
               for (final t in _tabs)

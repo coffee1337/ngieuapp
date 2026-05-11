@@ -9,7 +9,6 @@ enum WeekParity { any, odd, even }
 
 @freezed
 abstract class Lesson with _$Lesson {
-  const Lesson._();
 
   const factory Lesson({
     required String id,
@@ -31,6 +30,7 @@ abstract class Lesson with _$Lesson {
     String? subgroup,
     String? note,
   }) = _Lesson;
+  const Lesson._();
 
   factory Lesson.fromJson(Map<String, dynamic> json) => _$LessonFromJson(json);
 

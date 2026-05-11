@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
-import '../../../shared/widgets/error_view.dart';
-import 'news_list_controller.dart';
+import 'package:ngieuapp/app/features/news/presentation/news_list_controller.dart';
+import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
 class NewsDetailScreen extends ConsumerWidget {
-  const NewsDetailScreen({super.key, required this.articleId});
+  const NewsDetailScreen({required this.articleId, super.key});
 
   final int articleId;
 
@@ -19,7 +19,7 @@ class NewsDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Новость')),
       body: previewAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const NewsCardSkeleton(),
         error: (e, _) => ErrorView(error: e),
         data: (preview) {
           if (preview == null) {
@@ -27,7 +27,7 @@ class NewsDetailScreen extends ConsumerWidget {
           }
           final detailAsync = ref.watch(newsDetailProvider(preview));
           return detailAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const NewsCardSkeleton(),
             error: (e, _) => ErrorView(
               error: e,
               onRetry: () => ref.invalidate(newsDetailProvider(preview)),

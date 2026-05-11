@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
-import '../domain/week_type.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 
 class WeekTypeApiDataSource {
   WeekTypeApiDataSource(this._dio);

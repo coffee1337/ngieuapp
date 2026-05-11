@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
-import '../../../shared/widgets/app_gradient_bar.dart';
-import '../../../shared/widgets/empty_view.dart';
-import '../../../shared/widgets/error_view.dart';
-import '../data/schedule_providers.dart';
-import '../domain/usecases/search_schedule.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/search_schedule.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
+import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
+import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
 class ScheduleSearchScreen extends ConsumerStatefulWidget {
   const ScheduleSearchScreen({super.key});
@@ -82,7 +82,7 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
     }
     final asyncValue = ref.watch(scheduleSearchResultsProvider(_query));
     return asyncValue.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const ScheduleSkeleton(),
       error: (e, _) => ErrorView(error: e),
       data: (results) {
         if (results.isEmpty) {

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../domain/app_settings.dart';
-import 'settings_repository.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_repository.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository();

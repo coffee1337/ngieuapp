@@ -22,7 +22,6 @@ extension DateExt on DateTime {
     final academicStart = DateTime(
       month >= 9 ? year : year - 1,
       9,
-      1,
     ).startOfWeek;
     final diffDays = startOfWeek.difference(academicStart).inDays;
     final weekNum = (diffDays ~/ 7) + 1;

@@ -1,4 +1,4 @@
-import 'lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 abstract interface class ScheduleRepository {
   /// Отдаёт расписание на неделю. Сначала из кэша, затем свежее из сети.

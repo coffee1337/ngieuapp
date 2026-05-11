@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson_type_ext.dart';
 
 class LessonTile extends StatelessWidget {
-  const LessonTile({
-    super.key,
-    required this.lesson,
-  });
+  const LessonTile({required this.lesson, super.key});
 
   final Lesson lesson;
 
@@ -17,7 +15,7 @@ class LessonTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: isNoLesson 
+        color: isNoLesson
             ? colorScheme.surface.withValues(alpha: 0.6)
             : colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
@@ -53,7 +51,7 @@ class LessonTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: isNoLesson 
+            color: isNoLesson
                 ? colorScheme.onSurface.withValues(alpha: 0.5)
                 : colorScheme.onSurface,
           ),
@@ -63,7 +61,7 @@ class LessonTile extends StatelessWidget {
           _formatTime(lesson.endTime),
           style: TextStyle(
             fontSize: 15,
-            color: isNoLesson 
+            color: isNoLesson
                 ? colorScheme.onSurface.withValues(alpha: 0.4)
                 : colorScheme.onSurface.withValues(alpha: 0.7),
           ),
@@ -88,7 +86,11 @@ class LessonTile extends StatelessWidget {
     );
   }
 
-  Widget _buildContentColumn(BuildContext context, ColorScheme colorScheme, bool isNoLesson) {
+  Widget _buildContentColumn(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool isNoLesson,
+  ) {
     if (isNoLesson) {
       return Text(
         lesson.subject,
@@ -125,9 +127,12 @@ class LessonTile extends StatelessWidget {
                 children: [
                   if (lesson.isChange) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE),
+                        color: colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -135,24 +140,29 @@ class LessonTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFD32F2F),
+                          color: colorScheme.onErrorContainer,
                         ),
                       ),
                     ),
                     const SizedBox(height: 4),
                   ],
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.outlineVariant.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      _lessonTypeLabel(lesson.type),
+                      lesson.type.label,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.9,
+                        ),
                       ),
                     ),
                   ),
@@ -168,9 +178,10 @@ class LessonTile extends StatelessWidget {
   }
 
   Widget _buildMetadataRows(ColorScheme colorScheme) {
-    final locationText = [lesson.classroom, lesson.building]
-        .where((v) => v.trim().isNotEmpty)
-        .join(', ');
+    final locationText = [
+      lesson.classroom,
+      lesson.building,
+    ].where((v) => v.trim().isNotEmpty).join(', ');
     final teacherText = lesson.teacherNames.join(', ');
     final groupText = lesson.groupNames.join(', ');
 
@@ -236,21 +247,3 @@ String _formatTime(DateTime time) {
   return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }
 
-String _lessonTypeLabel(LessonType type) {
-  switch (type) {
-    case LessonType.lecture:
-      return 'Лекция';
-    case LessonType.practice:
-      return 'Практика';
-    case LessonType.lab:
-      return 'Лаб.';
-    case LessonType.exam:
-      return 'Экзамен';
-    case LessonType.consultation:
-      return 'Консультация';
-    case LessonType.event:
-      return 'Событие';
-    case LessonType.unknown:
-      return 'Занятие';
-  }
-}

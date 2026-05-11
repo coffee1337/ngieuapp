@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../theme/app_theme.dart';
-import '../../../../theme/app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class DayTab {
   const DayTab({required this.date, required this.isToday});
@@ -12,9 +12,7 @@ class DayTab {
 
 class DayTabs extends StatelessWidget {
   const DayTabs({
-    super.key,
-    required this.weekStart,
-    required this.tabController,
+    required this.weekStart, required this.tabController, super.key,
   });
 
   final DateTime weekStart;
@@ -32,7 +30,7 @@ class DayTabs extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         border: Border(
-          bottom: BorderSide(color: semantic.subtleDivider, width: 1),
+          bottom: BorderSide(color: semantic.subtleDivider),
         ),
       ),
       padding: const EdgeInsets.symmetric(
@@ -109,9 +107,10 @@ class _DayChipState extends State<_DayChip>
       duration: AppDurations.fast,
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
   }
 
   @override
@@ -140,7 +139,9 @@ class _DayChipState extends State<_DayChip>
         child: AnimatedContainer(
           duration: AppDurations.fast,
           curve: Curves.easeOut,
-          constraints: const BoxConstraints(minHeight: AppSizes.dayChipMinHeight),
+          constraints: const BoxConstraints(
+            minHeight: AppSizes.dayChipMinHeight,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xs,
             vertical: AppSpacing.xs,
@@ -164,7 +165,7 @@ class _DayChipState extends State<_DayChip>
                       ? Colors.white.withValues(alpha: 0.9)
                       : theme.colorScheme.onSurfaceVariant,
                   letterSpacing: 0.3,
-                  height: 1.0,
+                  height: 1,
                 ),
               ),
               const SizedBox(height: AppSpacing.xxs),
@@ -198,7 +199,7 @@ class _DayChipState extends State<_DayChip>
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
-                      height: 1.0,
+                      height: 1,
                       letterSpacing: 0.2,
                     ),
                   ),

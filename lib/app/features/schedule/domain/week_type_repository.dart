@@ -1,4 +1,4 @@
-import 'week_type.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 
 abstract class WeekTypeRepository {
   /// Получает тип недели для указанной даты

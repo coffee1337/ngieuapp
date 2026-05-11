@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'features/settings/data/settings_providers.dart';
-import 'features/settings/domain/app_settings.dart';
-import 'router.dart';
-import 'theme/app_theme.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
+import 'package:ngieuapp/app/router.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
 
 class NgieuApp extends ConsumerWidget {
   const NgieuApp({super.key});

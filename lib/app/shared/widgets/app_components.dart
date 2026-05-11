@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 /// Compact tappable field used in filter panels (date, time, dropdown-like).
 class AppCompactField extends StatelessWidget {
   const AppCompactField({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
+    required this.icon, required this.label, required this.onTap, super.key,
     this.active = false,
   });
 
@@ -34,8 +31,9 @@ class AppCompactField extends StatelessWidget {
               : theme.colorScheme.surfaceContainerHigh,
           borderRadius: AppRadius.mdBr,
           border: Border.all(
-            color: active ? primaryColor.withValues(alpha: 0.3) : semantic.cardBorder,
-            width: 1,
+            color: active
+                ? primaryColor.withValues(alpha: 0.3)
+                : semantic.cardBorder,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -72,9 +70,7 @@ class AppCompactField extends StatelessWidget {
 /// Primary action button with brand gradient.
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
-    super.key,
-    required this.onPressed,
-    required this.label,
+    required this.onPressed, required this.label, super.key,
     this.icon,
     this.enabled = true,
     this.height = AppSizes.buttonHeightSm,
@@ -98,7 +94,7 @@ class AppPrimaryButton extends StatelessWidget {
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: theme.colorScheme.onPrimary,
           disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBr),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdBr),
           padding: EdgeInsets.zero,
         ),
         child: Row(
@@ -125,7 +121,7 @@ class AppPrimaryButton extends StatelessWidget {
 
 /// Badge showing availability duration (e.g. "50 min free").
 class AvailabilityBadge extends StatelessWidget {
-  const AvailabilityBadge({super.key, required this.text});
+  const AvailabilityBadge({required this.text, super.key});
   final String text;
 
   @override
@@ -192,11 +188,7 @@ class ChangeBadge extends StatelessWidget {
 
 /// Lesson type badge (Лекция, Практика, etc.).
 class LessonTypeBadge extends StatelessWidget {
-  const LessonTypeBadge({
-    super.key,
-    required this.label,
-    required this.color,
-  });
+  const LessonTypeBadge({required this.label, required this.color, super.key});
 
   final String label;
   final Color color;
@@ -211,10 +203,7 @@ class LessonTypeBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: AppRadius.xsBr,
-        border: Border.all(
-          color: color.withValues(alpha: 0.25),
-          width: 0.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
       ),
       child: Text(
         label,

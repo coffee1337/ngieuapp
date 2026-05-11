@@ -2,9 +2,6 @@ import 'package:dio/dio.dart';
 
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode, this.cause});
-  final String message;
-  final int? statusCode;
-  final Object? cause;
 
   factory ApiException.fromDio(DioException e) {
     final code = e.response?.statusCode;
@@ -20,6 +17,9 @@ class ApiException implements Exception {
     };
     return ApiException(msg, statusCode: code, cause: e);
   }
+  final String message;
+  final int? statusCode;
+  final Object? cause;
 
   @override
   String toString() =>

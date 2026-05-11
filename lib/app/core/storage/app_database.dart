@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
-import 'tables/classrooms_table.dart';
-import 'tables/lessons_table.dart';
+import 'package:ngieuapp/app/core/storage/tables/classrooms_table.dart';
+import 'package:ngieuapp/app/core/storage/tables/lessons_table.dart';
 
 part 'app_database.g.dart';
 

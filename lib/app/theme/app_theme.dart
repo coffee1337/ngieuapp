@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
-import 'app_gradients.dart';
-import 'app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_colors.dart';
+import 'package:ngieuapp/app/theme/app_gradients.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 /// Semantic color roles that go beyond Material's ColorScheme.
 class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
@@ -114,19 +114,27 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     return AppSemanticColors(
       warning: Color.lerp(warning, other.warning, t)!,
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
-      warningContainer:
-          Color.lerp(warningContainer, other.warningContainer, t)!,
-      onWarningContainer:
-          Color.lerp(onWarningContainer, other.onWarningContainer, t)!,
+      warningContainer: Color.lerp(
+        warningContainer,
+        other.warningContainer,
+        t,
+      )!,
+      onWarningContainer: Color.lerp(
+        onWarningContainer,
+        other.onWarningContainer,
+        t,
+      )!,
       info: Color.lerp(info, other.info, t)!,
       onInfo: Color.lerp(onInfo, other.onInfo, t)!,
       infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
-      onInfoContainer:
-          Color.lerp(onInfoContainer, other.onInfoContainer, t)!,
+      onInfoContainer: Color.lerp(onInfoContainer, other.onInfoContainer, t)!,
       availability: Color.lerp(availability, other.availability, t)!,
       onAvailability: Color.lerp(onAvailability, other.onAvailability, t)!,
-      availabilityContainer:
-          Color.lerp(availabilityContainer, other.availabilityContainer, t)!,
+      availabilityContainer: Color.lerp(
+        availabilityContainer,
+        other.availabilityContainer,
+        t,
+      )!,
       onAvailabilityContainer: Color.lerp(
         onAvailabilityContainer,
         other.onAvailabilityContainer,
@@ -144,7 +152,6 @@ class AppTheme {
   static ThemeData light() {
     final base = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
-      brightness: Brightness.light,
       secondary: AppColors.purple,
       tertiary: AppColors.orange,
     );
@@ -300,14 +307,14 @@ class AppTheme {
             horizontal: AppSpacing.xxl,
             vertical: AppSpacing.lg,
           ),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.lgBr),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgBr),
           textStyle: textTheme.labelLarge,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest,
-        border: OutlineInputBorder(
+        border: const OutlineInputBorder(
           borderRadius: AppRadius.lgBr,
           borderSide: BorderSide.none,
         ),
@@ -344,9 +351,7 @@ class AppTheme {
               fontWeight: FontWeight.w700,
             );
           }
-          return textTheme.labelSmall?.copyWith(
-            color: scheme.onSurfaceVariant,
-          );
+          return textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant);
         }),
       ),
       listTileTheme: ListTileThemeData(iconColor: scheme.primary),
@@ -356,7 +361,7 @@ class AppTheme {
         space: 1,
       ),
       extensions: [
-        BrandColors(
+        const BrandColors(
           primaryBrand: AppColors.primary,
           deepBlue: AppColors.deepBlue,
           purple: AppColors.purple,

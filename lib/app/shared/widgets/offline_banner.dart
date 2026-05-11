@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/network/connectivity_provider.dart';
+import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 
 /// Баннер "Нет подключения к интернету", появляется сверху,
 /// когда у устройства пропала сеть.

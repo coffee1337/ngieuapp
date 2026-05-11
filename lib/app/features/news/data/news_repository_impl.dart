@@ -1,7 +1,7 @@
-import '../domain/news_article.dart';
-import '../domain/news_repository.dart';
-import 'news_api_datasource.dart';
-import 'news_cache_datasource.dart';
+import 'package:ngieuapp/app/features/news/data/news_api_datasource.dart';
+import 'package:ngieuapp/app/features/news/data/news_cache_datasource.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
+import 'package:ngieuapp/app/features/news/domain/news_repository.dart';
 
 class NewsRepositoryImpl implements NewsRepository {
   NewsRepositoryImpl(this._api, this._cache);

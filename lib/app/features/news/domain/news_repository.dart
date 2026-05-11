@@ -1,4 +1,4 @@
-import 'news_article.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 abstract interface class NewsRepository {
   /// Стрим, который отдаёт сначала кэш, затем свежие данные (если есть).

@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/network/providers.dart';
-import '../../../core/storage/app_database.dart';
-import '../../../core/utils/date_ext.dart';
-import '../../settings/data/settings_providers.dart';
-import '../domain/actor.dart';
-import '../domain/classroom_availability.dart';
-import '../domain/lesson.dart';
-import '../domain/schedule_repository.dart';
-import '../domain/week_type.dart';
-import '../domain/week_type_repository.dart';
-import '../domain/usecases/find_free_classrooms.dart';
-import '../domain/usecases/search_schedule.dart';
-import 'actors_api_datasource.dart';
-import 'schedule_api_datasource.dart';
-import 'schedule_db_datasource.dart';
-import 'schedule_repository_impl.dart';
-import 'week_type_api_datasource.dart';
-import 'week_type_cache_datasource.dart';
-import 'week_type_repository_impl.dart';
+import 'package:ngieuapp/app/core/network/providers.dart';
+import 'package:ngieuapp/app/core/storage/app_database.dart';
+import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/schedule/data/actors_api_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_repository_impl.dart';
+import 'package:ngieuapp/app/features/schedule/data/week_type_api_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/week_type_cache_datasource.dart';
+import 'package:ngieuapp/app/features/schedule/data/week_type_repository_impl.dart';
+import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/classroom_availability.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/filter_week_schedule.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/find_free_classrooms.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/get_next_lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/search_schedule.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type_repository.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 
 // ---- Core DB ----
 
@@ -79,6 +80,14 @@ final searchScheduleProvider = Provider<SearchSchedule>((ref) {
   return SearchSchedule(ref.watch(scheduleRepositoryProvider));
 });
 
+final filterWeekScheduleProvider = Provider<FilterWeekSchedule>((ref) {
+  return FilterWeekSchedule();
+});
+
+final getNextLessonProvider = Provider<GetNextLesson>((ref) {
+  return GetNextLesson();
+});
+
 // ---- UI state ----
 
 /// Провайдер для получения типа недели для указанной даты
@@ -133,67 +142,18 @@ final weekScheduleProvider = FutureProvider.autoDispose
       final rawAsync = await ref.watch(rawWeekScheduleProvider(key).future);
       final showChanges = ref.watch(appSettingsProvider).showChanges;
 
-      // Получаем тип недели для данной недели из API
       final weekType = await ref.watch(weekTypeProvider(key.weekStart).future);
-
-      // Проверяем, есть ли пользовательский выбор типа недели
       final weekTypeOverride = ref.watch(weekTypeOverrideProvider);
-
-      // Используем пользовательский выбор, если он есть, иначе тип из API
       final isEvenWeek = weekTypeOverride ?? weekType.isEvenWeek;
 
-      final weekEnd = key.weekStart.add(const Duration(days: 7));
-      final thisWeek = rawAsync
-          .where(
-            (l) => !l.date.isBefore(key.weekStart) && l.date.isBefore(weekEnd),
-          )
-          .toList();
-
-      final byCell = <String, List<Lesson>>{};
-      for (final l in thisWeek) {
-        final k = '${l.date.toIso8601String()}|${l.pairNumber}';
-        byCell.putIfAbsent(k, () => []).add(l);
-      }
-
-      final result = <Lesson>[];
-      for (final cell in byCell.values) {
-        final changes = cell.where((l) => l.isChange).toList();
-        final regulars = cell.where((l) => !l.isChange).toList();
-
-        if (showChanges && changes.isNotEmpty) {
-          final visible = changes
-              .where(
-                (l) =>
-                    !(l.isEvent &&
-                        l.subject.toLowerCase() == 'мероприятие' &&
-                        l.classroom.isEmpty),
-              )
-              .toList();
-          if (visible.isEmpty) {
-            result.add(
-              changes.first.copyWith(
-                subject: 'Занятие отменено',
-                isEvent: true,
-              ),
-            );
-          } else {
-            result.addAll(visible);
-          }
-        } else {
-          for (final l in regulars) {
-            if (_parityMatches(l, isEvenWeek)) {
-              result.add(l);
-            }
-          }
-        }
-      }
-      return result;
+      final filter = ref.watch(filterWeekScheduleProvider);
+      return filter(
+        lessons: rawAsync,
+        weekStart: key.weekStart,
+        isEvenWeek: isEvenWeek,
+        showChanges: showChanges,
+      );
     });
-
-bool _parityMatches(Lesson l, bool isEvenWeek) {
-  if (l.parity == WeekParity.any) return true;
-  return (l.parity == WeekParity.even) == isEvenWeek;
-}
 
 final studentGroupsProvider = FutureProvider<List<Actor>>((ref) {
   return ref.watch(actorsApiDataSourceProvider).loadStudentGroups();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import 'package:ngieuapp/app/theme/app_colors.dart';
 
 /// Коллекция градиентов, используемых в приложении.
 class AppGradients {

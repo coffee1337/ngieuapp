@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../domain/app_settings.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 
 class SettingsRepository {
   static const _box = 'settings';

@@ -1,326 +1,202 @@
-import 'dart:math';
+import 'package:ngieuapp/app/features/schedule/domain/utils/classroom_utils.dart';
 
-/// Утилиты для работы с этажами и аудиториями
+/// Утилиты для определения этажей с учетом специфики институтов НГИЭУ
 class FloorUtils {
-  /// Получить номер этажа из аудитории
-  static int getFloorNumber(String classroom) {
-    // Извлекаем номер этажа из номера аудитории
-    final match = RegExp(r'(\d+)').firstMatch(classroom);
-    if (match != null) {
-      final roomNumber = int.tryParse(match.group(1) ?? '') ?? 0;
-      if (roomNumber >= 100 && roomNumber <= 999) {
-        return roomNumber ~/ 100;
-      } else if (roomNumber >= 1 && roomNumber <= 9) {
-        return 1;
-      }
-    }
-    return 1; // По умолчанию первый этаж
+  /// Определяет этаж по номеру кабинета с учетом института
+  ///
+  /// Правила разных институтов:
+  /// 1. Институт экономики и управления (первая цифра = 1):
+  ///    - вторая цифра 1 => 1 этаж
+  ///    - вторая цифра 2 => 2 этаж
+  ///    - вторая цифра 3 => 3 этаж
+  ///    - и т.д.
+  ///    Примеры: 121 → 2 этаж, 136 → 3 этаж
+  ///
+  /// 2. Институт информационных технологий и систем связи (первая цифра = 2):
+  ///    - вторая цифра 0 => 1 этаж
+  ///    - вторая цифра 1 => 2 этаж
+  ///    - вторая цифра 2 => 3 этаж
+  ///    - вторая цифра 3 => 4 этаж
+  ///    Формула: этаж = вторая цифра + 1
+  ///    Примеры: 206 → 1 этаж, 220 → 3 этаж, 231 → 4 этаж
+  ///
+  /// 3. Инженерный институт (первая цифра = 3):
+  ///    - вторая цифра 0 => 1 этаж
+  ///    - вторая цифра 1 => 2 этаж
+  ///    - вторая цифра 2 => 3 этаж
+  ///    - вторая цифра 3 => 4 этаж
+  ///    Формула: этаж = вторая цифра + 1
+  ///    Примеры: 307 → 1 этаж, 312 → 2 этаж, 321 → 3 этаж
+  ///
+  /// 4. Для некорректных аудиторий ("спортзал", "121А", "А-121", пустая строка):
+  ///    - возвращает null
+  ///    - UI должен аккуратно обрабатывать null
+  static int? getFloorFromRoomNumber(String roomNumber) {
+    // Нестандартные аудитории — не вычисляем этаж
+    if (!ClassroomUtils.isStandardRoomNumber(roomNumber)) return null;
+
+    final digits = ClassroomUtils.extractAllDigits(roomNumber);
+    if (digits.length < 3) return null;
+
+    final firstDigit = int.tryParse(digits[0]);
+    final secondDigit = int.tryParse(digits[1]);
+
+    if (firstDigit == null || secondDigit == null) return null;
+
+    final floor = switch (firstDigit) {
+      1 => secondDigit, // Вторая цифра напрямую
+      2 || 3 => secondDigit + 1, // Этаж = вторая цифра + 1
+      _ => null,
+    };
+
+    // Этаж ≤ 0 не показываем
+    if (floor != null && floor <= 0) return null;
+    return floor;
   }
 
-  /// Получить корпус из аудитории
-  static String getBuilding(String classroom) {
-    if (classroom.startsWith('А')) return 'А';
-    if (classroom.startsWith('Б')) return 'Б';
-    if (classroom.startsWith('В')) return 'В';
-    if (classroom.startsWith('Г')) return 'Г';
-    return 'А'; // По умолчанию корпус А
-  }
+  /// Определяет институт по номеру кабинета
+  ///
+  /// Возвращает название института или null если не удалось определить
+  static String? getInstituteFromRoomNumber(String roomNumber) {
+    // Нестандартные аудитории — не определяем институт
+    if (!ClassroomUtils.isStandardRoomNumber(roomNumber)) return null;
 
-  /// Получить информацию о местоположении аудитории
-  static Map<String, dynamic> getRoomLocationInfo(String classroom) {
-    final floor = getFloorNumber(classroom);
-    final building = getBuilding(classroom);
-    
-    return {
-      'floor': floor,
-      'building': building,
-      'wing': _getWing(classroom),
-      'section': _getSection(classroom),
+    final digits = ClassroomUtils.extractAllDigits(roomNumber);
+    if (digits.isEmpty) return null;
+
+    final firstDigit = int.tryParse(digits[0]);
+    return switch (firstDigit) {
+      1 => 'Институт экономики и управления',
+      2 => 'Институт информационных технологий и систем связи',
+      3 => 'Инженерный институт',
+      _ => null,
     };
   }
 
-  /// Получить крыло здания
-  static String _getWing(String classroom) {
-    if (classroom.contains('л')) return 'левое';
-    if (classroom.contains('п')) return 'правое';
-    return 'центральное';
-  }
+  /// Форматирует отображение этажа с правильными окончаниями
+  ///
+  /// Примеры: "1-й этаж", "2-й этаж", "3-й этаж"
+  static String formatFloor(int floor) {
+    final lastDigit = floor % 10;
+    final lastTwoDigits = floor % 100;
 
-  /// Получить секцию
-  static String _getSection(String classroom) {
-    if (classroom.contains('а')) return 'А';
-    if (classroom.contains('б')) return 'Б';
-    if (classroom.contains('в')) return 'В';
-    return '';
-  }
-
-  /// Рассчитать расстояние между аудиториями
-  static double calculateDistance(String from, String to) {
-    final fromInfo = getRoomLocationInfo(from);
-    final toInfo = getRoomLocationInfo(to);
-    
-    final floorDiff = (fromInfo['floor'] as int - toInfo['floor'] as int).abs();
-    final buildingDiff = fromInfo['building'] != toInfo['building'] ? 50.0 : 0.0;
-    
-    return floorDiff * 10.0 + buildingDiff;
-  }
-
-  /// Получить время перехода между аудиториями
-  static Duration getTransitionTime(String from, String to) {
-    final distance = calculateDistance(from, to);
-    return Duration(seconds: (distance * 10).round());
-  }
-
-  /// Проверить доступность аудитории для людей с ограниченными возможностями
-  static bool isAccessible(String classroom) {
-    final floor = getFloorNumber(classroom);
-    return floor == 1; // Только первый этаж доступен
-  }
-
-  /// Получить ближайшие доступные аудитории
-  static List<String> getNearbyAccessibleRooms(String classroom) {
-    final building = getBuilding(classroom);
-    final floor = getFloorNumber(classroom);
-    
-    final rooms = <String>[];
-    for (int i = 1; i <= 20; i++) {
-      final room = '${building}${floor.toString().padLeft(2, '0')}${i.toString().padLeft(2, '0')}';
-      if (isAccessible(room)) {
-        rooms.add(room);
-      }
+    // Исключения для 11-19
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+      return '$floor-й этаж';
     }
-    
-    return rooms.take(5).toList();
-  }
 
-  /// Получить информацию о вместимости аудитории
-  static int getRoomCapacity(String classroom) {
-    final floor = getFloorNumber(classroom);
-    if (floor == 1) return 30; // Лекционные аудитории
-    if (floor == 2) return 20; // Семинарские аудитории
-    return 25; // Стандартные аудитории
-  }
-
-  /// Получить тип аудитории
-  static String getRoomType(String classroom) {
-    if (classroom.contains('лк')) return 'Лекционная';
-    if (classroom.contains('лаб')) return 'Лабораторная';
-    if (classroom.contains('каб')) return 'Кабинет';
-    return 'Аудитория';
-  }
-
-  /// Проверить наличие оборудования в аудитории
-  static bool hasEquipment(String classroom, String equipment) {
-    final roomType = getRoomType(classroom);
-    
-    switch (equipment.toLowerCase()) {
-      case 'проектор':
-        return roomType == 'Лекционная';
-      case 'компьютер':
-        return roomType == 'Лабораторная';
-      case 'доска':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  /// Получить список оборудования в аудитории
-  static List<String> getRoomEquipment(String classroom) {
-    final equipment = <String>[];
-    final roomType = getRoomType(classroom);
-    
-    if (roomType == 'Лекционная') {
-      equipment.addAll(['Проектор', 'Микрофон', 'Доска']);
-    } else if (roomType == 'Лабораторная') {
-      equipment.addAll(['Компьютеры', 'Доска']);
-    } else {
-      equipment.add('Доска');
-    }
-    
-    return equipment;
-  }
-
-  /// Получить рекомендуемые аудитории для группы
-  static List<String> getRecommendedRooms(int groupSize, String roomType) {
-    final rooms = <String>[];
-    final buildings = ['А', 'Б', 'В', 'Г'];
-    
-    for (final building in buildings) {
-      for (int floor = 1; floor <= 4; floor++) {
-        for (int room = 1; room <= 20; room++) {
-          final roomNumber = '${building}${floor.toString().padLeft(2, '0')}${room.toString().padLeft(2, '0')}';
-          final capacity = getRoomCapacity(roomNumber);
-          
-          if (capacity >= groupSize && getRoomType(roomNumber) == roomType) {
-            rooms.add(roomNumber);
-          }
-        }
-      }
-    }
-    
-    return rooms.take(10).toList();
-  }
-
-  /// Получить координаты аудитории для навигации
-  static List<double> getRoomCoordinates(String classroom) {
-    final building = getBuilding(classroom);
-    final floor = getFloorNumber(classroom);
-    
-    final buildingCoords = <String, List<double>>{
-      'А': <double>[0.0, 0.0],
-      'Б': <double>[100.0, 0.0],
-      'В': <double>[0.0, 100.0],
-      'Г': <double>[100.0, 100.0],
-    };
-    
-    final baseCoords = buildingCoords[building] ?? <double>[0.0, 0.0];
-    final floorOffset = (floor - 1) * 25.0;
-    
-    return <double>[
-      baseCoords[0] + floorOffset,
-      baseCoords[1] + floorOffset,
-    ];
-  }
-
-  /// Получить путь между аудиториями
-  static List<List<double>> getPathBetweenRooms(String from, String to) {
-    final fromCoords = getRoomCoordinates(from);
-    final toCoords = getRoomCoordinates(to);
-    
-    return <List<double>>[
-      fromCoords,
-      <double>[(fromCoords[0] + toCoords[0]) / 2, (fromCoords[1] + toCoords[1]) / 2],
-      toCoords,
-    ];
-  }
-
-  /// Получить информацию о навигации
-  static Map<String, dynamic> getNavigationInfo(String from, String to) {
-    final path = getPathBetweenRooms(from);
-    final distance = calculateDistance(from, to);
-    final time = getTransitionTime(from, to);
-    
-    return {
-      'from': from,
-      'to': to,
-      'path': path,
-      'distance': distance,
-      'time': time.inSeconds,
+    return switch (lastDigit) {
+      1 => '$floor-й этаж',
+      2 || 3 || 4 => '$floor-й этаж',
+      _ => '$floor-й этаж',
     };
   }
 
-  /// Получить аудитории на этаже
-  static List<String> getRoomsOnFloor(String building, int floor) {
-    final rooms = <String>[];
-    
-    for (int i = 1; i <= 20; i++) {
-      final roomNumber = '${building}${floor.toString().padLeft(2, '0')}${i.toString().padLeft(2, '0')}';
-      rooms.add(roomNumber);
+  /// Получает полную информацию о расположении кабинета
+  static RoomLocationInfo getRoomLocationInfo(String roomNumber) {
+    final institute = getInstituteFromRoomNumber(roomNumber);
+    final floor = getFloorFromRoomNumber(roomNumber);
+
+    // Извлекаем номер кабинета (последние 1-2 цифры)
+    final digits = ClassroomUtils.extractAllDigits(roomNumber);
+    var roomNum = '';
+    if (digits.length >= 3) {
+      // Последняя цифра или две
+      roomNum = digits.sublist(2).join();
     }
-    
-    return rooms;
+
+    return RoomLocationInfo(
+      institute: institute,
+      floor: floor,
+      roomNumber: roomNum.isNotEmpty ? roomNum : roomNumber,
+      originalNumber: roomNumber,
+    );
   }
 
-  /// Получить загрузку этажа
-  static Map<String, int> getFloorLoad(String building, int floor, List<String> occupiedRooms) {
-    final allRooms = getRoomsOnFloor(building, floor);
-    final occupied = occupiedRooms.where((room) => 
-      room.startsWith(building) && getFloorNumber(room) == floor
-    ).toList();
-    
-    return {
-      'total': allRooms.length,
-      'occupied': occupied.length,
-      'free': allRooms.length - occupied.length,
-    };
-  }
+  /// Форматирует информацию о кабинете для отображения
+  ///
+  /// Примеры:
+  /// - "220А • 2 этаж • Институт информационных технологий и систем связи"
+  /// - "121А • 2 этаж • Институт экономики и управления"
+  static String formatRoomInfo(String roomNumber) {
+    final info = getRoomLocationInfo(roomNumber);
+    final parts = <String>[];
 
-  /// Получить оптимальный маршрут для посещения нескольких аудиторий
-  static List<String> getOptimalRoute(List<String> rooms) {
-    if (rooms.length <= 1) return rooms;
-    
-    final route = <String>[rooms.first];
-    final remaining = List<String>.from(rooms)..removeAt(0);
-    
-    while (remaining.isNotEmpty) {
-      final current = route.last;
-      String? nearest;
-      double minDistance = double.infinity;
-      
-      for (final room in remaining) {
-        final distance = calculateDistance(current, room);
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearest = room;
-        }
-      }
-      
-      if (nearest != null) {
-        route.add(nearest);
-        remaining.remove(nearest);
-      } else {
-        break;
-      }
+    // Номер аудитории (с сохранением оригинального формата)
+    parts.add(info.originalNumber);
+
+    // Этаж если определен
+    if (info.floor != null) {
+      parts.add(formatFloor(info.floor!));
     }
-    
-    return route;
-  }
 
-  /// Получить статистику по аудиториям
-  static Map<String, dynamic> getRoomStatistics(List<String> rooms) {
-    final buildings = <String, int>{};
-    final floors = <int, int>{};
-    final types = <String, int>{};
-    
-    for (final room in rooms) {
-      final building = getBuilding(room);
-      final floor = getFloorNumber(room);
-      final type = getRoomType(room);
-      
-      buildings[building] = (buildings[building] ?? 0) + 1;
-      floors[floor] = (floors[floor] ?? 0) + 1;
-      types[type] = (types[type] ?? 0) + 1;
+    // Институт если определен
+    if (info.institute != null) {
+      parts.add(info.institute!);
     }
-    
-    return {
-      'total': rooms.length,
-      'buildings': buildings,
-      'floors': floors,
-      'types': types,
-    };
+
+    return parts.join(' • ');
   }
 
-  /// Проверить корректность номера аудитории
-  static bool isValidRoomNumber(String classroom) {
-    final pattern = RegExp(r'^[А-ВГ]\d{3,4}$');
-    return pattern.hasMatch(classroom);
-  }
+  /// Упрощенное форматирование для компактного отображения
+  ///
+  /// Примеры:
+  /// - "220А • 2 этаж"
+  /// - "121А • Институт экономики и управления"
+  static String formatRoomInfoCompact(String roomNumber) {
+    final info = getRoomLocationInfo(roomNumber);
+    final parts = <String>[];
 
-  /// Отформатировать номер аудитории
-  static String formatRoomNumber(String classroom) {
-    if (!isValidRoomNumber(classroom)) return classroom;
-    
-    final building = getBuilding(classroom);
-    final match = RegExp(r'(\d+)').firstMatch(classroom);
-    final number = match?.group(1) ?? '';
-    
-    return '$building${number.padLeft(3, '0')}';
-  }
+    // Номер аудитории
+    parts.add(info.originalNumber);
 
-  /// Получить похожие номера аудиторий
-  static List<String> getSimilarRooms(String classroom) {
-    final building = getBuilding(classroom);
-    final floor = getFloorNumber(classroom);
-    final similar = <String>[];
-    
-    for (int i = 1; i <= 20; i++) {
-      final room = '${building}${floor.toString().padLeft(2, '0')}${i.toString().padLeft(2, '0')}';
-      if (room != classroom) {
-        similar.add(room);
-      }
+    // Этаж если определен (приоритетнее института для компактности)
+    if (info.floor != null) {
+      parts.add(formatFloor(info.floor!));
+    } else if (info.institute != null) {
+      // Если этаж не определен, показываем институт
+      parts.add(info.institute!);
     }
-    
-    return similar.take(5).toList();
+
+    return parts.join(' • ');
+  }
+
+  /// Форматирует информацию о кабинете для карточек занятий
+  ///
+  /// Пример: "Ауд. 220А • 2 этаж"
+  static String formatRoomForLesson(String roomNumber) {
+    final info = getRoomLocationInfo(roomNumber);
+
+    if (info.floor != null) {
+      return 'Ауд. ${info.originalNumber} • ${formatFloor(info.floor!)}';
+    }
+
+    return 'Ауд. ${info.originalNumber}';
+  }
+}
+
+/// Информация о расположении кабинета
+class RoomLocationInfo {
+  RoomLocationInfo({
+    required this.institute,
+    required this.floor,
+    required this.roomNumber,
+    required this.originalNumber,
+  });
+
+  final String? institute;
+  final int? floor;
+  final String roomNumber;
+  final String originalNumber;
+
+  @override
+  String toString() {
+    final parts = <String>[];
+
+    if (institute != null) parts.add(institute!);
+    if (floor != null) parts.add(FloorUtils.formatFloor(floor!));
+    parts.add('Аудитория $originalNumber');
+
+    return parts.join(' · ');
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class AppGradientBar extends StatelessWidget {
   const AppGradientBar({super.key, this.height = AppSizes.gradientBarHeight});

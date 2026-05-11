@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../shared/widgets/app_gradient_bar.dart';
-import '../../../shared/widgets/error_view.dart';
-import '../../profile/data/profile_providers.dart';
-import '../../profile/domain/student_identity.dart';
-import '../data/schedule_providers.dart';
-import '../domain/actor.dart';
-import '../domain/department.dart';
+import 'package:ngieuapp/app/features/profile/data/profile_providers.dart';
+import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/department.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
+import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
 class ActorPickerScreen extends ConsumerStatefulWidget {
   const ActorPickerScreen({super.key});
@@ -176,7 +176,7 @@ class _ActorList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return asyncProvider.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const ListSkeleton(),
       error: (e, _) => ErrorView(error: e, onRetry: onRetry),
       data: (all) {
         final items = filter(all);

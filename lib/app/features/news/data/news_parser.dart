@@ -1,6 +1,6 @@
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
-import '../domain/news_article.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 /// Чистый парсер, не знает про сеть — легко тестировать.
 class NewsParser {
@@ -80,7 +80,7 @@ class NewsParser {
   DateTime? _extractDate(Element el) {
     // На WP-темах день и месяц — короткие текстовые узлы перед заголовком
     final texts = el.nodes
-        .expand((n) => _collectText(n))
+        .expand(_collectText)
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();

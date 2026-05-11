@@ -3,20 +3,22 @@ import 'dart:io';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 
-import '../schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/get_next_lesson.dart';
 
 /// Сервис для обновления виджета на домашнем экране.
 class HomeWidgetService {
-  HomeWidgetService._();
-  static final instance = HomeWidgetService._();
+  HomeWidgetService();
+  static final instance = HomeWidgetService();
 
   static const _androidProvider = 'NextLessonWidgetProvider';
+  static final _getNextLesson = GetNextLesson();
 
   /// Обновляет виджет "Следующая пара" данными из списка занятий.
   Future<void> updateNextLesson(List<Lesson> lessons) async {
     if (!Platform.isAndroid) return;
 
-    final next = _findNext(lessons);
+    final next = _getNextLesson(lessons);
     if (next == null) {
       await HomeWidget.saveWidgetData('widget_header', 'РАСПИСАНИЕ');
       await HomeWidget.saveWidgetData('widget_subject', 'Пар больше нет');
@@ -50,16 +52,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData('widget_room', roomStr);
     }
 
-    // Пнуть виджет, чтоб перерисовался
     await HomeWidget.updateWidget(androidName: _androidProvider);
-  }
-
-  Lesson? _findNext(List<Lesson> lessons) {
-    final now = DateTime.now();
-    final future =
-        lessons.where((l) => l.endTime.isAfter(now) && !l.isEvent).toList()
-          ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    return future.isEmpty ? null : future.first;
   }
 
   bool _isSameDay(DateTime a, DateTime b) =>

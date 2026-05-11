@@ -7,7 +7,7 @@ enum AppThemeMode { system, light, dark }
 
 enum AppFontScale {
   small(0.9),
-  normal(1.0),
+  normal(1),
   large(1.15),
   huge(1.3);
 

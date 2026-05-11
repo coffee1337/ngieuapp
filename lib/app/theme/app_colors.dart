@@ -26,8 +26,6 @@ class AppColors {
 
   // Градиенты
   static const brandGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
     colors: [deepBlue, purple, primary, orange],
     stops: [0.0, 0.33, 0.66, 1.0],
   );

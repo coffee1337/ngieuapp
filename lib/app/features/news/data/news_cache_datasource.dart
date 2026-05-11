@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../core/cache/hive_boxes.dart';
-import '../domain/news_article.dart';
+import 'package:ngieuapp/app/core/cache/hive_boxes.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 class NewsCacheDataSource {
   Future<void> saveList(int page, List<NewsArticle> items) async {

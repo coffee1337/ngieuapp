@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../domain/news_article.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 class NewsCard extends StatelessWidget {
-  const NewsCard({super.key, required this.article, required this.onTap});
+  const NewsCard({required this.article, required this.onTap, super.key});
 
   final NewsArticle article;
   final VoidCallback onTap;
@@ -38,7 +38,7 @@ class NewsCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: article.imageUrl!,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
+                  placeholder: (_, __) => ColoredBox(
                     color: theme.colorScheme.surfaceContainerHigh,
                     child: Center(
                       child: SizedBox(
@@ -53,7 +53,7 @@ class NewsCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  errorWidget: (_, __, ___) => Container(
+                  errorWidget: (_, __, ___) => ColoredBox(
                     color: theme.colorScheme.surfaceContainerHigh,
                     child: Icon(
                       Icons.image_not_supported_outlined,

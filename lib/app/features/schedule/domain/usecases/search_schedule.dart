@@ -1,5 +1,5 @@
-import '../lesson.dart';
-import '../schedule_repository.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 
 class SearchScheduleResult {
   const SearchScheduleResult({required this.lesson, required this.matchType});
@@ -33,7 +33,7 @@ class SearchSchedule {
         if (match == null) continue;
         // Дедупликация — одно и то же занятие может быть повторено (разные группы)
         final key =
-            '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join("")}';
+            '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join()}';
         if (!seen.add(key)) continue;
         results.add(SearchScheduleResult(lesson: l, matchType: match));
       }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../classroom_availability.dart';
-import '../schedule_repository.dart';
-import '../utils/classroom_utils.dart';
+import 'package:ngieuapp/app/features/schedule/domain/classroom_availability.dart';
+import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
+import 'package:ngieuapp/app/features/schedule/domain/utils/classroom_utils.dart';
 
 class FindFreeClassrooms {
   FindFreeClassrooms(this._repo);

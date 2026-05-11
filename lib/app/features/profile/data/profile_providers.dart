@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../domain/student_identity.dart';
-import 'profile_local_datasource.dart';
+import 'package:ngieuapp/app/features/profile/data/profile_local_datasource.dart';
+import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
 
 final profileLocalDataSourceProvider = Provider<ProfileLocalDataSource>((ref) {
   return ProfileLocalDataSource();

@@ -2,15 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../schedule/domain/lesson.dart';
-
 class NotificationsService {
-  NotificationsService._();
-  static final instance = NotificationsService._();
+  NotificationsService();
+  static final instance = NotificationsService();
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;

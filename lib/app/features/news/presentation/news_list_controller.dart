@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/news_providers.dart';
-import '../domain/news_article.dart';
+import 'package:ngieuapp/app/features/news/data/news_providers.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 /// Состояние принудительного обновления новостей
 final forceRefreshProvider = StateProvider.autoDispose<bool>((ref) => false);
@@ -16,34 +16,14 @@ final newsListProvider = StreamProvider.autoDispose<List<NewsArticle>>((ref) {
 
 /// Метод для принудительного обновления новостей
 Future<void> refreshNews(WidgetRef ref) async {
-  final notifier = ref.read(forceRefreshProvider.notifier);
-  notifier.state = true;
-
-  // Даем время стриму отреагировать на изменение состояния
-  await Future.delayed(const Duration(milliseconds: 50));
-
-  // Инвалидируем провайдер новостей, чтобы гарантировать перезагрузку
+  ref.read(forceRefreshProvider.notifier).state = true;
   ref.invalidate(newsListProvider);
-
-  // Ждем немного чтобы стрим начал обновляться
-  await Future.delayed(const Duration(milliseconds: 100));
-
-  // Сбрасываем флаг force refresh
-  notifier.state = false;
 }
 
 /// Метод для принудительного обновления деталей конкретной новости
 Future<void> refreshNewsDetail(WidgetRef ref, NewsArticle preview) async {
-  final notifier = ref.read(forceRefreshProvider.notifier);
-  notifier.state = true;
-
-  // Инвалидируем провайдер деталей для конкретной новости
+  ref.read(forceRefreshProvider.notifier).state = true;
   ref.invalidate(newsDetailProvider(preview));
-
-  // Даем время для обновления
-  await Future.delayed(const Duration(milliseconds: 100));
-
-  notifier.state = false;
 }
 
 /// Деталь новости по preview-объекту.

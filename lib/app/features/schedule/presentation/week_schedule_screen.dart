@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
-import '../../../core/utils/date_ext.dart';
-import '../../../shared/widgets/app_gradient_bar.dart';
-import '../../../shared/widgets/empty_view.dart';
-import '../../../shared/widgets/error_view.dart';
-import '../../../theme/app_theme.dart';
-import '../../../theme/app_tokens.dart';
-import '../../settings/data/settings_providers.dart';
-import '../data/schedule_providers.dart';
-import '../domain/week_type.dart';
-import 'widgets/day_tabs.dart';
-import 'widgets/lesson_tile.dart';
+import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/widgets/day_tabs.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/widgets/lesson_tile.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
+import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
+import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class WeekScheduleScreen extends ConsumerWidget {
-  const WeekScheduleScreen({super.key, required this.actorId});
+  const WeekScheduleScreen({required this.actorId, super.key});
   final String actorId;
 
   int _todayIndex(DateTime weekStart) {
@@ -86,11 +86,7 @@ class WeekScheduleScreen extends ConsumerWidget {
                   ),
                   Expanded(
                     child: lessonsAsync.when(
-                      loading: () => Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
+                      loading: () => const ScheduleSkeleton(),
                       error: (e, _) => ErrorView(
                         error: e,
                         onRetry: () =>
@@ -170,12 +166,15 @@ class _WeekHeader extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.md,
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: semantic.subtleDivider, width: 1),
+          bottom: BorderSide(color: semantic.subtleDivider),
         ),
       ),
       child: Column(
@@ -218,8 +217,9 @@ class _WeekHeader extends ConsumerWidget {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary
-                              .withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: AppRadius.mdBr,
                         ),
                         child: Row(
@@ -265,7 +265,7 @@ class _WeekHeader extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHigh,
                 borderRadius: AppRadius.mdBr,
-                border: Border.all(color: semantic.cardBorder, width: 1),
+                border: Border.all(color: semantic.cardBorder),
               ),
               child: const Center(
                 child: SizedBox(
@@ -329,7 +329,7 @@ class _WeekNavButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerHigh,
           borderRadius: AppRadius.mdBr,
-          border: Border.all(color: semantic.cardBorder, width: 1),
+          border: Border.all(color: semantic.cardBorder),
         ),
         child: Icon(
           icon,
@@ -358,7 +358,7 @@ class _WeekTypeSelector extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: AppRadius.mdBr,
-        border: Border.all(color: semantic.cardBorder, width: 1),
+        border: Border.all(color: semantic.cardBorder),
       ),
       child: Row(
         children: [

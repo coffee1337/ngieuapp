@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import '../domain/news_article.dart';
-import 'news_parser.dart';
+import 'package:ngieuapp/app/features/news/data/news_parser.dart';
+import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 class NewsApiDataSource {
   NewsApiDataSource(this._dio, this._parser);

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/app_tokens.dart';
-import 'app_gradient_bar.dart';
+import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 /// Brand button with gradient background.
 class BrandButton extends StatelessWidget {
   const BrandButton({
-    super.key,
-    required this.onPressed,
-    required this.label,
+    required this.onPressed, required this.label, super.key,
     this.icon,
     this.isLoading = false,
     this.variant = BrandButtonVariant.primary,
@@ -107,8 +105,7 @@ enum BrandButtonVariant { primary, secondary, accent }
 /// Brand card with optional gradient border.
 class BrandCard extends StatelessWidget {
   const BrandCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.padding = const EdgeInsets.all(AppSpacing.xxl),
     this.margin = const EdgeInsets.symmetric(
       horizontal: AppSpacing.xl,
@@ -137,7 +134,6 @@ class BrandCard extends StatelessWidget {
             ? const BorderSide(width: 2, color: Colors.transparent)
             : BorderSide(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
-                width: 1,
               ),
       ),
       color: theme.colorScheme.surfaceContainer,
@@ -176,8 +172,7 @@ class BrandCard extends StatelessWidget {
 /// Brand status badge.
 class BrandBadge extends StatelessWidget {
   const BrandBadge({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.variant = BrandBadgeVariant.primary,
     this.icon,
   });
@@ -274,8 +269,7 @@ class BrandDivider extends StatelessWidget {
 /// Brand section header.
 class BrandSectionHeader extends StatelessWidget {
   const BrandSectionHeader({
-    super.key,
-    required this.title,
+    required this.title, super.key,
     this.subtitle,
     this.icon,
     this.action,

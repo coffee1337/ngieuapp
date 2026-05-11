@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
-import '../../../core/storage/app_database.dart';
-import '../domain/lesson.dart';
+import 'package:ngieuapp/app/core/storage/app_database.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class ScheduleDbDataSource {
   ScheduleDbDataSource(this._db);

@@ -1,7 +1,5 @@
-import 'dart:convert';
-
-import '../../../core/utils/date_ext.dart';
-import '../domain/lesson.dart';
+import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class LessonMapper {
   static List<Lesson> fromApi(Map<String, dynamic> j) {
@@ -165,28 +163,12 @@ class LessonMapper {
   }
 
   static List<DateTime> _expandDates(int weekday, bool? isUpperWeek) {
-    final now = DateTime.now();
-    final thisWeekMonday = now.startOfWeek;
-    final ranges = [
-      thisWeekMonday.subtract(const Duration(days: 14)),
-      thisWeekMonday.subtract(const Duration(days: 7)),
-      thisWeekMonday,
-      thisWeekMonday.add(const Duration(days: 7)),
-      thisWeekMonday.add(const Duration(days: 14)),
-    ];
-
-    final result = <DateTime>[];
-    for (final monday in ranges) {
-      final date = monday.add(Duration(days: weekday - 1));
-      if (isUpperWeek == null) {
-        result.add(date);
-      } else {
-        // Вместо использования date.isEvenWeek, просто добавляем дату
-        // Фильтрация по четности недели будет выполнена позже через weekTypeProvider
-        result.add(date);
-      }
-    }
-    return result;
+    final thisWeekMonday = DateTime.now().startOfWeek;
+    final baseOffset = weekday - 1;
+    return List.generate(5, (i) {
+      final monday = thisWeekMonday.add(Duration(days: (i - 2) * 7));
+      return DateTime(monday.year, monday.month, monday.day + baseOffset);
+    });
   }
 
   static String _stableId(
@@ -198,7 +180,13 @@ class LessonMapper {
     bool isChange,
   ) {
     final key =
-        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|${isChange ? 'change' : 'plan'}';
-    return base64Url.encode(utf8.encode(key));
+        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|${isChange ? 'c' : 'p'}';
+    // FNV-1a 32-bit hash — short, stable, no import needed
+    var hash = 0x811c9dc5;
+    for (var i = 0; i < key.length; i++) {
+      hash ^= key.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
+    }
+    return hash.toRadixString(36);
   }
 }
