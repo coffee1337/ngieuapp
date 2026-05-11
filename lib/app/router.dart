@@ -54,8 +54,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'detail/:id',
+                redirect: (context, state) {
+                  final raw = state.pathParameters['id'];
+                  if (raw == null || int.tryParse(raw) == null) {
+                    return '/news';
+                  }
+                  return null;
+                },
                 pageBuilder: (ctx, state) {
-                  final id = int.parse(state.pathParameters['id']!);
+                  final id =
+                      int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
                   return _page(NewsDetailScreen(articleId: id));
                 },
               ),
