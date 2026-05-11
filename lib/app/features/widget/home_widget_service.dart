@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/get_next_lesson.dart';
+import 'package:ngieuapp/app/features/widget/home_widget_payload.dart';
 
 /// Сервис для обновления виджета на домашнем экране.
 class HomeWidgetService {
@@ -24,13 +25,16 @@ class HomeWidgetService {
     if (!Platform.isAndroid) return;
 
     final next = _getNextLesson(lessons);
+    final now = DateTime.now();
+    final HomeWidgetPayload payload;
+
     if (next == null) {
-      await HomeWidget.saveWidgetData('widget_header', 'РАСПИСАНИЕ');
-      await HomeWidget.saveWidgetData('widget_subject', 'Пар больше нет');
-      await HomeWidget.saveWidgetData('widget_time', '');
-      await HomeWidget.saveWidgetData('widget_room', '');
+      payload = HomeWidgetPayload.empty(
+        header: 'РАСПИСАНИЕ',
+        title: 'Пар больше нет',
+        updatedAt: now,
+      );
     } else {
-      final now = DateTime.now();
       final isNow = now.isAfter(next.startTime) && now.isBefore(next.endTime);
 
       final timeFmt = DateFormat('HH:mm');
@@ -50,10 +54,17 @@ class HomeWidgetService {
 
       final roomStr = showRoom ? _roomText(next) : '';
 
-      await HomeWidget.saveWidgetData('widget_header', header);
-      await HomeWidget.saveWidgetData('widget_subject', next.subject);
-      await HomeWidget.saveWidgetData('widget_time', timeStr);
-      await HomeWidget.saveWidgetData('widget_room', roomStr);
+      payload = HomeWidgetPayload.nextLesson(
+        header: header,
+        subject: next.subject,
+        time: timeStr,
+        room: roomStr,
+        updatedAt: now,
+      );
+    }
+
+    for (final entry in payload.toWidgetData().entries) {
+      await HomeWidget.saveWidgetData(entry.key, entry.value);
     }
 
     await HomeWidget.updateWidget(androidName: _androidProvider);
