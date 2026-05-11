@@ -7,6 +7,7 @@ import 'package:ngieuapp/app/features/profile/presentation/widgets/next_lesson_c
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_header.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/widget/home_widget_provider.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
@@ -110,9 +111,18 @@ class _ProfileContent extends ConsumerWidget {
       weekStart: DateTime(weekStart.year, weekStart.month, weekStart.day),
     );
     final lessonsAsync = ref.watch(weekScheduleProvider(key));
+    final settings = ref.watch(appSettingsProvider);
 
     ref.listen(weekScheduleProvider(key), (_, next) {
-      next.whenData(ref.read(homeWidgetServiceProvider).updateNextLesson);
+      next.whenData(
+        (lessons) => ref
+            .read(homeWidgetServiceProvider)
+            .updateNextLesson(
+              lessons,
+              enabled: settings.homeWidgetEnabled,
+              showRoom: settings.homeWidgetShowRoom,
+            ),
+      );
     });
 
     return ListView(
@@ -135,10 +145,7 @@ class _ProfileContent extends ConsumerWidget {
                         l.date.day == today.day,
                   )
                   .length;
-              return StatCard(
-                label: 'Сегодня пар',
-                value: '$todayCount',
-              );
+              return StatCard(label: 'Сегодня пар', value: '$todayCount');
             },
           ),
         ),

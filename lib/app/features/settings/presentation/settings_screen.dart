@@ -84,6 +84,53 @@ class SettingsScreen extends ConsumerWidget {
               await rescheduleNotifications(ref);
             },
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              'Длительность поиска свободных аудиторий',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 30, label: Text('30')),
+                ButtonSegment(value: 45, label: Text('45')),
+                ButtonSegment(value: 60, label: Text('60')),
+                ButtonSegment(value: 90, label: Text('90')),
+              ],
+              selected: {s.defaultFreeRoomDurationMinutes},
+              onSelectionChanged: (sel) =>
+                  notifier.setDefaultFreeRoomDurationMinutes(sel.first),
+            ),
+          ),
+          const Divider(),
+          const _SectionTitle('Новости'),
+          SwitchListTile(
+            title: const Text('Показывать изображения в новостях'),
+            subtitle: const Text('Отключите, чтобы экономить трафик'),
+            value: s.showNewsImages,
+            onChanged: notifier.setShowNewsImages,
+          ),
+          const Divider(),
+          const _SectionTitle('Виджет'),
+          SwitchListTile(
+            title: const Text('Обновлять виджет «Следующая пара»'),
+            subtitle: const Text('Для виджета на домашнем экране'),
+            value: s.homeWidgetEnabled,
+            onChanged: notifier.setHomeWidgetEnabled,
+          ),
+          SwitchListTile(
+            title: const Text('В виджете показывать аудиторию'),
+            subtitle: const Text('Отключите, чтобы скрыть аудиторию'),
+            value: s.homeWidgetShowRoom,
+            onChanged: s.homeWidgetEnabled
+                ? notifier.setHomeWidgetShowRoom
+                : null,
+          ),
           const Divider(),
           const _SectionTitle('Уведомления'),
           SwitchListTile(

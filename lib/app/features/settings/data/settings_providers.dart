@@ -41,6 +41,26 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(notificationMinutesBefore: minutes);
     await _repo.save(state);
   }
+
+  Future<void> setShowNewsImages(bool value) async {
+    state = state.copyWith(showNewsImages: value);
+    await _repo.save(state);
+  }
+
+  Future<void> setHomeWidgetEnabled(bool value) async {
+    state = state.copyWith(homeWidgetEnabled: value);
+    await _repo.save(state);
+  }
+
+  Future<void> setHomeWidgetShowRoom(bool value) async {
+    state = state.copyWith(homeWidgetShowRoom: value);
+    await _repo.save(state);
+  }
+
+  Future<void> setDefaultFreeRoomDurationMinutes(int minutes) async {
+    state = state.copyWith(defaultFreeRoomDurationMinutes: minutes);
+    await _repo.save(state);
+  }
 }
 
 final appSettingsProvider =

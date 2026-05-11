@@ -17,6 +17,11 @@ _AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => _AppSettings(
   notificationsEnabled: json['notificationsEnabled'] as bool? ?? false,
   notificationMinutesBefore:
       (json['notificationMinutesBefore'] as num?)?.toInt() ?? 15,
+  showNewsImages: json['showNewsImages'] as bool? ?? true,
+  homeWidgetEnabled: json['homeWidgetEnabled'] as bool? ?? true,
+  homeWidgetShowRoom: json['homeWidgetShowRoom'] as bool? ?? true,
+  defaultFreeRoomDurationMinutes:
+      (json['defaultFreeRoomDurationMinutes'] as num?)?.toInt() ?? 45,
 );
 
 Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
@@ -26,6 +31,10 @@ Map<String, dynamic> _$AppSettingsToJson(_AppSettings instance) =>
       'showChanges': instance.showChanges,
       'notificationsEnabled': instance.notificationsEnabled,
       'notificationMinutesBefore': instance.notificationMinutesBefore,
+      'showNewsImages': instance.showNewsImages,
+      'homeWidgetEnabled': instance.homeWidgetEnabled,
+      'homeWidgetShowRoom': instance.homeWidgetShowRoom,
+      'defaultFreeRoomDurationMinutes': instance.defaultFreeRoomDurationMinutes,
     };
 
 const _$AppThemeModeEnumMap = {

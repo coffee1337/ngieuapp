@@ -15,7 +15,12 @@ class HomeWidgetService {
   static final _getNextLesson = GetNextLesson();
 
   /// Обновляет виджет "Следующая пара" данными из списка занятий.
-  Future<void> updateNextLesson(List<Lesson> lessons) async {
+  Future<void> updateNextLesson(
+    List<Lesson> lessons, {
+    bool enabled = true,
+    bool showRoom = true,
+  }) async {
+    if (!enabled) return;
     if (!Platform.isAndroid) return;
 
     final next = _getNextLesson(lessons);
@@ -39,12 +44,11 @@ class HomeWidgetService {
           : 'БЛИЖАЙШАЯ ПАРА';
 
       final timeStr = isToday
-          ? '${timeFmt.format(next.startTime)} — ${timeFmt.format(next.endTime)}'
+          ? '${timeFmt.format(next.startTime)} — '
+                '${timeFmt.format(next.endTime)}'
           : dayFmt.format(next.startTime);
 
-      final roomStr = next.classroom.isEmpty
-          ? (next.teacherNames.isEmpty ? '' : next.teacherNames.first)
-          : 'Ауд. ${next.classroom}';
+      final roomStr = showRoom ? _roomText(next) : '';
 
       await HomeWidget.saveWidgetData('widget_header', header);
       await HomeWidget.saveWidgetData('widget_subject', next.subject);
@@ -57,4 +61,10 @@ class HomeWidgetService {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _roomText(Lesson lesson) {
+    if (lesson.classroom.isNotEmpty) return 'Ауд. ${lesson.classroom}';
+    if (lesson.teacherNames.isNotEmpty) return lesson.teacherNames.first;
+    return '';
+  }
 }

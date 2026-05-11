@@ -6,6 +6,7 @@ import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/backgroun
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/filter_panel.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/loading_banner.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/room_card.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
@@ -27,7 +28,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   TimeOfDay _from = const TimeOfDay(hour: 10, minute: 0);
   TimeOfDay _to = const TimeOfDay(hour: 12, minute: 0);
   bool _searched = false;
-  int _minDurationMinutes = 45;
+  int? _minDurationMinutes;
   String? _instituteFilter;
 
   @override
@@ -72,6 +73,9 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
     final semantic = theme.extension<AppSemanticColors>()!;
     final dateFmt = DateFormat('EEEE, d MMMM', 'ru_RU');
     final loader = ref.watch(backgroundLoaderProvider);
+    final minDurationMinutes =
+        _minDurationMinutes ??
+        ref.watch(appSettingsProvider).defaultFreeRoomDurationMinutes;
 
     return Scaffold(
       appBar: AppBar(
@@ -97,7 +101,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
             date: _date,
             from: _from,
             to: _to,
-            minDurationMinutes: _minDurationMinutes,
+            minDurationMinutes: minDurationMinutes,
             instituteFilter: _instituteFilter,
             loader: loader,
             onPickDate: _pickDate,
@@ -124,13 +128,16 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
         icon: Icons.search,
       );
     }
+    final minDurationMinutes =
+        _minDurationMinutes ??
+        ref.watch(appSettingsProvider).defaultFreeRoomDurationMinutes;
     final key = (
       date: _date,
       fromHour: _from.hour,
       fromMinute: _from.minute,
       toHour: _to.hour,
       toMinute: _to.minute,
-      minDurationMinutes: _minDurationMinutes,
+      minDurationMinutes: minDurationMinutes,
       buildingFilter: '',
       instituteFilter: _instituteFilter ?? '',
     );

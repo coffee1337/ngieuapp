@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_list_controller.dart';
 import 'package:ngieuapp/app/features/news/presentation/widgets/news_card.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
@@ -14,6 +15,7 @@ class NewsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(newsListProvider);
+    final showImages = ref.watch(appSettingsProvider).showNewsImages;
 
     return Scaffold(
       appBar: AppBar(
@@ -43,6 +45,7 @@ class NewsListScreen extends ConsumerWidget {
                 final a = articles[i];
                 return NewsCard(
                   article: a,
+                  showImage: showImages,
                   onTap: () => context.push('/news/detail/${a.id}'),
                 );
               },

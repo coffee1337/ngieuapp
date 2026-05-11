@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- AppThemeMode get themeMode; AppFontScale get fontScale; bool get showChanges; bool get notificationsEnabled; int get notificationMinutesBefore;
+ AppThemeMode get themeMode; AppFontScale get fontScale; bool get showChanges; bool get notificationsEnabled; int get notificationMinutesBefore; bool get showNewsImages; bool get homeWidgetEnabled; bool get homeWidgetShowRoom; int get defaultFreeRoomDurationMinutes;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore)&&(identical(other.showNewsImages, showNewsImages) || other.showNewsImages == showNewsImages)&&(identical(other.homeWidgetEnabled, homeWidgetEnabled) || other.homeWidgetEnabled == homeWidgetEnabled)&&(identical(other.homeWidgetShowRoom, homeWidgetShowRoom) || other.homeWidgetShowRoom == homeWidgetShowRoom)&&(identical(other.defaultFreeRoomDurationMinutes, defaultFreeRoomDurationMinutes) || other.defaultFreeRoomDurationMinutes == defaultFreeRoomDurationMinutes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore);
+int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore,showNewsImages,homeWidgetEnabled,homeWidgetShowRoom,defaultFreeRoomDurationMinutes);
 
 @override
 String toString() {
-  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore)';
+  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore, showNewsImages: $showNewsImages, homeWidgetEnabled: $homeWidgetEnabled, homeWidgetShowRoom: $homeWidgetShowRoom, defaultFreeRoomDurationMinutes: $defaultFreeRoomDurationMinutes)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore
+ AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore, bool showNewsImages, bool homeWidgetEnabled, bool homeWidgetShowRoom, int defaultFreeRoomDurationMinutes
 });
 
 
@@ -65,13 +65,17 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,Object? showNewsImages = null,Object? homeWidgetEnabled = null,Object? homeWidgetShowRoom = null,Object? defaultFreeRoomDurationMinutes = null,}) {
   return _then(_self.copyWith(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as AppThemeMode,fontScale: null == fontScale ? _self.fontScale : fontScale // ignore: cast_nullable_to_non_nullable
 as AppFontScale,showChanges: null == showChanges ? _self.showChanges : showChanges // ignore: cast_nullable_to_non_nullable
 as bool,notificationsEnabled: null == notificationsEnabled ? _self.notificationsEnabled : notificationsEnabled // ignore: cast_nullable_to_non_nullable
 as bool,notificationMinutesBefore: null == notificationMinutesBefore ? _self.notificationMinutesBefore : notificationMinutesBefore // ignore: cast_nullable_to_non_nullable
+as int,showNewsImages: null == showNewsImages ? _self.showNewsImages : showNewsImages // ignore: cast_nullable_to_non_nullable
+as bool,homeWidgetEnabled: null == homeWidgetEnabled ? _self.homeWidgetEnabled : homeWidgetEnabled // ignore: cast_nullable_to_non_nullable
+as bool,homeWidgetShowRoom: null == homeWidgetShowRoom ? _self.homeWidgetShowRoom : homeWidgetShowRoom // ignore: cast_nullable_to_non_nullable
+as bool,defaultFreeRoomDurationMinutes: null == defaultFreeRoomDurationMinutes ? _self.defaultFreeRoomDurationMinutes : defaultFreeRoomDurationMinutes // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -157,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore,  bool showNewsImages,  bool homeWidgetEnabled,  bool homeWidgetShowRoom,  int defaultFreeRoomDurationMinutes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore,_that.showNewsImages,_that.homeWidgetEnabled,_that.homeWidgetShowRoom,_that.defaultFreeRoomDurationMinutes);case _:
   return orElse();
 
 }
@@ -178,10 +182,10 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notifica
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore,  bool showNewsImages,  bool homeWidgetEnabled,  bool homeWidgetShowRoom,  int defaultFreeRoomDurationMinutes)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore,_that.showNewsImages,_that.homeWidgetEnabled,_that.homeWidgetShowRoom,_that.defaultFreeRoomDurationMinutes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +202,10 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notifica
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AppThemeMode themeMode,  AppFontScale fontScale,  bool showChanges,  bool notificationsEnabled,  int notificationMinutesBefore,  bool showNewsImages,  bool homeWidgetEnabled,  bool homeWidgetShowRoom,  int defaultFreeRoomDurationMinutes)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore);case _:
+return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notificationsEnabled,_that.notificationMinutesBefore,_that.showNewsImages,_that.homeWidgetEnabled,_that.homeWidgetShowRoom,_that.defaultFreeRoomDurationMinutes);case _:
   return null;
 
 }
@@ -213,7 +217,7 @@ return $default(_that.themeMode,_that.fontScale,_that.showChanges,_that.notifica
 @JsonSerializable()
 
 class _AppSettings implements AppSettings {
-  const _AppSettings({this.themeMode = AppThemeMode.system, this.fontScale = AppFontScale.normal, this.showChanges = true, this.notificationsEnabled = false, this.notificationMinutesBefore = 15});
+  const _AppSettings({this.themeMode = AppThemeMode.system, this.fontScale = AppFontScale.normal, this.showChanges = true, this.notificationsEnabled = false, this.notificationMinutesBefore = 15, this.showNewsImages = true, this.homeWidgetEnabled = true, this.homeWidgetShowRoom = true, this.defaultFreeRoomDurationMinutes = 45});
   factory _AppSettings.fromJson(Map<String, dynamic> json) => _$AppSettingsFromJson(json);
 
 @override@JsonKey() final  AppThemeMode themeMode;
@@ -221,6 +225,10 @@ class _AppSettings implements AppSettings {
 @override@JsonKey() final  bool showChanges;
 @override@JsonKey() final  bool notificationsEnabled;
 @override@JsonKey() final  int notificationMinutesBefore;
+@override@JsonKey() final  bool showNewsImages;
+@override@JsonKey() final  bool homeWidgetEnabled;
+@override@JsonKey() final  bool homeWidgetShowRoom;
+@override@JsonKey() final  int defaultFreeRoomDurationMinutes;
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.fontScale, fontScale) || other.fontScale == fontScale)&&(identical(other.showChanges, showChanges) || other.showChanges == showChanges)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.notificationMinutesBefore, notificationMinutesBefore) || other.notificationMinutesBefore == notificationMinutesBefore)&&(identical(other.showNewsImages, showNewsImages) || other.showNewsImages == showNewsImages)&&(identical(other.homeWidgetEnabled, homeWidgetEnabled) || other.homeWidgetEnabled == homeWidgetEnabled)&&(identical(other.homeWidgetShowRoom, homeWidgetShowRoom) || other.homeWidgetShowRoom == homeWidgetShowRoom)&&(identical(other.defaultFreeRoomDurationMinutes, defaultFreeRoomDurationMinutes) || other.defaultFreeRoomDurationMinutes == defaultFreeRoomDurationMinutes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore);
+int get hashCode => Object.hash(runtimeType,themeMode,fontScale,showChanges,notificationsEnabled,notificationMinutesBefore,showNewsImages,homeWidgetEnabled,homeWidgetShowRoom,defaultFreeRoomDurationMinutes);
 
 @override
 String toString() {
-  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore)';
+  return 'AppSettings(themeMode: $themeMode, fontScale: $fontScale, showChanges: $showChanges, notificationsEnabled: $notificationsEnabled, notificationMinutesBefore: $notificationMinutesBefore, showNewsImages: $showNewsImages, homeWidgetEnabled: $homeWidgetEnabled, homeWidgetShowRoom: $homeWidgetShowRoom, defaultFreeRoomDurationMinutes: $defaultFreeRoomDurationMinutes)';
 }
 
 
@@ -255,7 +263,7 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore
+ AppThemeMode themeMode, AppFontScale fontScale, bool showChanges, bool notificationsEnabled, int notificationMinutesBefore, bool showNewsImages, bool homeWidgetEnabled, bool homeWidgetShowRoom, int defaultFreeRoomDurationMinutes
 });
 
 
@@ -272,13 +280,17 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? fontScale = null,Object? showChanges = null,Object? notificationsEnabled = null,Object? notificationMinutesBefore = null,Object? showNewsImages = null,Object? homeWidgetEnabled = null,Object? homeWidgetShowRoom = null,Object? defaultFreeRoomDurationMinutes = null,}) {
   return _then(_AppSettings(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as AppThemeMode,fontScale: null == fontScale ? _self.fontScale : fontScale // ignore: cast_nullable_to_non_nullable
 as AppFontScale,showChanges: null == showChanges ? _self.showChanges : showChanges // ignore: cast_nullable_to_non_nullable
 as bool,notificationsEnabled: null == notificationsEnabled ? _self.notificationsEnabled : notificationsEnabled // ignore: cast_nullable_to_non_nullable
 as bool,notificationMinutesBefore: null == notificationMinutesBefore ? _self.notificationMinutesBefore : notificationMinutesBefore // ignore: cast_nullable_to_non_nullable
+as int,showNewsImages: null == showNewsImages ? _self.showNewsImages : showNewsImages // ignore: cast_nullable_to_non_nullable
+as bool,homeWidgetEnabled: null == homeWidgetEnabled ? _self.homeWidgetEnabled : homeWidgetEnabled // ignore: cast_nullable_to_non_nullable
+as bool,homeWidgetShowRoom: null == homeWidgetShowRoom ? _self.homeWidgetShowRoom : homeWidgetShowRoom // ignore: cast_nullable_to_non_nullable
+as bool,defaultFreeRoomDurationMinutes: null == defaultFreeRoomDurationMinutes ? _self.defaultFreeRoomDurationMinutes : defaultFreeRoomDurationMinutes // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

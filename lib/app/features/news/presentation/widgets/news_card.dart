@@ -5,10 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 class NewsCard extends StatelessWidget {
-  const NewsCard({required this.article, required this.onTap, super.key});
+  const NewsCard({
+    required this.article,
+    required this.onTap,
+    this.showImage = true,
+    super.key,
+  });
 
   final NewsArticle article;
   final VoidCallback onTap;
+  final bool showImage;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +38,9 @@ class NewsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (article.imageUrl != null && article.imageUrl!.isNotEmpty)
+            if (showImage &&
+                article.imageUrl != null &&
+                article.imageUrl!.isNotEmpty)
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: CachedNetworkImage(

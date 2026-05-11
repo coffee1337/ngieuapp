@@ -23,6 +23,10 @@ abstract class AppSettings with _$AppSettings {
     @Default(true) bool showChanges,
     @Default(false) bool notificationsEnabled,
     @Default(15) int notificationMinutesBefore,
+    @Default(true) bool showNewsImages,
+    @Default(true) bool homeWidgetEnabled,
+    @Default(true) bool homeWidgetShowRoom,
+    @Default(45) int defaultFreeRoomDurationMinutes,
   }) = _AppSettings;
 
   factory AppSettings.fromJson(Map<String, dynamic> json) =>
