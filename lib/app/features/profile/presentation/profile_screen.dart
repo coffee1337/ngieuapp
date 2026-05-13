@@ -117,6 +117,7 @@ class _ProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final course = identity.computedCourse;
     final theme = Theme.of(context);
+    final isStudentGroup = identity.isStudentGroup;
 
     final today = DateTime.now();
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
@@ -143,10 +144,9 @@ class _ProfileContent extends ConsumerWidget {
       children: [
         ProfileHeader(
           identity: identity,
-          courseStats: StatCard(
-            label: 'Курс',
-            value: course == null ? '—' : '$course',
-          ),
+          courseStats: isStudentGroup
+              ? StatCard(label: 'Курс', value: course == null ? '—' : '$course')
+              : const StatCard(label: 'Тип', value: 'Преподаватель'),
           todayStats: lessonsAsync.when(
             loading: () => const StatCard(label: 'Сегодня', value: '…'),
             error: (_, __) => const StatCard(label: 'Сегодня', value: '—'),

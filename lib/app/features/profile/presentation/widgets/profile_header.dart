@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
-import 'package:ngieuapp/app/features/schedule/domain/department.dart';
 import 'package:ngieuapp/app/theme/app_colors.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -46,11 +45,7 @@ class ProfileHeader extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.school,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.school, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -58,7 +53,7 @@ class ProfileHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      identity.groupName,
+                      identity.displayName,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -67,7 +62,7 @@ class ProfileHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      Departments.nameOf(identity.departmentId),
+                      identity.departmentName,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
@@ -79,13 +74,7 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              courseStats,
-              const SizedBox(width: 8),
-              todayStats,
-            ],
-          ),
+          Row(children: [courseStats, const SizedBox(width: 8), todayStats]),
         ],
       ),
     );
