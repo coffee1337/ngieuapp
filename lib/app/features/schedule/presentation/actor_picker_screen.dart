@@ -63,6 +63,12 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final studentDepartments = ref.watch(studentDepartmentsProvider);
+    final studentDepartmentNames = {
+      for (final department in studentDepartments.valueOrNull ?? <Department>[])
+        department.id: department.name,
+    };
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -143,12 +149,15 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                     filter: _filter,
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(studentGroupsProvider),
+                    departmentNameOf: (id) =>
+                        studentDepartmentNames[id] ?? 'Без института',
                   ),
                   _ActorList(
                     asyncProvider: ref.watch(teachersProvider),
                     filter: _filter,
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(teachersProvider),
+                    departmentNameOf: Departments.nameOf,
                   ),
                 ],
               ),
@@ -166,12 +175,14 @@ class _ActorList extends StatelessWidget {
     required this.filter,
     required this.onTap,
     required this.onRetry,
+    required this.departmentNameOf,
   });
 
   final AsyncValue<List<Actor>> asyncProvider;
   final List<Actor> Function(List<Actor>) filter;
   final void Function(Actor) onTap;
   final VoidCallback onRetry;
+  final String Function(int) departmentNameOf;
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +218,10 @@ class _ActorList extends StatelessWidget {
                 slivers: [
                   SliverPersistentHeader(
                     pinned: true,
-                    delegate: _DepartmentHeaderDelegate(id: id),
+                    delegate: _DepartmentHeaderDelegate(
+                      id: id,
+                      title: departmentNameOf(id),
+                    ),
                   ),
                   SliverList.separated(
                     itemCount: grouped[id]!.length,
@@ -234,8 +248,9 @@ class _ActorList extends StatelessWidget {
 }
 
 class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _DepartmentHeaderDelegate({required this.id});
+  const _DepartmentHeaderDelegate({required this.id, required this.title});
   final int id;
+  final String title;
 
   @override
   double get minExtent => 44;
@@ -270,7 +285,7 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              Departments.nameOf(id),
+              title,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -286,7 +301,8 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant _DepartmentHeaderDelegate old) => old.id != id;
+  bool shouldRebuild(covariant _DepartmentHeaderDelegate old) =>
+      old.id != id || old.title != title;
 }
 
 class _ActorTile extends StatelessWidget {
