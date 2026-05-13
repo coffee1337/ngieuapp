@@ -44,17 +44,26 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   }
 
   Future<void> _onActorTap(Actor a) async {
-    if (a.type == ActorType.studentGroup) {
-      final repo = ref.read(profileLocalDataSourceProvider);
-      await repo.save(
-        StudentIdentity(
-          actorId: a.id,
-          groupName: a.name,
-          departmentId: a.departmentId,
-        ),
-      );
-      ref.invalidate(studentIdentityProvider);
-    }
+    final studentDepartments = ref.read(studentDepartmentsProvider).valueOrNull;
+    final studentDepartmentNames = {
+      for (final department in studentDepartments ?? <Department>[])
+        department.id: department.name,
+    };
+    final repo = ref.read(profileLocalDataSourceProvider);
+    await repo.save(
+      StudentIdentity(
+        actorId: a.id,
+        displayName: a.name,
+        actorType: a.type,
+        departmentName: a.type == ActorType.studentGroup
+            ? studentDepartmentNames[a.departmentId] ?? 'Без института'
+            : Departments.nameOf(a.departmentId),
+        groupName: a.type == ActorType.studentGroup ? a.name : null,
+        departmentId: a.departmentId,
+      ),
+    );
+    ref.invalidate(studentIdentityProvider);
+
     if (mounted) {
       context.push('/schedule/${a.id}');
     }

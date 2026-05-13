@@ -11,33 +11,30 @@ part of 'student_identity.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$StudentIdentity {
 
- String get actorId; String get groupName; int get departmentId; String? get fullName;
+ String get actorId; String get displayName; ActorType get actorType; String get departmentName; String? get groupName; int? get departmentId; String? get fullName;
 /// Create a copy of StudentIdentity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $StudentIdentityCopyWith<StudentIdentity> get copyWith => _$StudentIdentityCopyWithImpl<StudentIdentity>(this as StudentIdentity, _$identity);
 
-  /// Serializes this StudentIdentity to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudentIdentity&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.departmentId, departmentId) || other.departmentId == departmentId)&&(identical(other.fullName, fullName) || other.fullName == fullName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudentIdentity&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.actorType, actorType) || other.actorType == actorType)&&(identical(other.departmentName, departmentName) || other.departmentName == departmentName)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.departmentId, departmentId) || other.departmentId == departmentId)&&(identical(other.fullName, fullName) || other.fullName == fullName));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,actorId,groupName,departmentId,fullName);
+int get hashCode => Object.hash(runtimeType,actorId,displayName,actorType,departmentName,groupName,departmentId,fullName);
 
 @override
 String toString() {
-  return 'StudentIdentity(actorId: $actorId, groupName: $groupName, departmentId: $departmentId, fullName: $fullName)';
+  return 'StudentIdentity(actorId: $actorId, displayName: $displayName, actorType: $actorType, departmentName: $departmentName, groupName: $groupName, departmentId: $departmentId, fullName: $fullName)';
 }
 
 
@@ -48,7 +45,7 @@ abstract mixin class $StudentIdentityCopyWith<$Res>  {
   factory $StudentIdentityCopyWith(StudentIdentity value, $Res Function(StudentIdentity) _then) = _$StudentIdentityCopyWithImpl;
 @useResult
 $Res call({
- String actorId, String groupName, int departmentId, String? fullName
+ String actorId, String displayName, ActorType actorType, String departmentName, String? groupName, int? departmentId, String? fullName
 });
 
 
@@ -65,12 +62,15 @@ class _$StudentIdentityCopyWithImpl<$Res>
 
 /// Create a copy of StudentIdentity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? actorId = null,Object? groupName = null,Object? departmentId = null,Object? fullName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? actorId = null,Object? displayName = null,Object? actorType = null,Object? departmentName = null,Object? groupName = freezed,Object? departmentId = freezed,Object? fullName = freezed,}) {
   return _then(_self.copyWith(
 actorId: null == actorId ? _self.actorId : actorId // ignore: cast_nullable_to_non_nullable
-as String,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
-as String,departmentId: null == departmentId ? _self.departmentId : departmentId // ignore: cast_nullable_to_non_nullable
-as int,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
+as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,actorType: null == actorType ? _self.actorType : actorType // ignore: cast_nullable_to_non_nullable
+as ActorType,departmentName: null == departmentName ? _self.departmentName : departmentName // ignore: cast_nullable_to_non_nullable
+as String,groupName: freezed == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
+as String?,departmentId: freezed == departmentId ? _self.departmentId : departmentId // ignore: cast_nullable_to_non_nullable
+as int?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -156,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String actorId,  String groupName,  int departmentId,  String? fullName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String actorId,  String displayName,  ActorType actorType,  String departmentName,  String? groupName,  int? departmentId,  String? fullName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StudentIdentity() when $default != null:
-return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName);case _:
+return $default(_that.actorId,_that.displayName,_that.actorType,_that.departmentName,_that.groupName,_that.departmentId,_that.fullName);case _:
   return orElse();
 
 }
@@ -177,10 +177,10 @@ return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String actorId,  String groupName,  int departmentId,  String? fullName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String actorId,  String displayName,  ActorType actorType,  String departmentName,  String? groupName,  int? departmentId,  String? fullName)  $default,) {final _that = this;
 switch (_that) {
 case _StudentIdentity():
-return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName);case _:
+return $default(_that.actorId,_that.displayName,_that.actorType,_that.departmentName,_that.groupName,_that.departmentId,_that.fullName);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +197,10 @@ return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String actorId,  String groupName,  int departmentId,  String? fullName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String actorId,  String displayName,  ActorType actorType,  String departmentName,  String? groupName,  int? departmentId,  String? fullName)?  $default,) {final _that = this;
 switch (_that) {
 case _StudentIdentity() when $default != null:
-return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName);case _:
+return $default(_that.actorId,_that.displayName,_that.actorType,_that.departmentName,_that.groupName,_that.departmentId,_that.fullName);case _:
   return null;
 
 }
@@ -209,15 +209,18 @@ return $default(_that.actorId,_that.groupName,_that.departmentId,_that.fullName)
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _StudentIdentity implements StudentIdentity {
-  const _StudentIdentity({required this.actorId, required this.groupName, required this.departmentId, this.fullName});
-  factory _StudentIdentity.fromJson(Map<String, dynamic> json) => _$StudentIdentityFromJson(json);
+  const _StudentIdentity({required this.actorId, required this.displayName, required this.actorType, required this.departmentName, this.groupName, this.departmentId, this.fullName});
+  
 
 @override final  String actorId;
-@override final  String groupName;
-@override final  int departmentId;
+@override final  String displayName;
+@override final  ActorType actorType;
+@override final  String departmentName;
+@override final  String? groupName;
+@override final  int? departmentId;
 @override final  String? fullName;
 
 /// Create a copy of StudentIdentity
@@ -226,23 +229,20 @@ class _StudentIdentity implements StudentIdentity {
 @pragma('vm:prefer-inline')
 _$StudentIdentityCopyWith<_StudentIdentity> get copyWith => __$StudentIdentityCopyWithImpl<_StudentIdentity>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$StudentIdentityToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudentIdentity&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.departmentId, departmentId) || other.departmentId == departmentId)&&(identical(other.fullName, fullName) || other.fullName == fullName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudentIdentity&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.actorType, actorType) || other.actorType == actorType)&&(identical(other.departmentName, departmentName) || other.departmentName == departmentName)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.departmentId, departmentId) || other.departmentId == departmentId)&&(identical(other.fullName, fullName) || other.fullName == fullName));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,actorId,groupName,departmentId,fullName);
+int get hashCode => Object.hash(runtimeType,actorId,displayName,actorType,departmentName,groupName,departmentId,fullName);
 
 @override
 String toString() {
-  return 'StudentIdentity(actorId: $actorId, groupName: $groupName, departmentId: $departmentId, fullName: $fullName)';
+  return 'StudentIdentity(actorId: $actorId, displayName: $displayName, actorType: $actorType, departmentName: $departmentName, groupName: $groupName, departmentId: $departmentId, fullName: $fullName)';
 }
 
 
@@ -253,7 +253,7 @@ abstract mixin class _$StudentIdentityCopyWith<$Res> implements $StudentIdentity
   factory _$StudentIdentityCopyWith(_StudentIdentity value, $Res Function(_StudentIdentity) _then) = __$StudentIdentityCopyWithImpl;
 @override @useResult
 $Res call({
- String actorId, String groupName, int departmentId, String? fullName
+ String actorId, String displayName, ActorType actorType, String departmentName, String? groupName, int? departmentId, String? fullName
 });
 
 
@@ -270,12 +270,15 @@ class __$StudentIdentityCopyWithImpl<$Res>
 
 /// Create a copy of StudentIdentity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? actorId = null,Object? groupName = null,Object? departmentId = null,Object? fullName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? actorId = null,Object? displayName = null,Object? actorType = null,Object? departmentName = null,Object? groupName = freezed,Object? departmentId = freezed,Object? fullName = freezed,}) {
   return _then(_StudentIdentity(
 actorId: null == actorId ? _self.actorId : actorId // ignore: cast_nullable_to_non_nullable
-as String,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
-as String,departmentId: null == departmentId ? _self.departmentId : departmentId // ignore: cast_nullable_to_non_nullable
-as int,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
+as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,actorType: null == actorType ? _self.actorType : actorType // ignore: cast_nullable_to_non_nullable
+as ActorType,departmentName: null == departmentName ? _self.departmentName : departmentName // ignore: cast_nullable_to_non_nullable
+as String,groupName: freezed == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
+as String?,departmentId: freezed == departmentId ? _self.departmentId : departmentId // ignore: cast_nullable_to_non_nullable
+as int?,fullName: freezed == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
