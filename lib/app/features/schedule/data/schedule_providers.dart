@@ -12,6 +12,7 @@ import 'package:ngieuapp/app/features/schedule/data/week_type_cache_datasource.d
 import 'package:ngieuapp/app/features/schedule/data/week_type_repository_impl.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/classroom_availability.dart';
+import 'package:ngieuapp/app/features/schedule/domain/department.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/filter_week_schedule.dart';
@@ -157,6 +158,10 @@ final weekScheduleProvider = FutureProvider.autoDispose
 
 final studentGroupsProvider = FutureProvider<List<Actor>>((ref) {
   return ref.watch(actorsApiDataSourceProvider).loadStudentGroups();
+});
+
+final studentDepartmentsProvider = FutureProvider<List<Department>>((ref) {
+  return ref.watch(actorsApiDataSourceProvider).fetchStudentDepartments();
 });
 
 final teachersProvider = FutureProvider<List<Actor>>((ref) {

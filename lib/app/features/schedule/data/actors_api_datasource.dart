@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/department.dart';
 
 class ActorsApiDataSource {
   ActorsApiDataSource(this._dio);
@@ -35,9 +36,10 @@ class ActorsApiDataSource {
     );
     final data = resp.data;
     final raw = switch (data) {
-      final List l => l,
-      final Map m when m['data'] is List => m['data'] as List,
-      _ => const [],
+      final List<dynamic> l => l,
+      final Map<dynamic, dynamic> m when m['data'] is List<dynamic> =>
+        m['data'] as List<dynamic>,
+      _ => const <dynamic>[],
     };
     return raw.whereType<Map<String, dynamic>>().map((j) {
       final depRaw = j['departmentId'] ?? j['id'];
@@ -51,5 +53,24 @@ class ActorsApiDataSource {
         type: ActorType.department,
       );
     }).toList();
+  }
+
+  Future<List<Department>> fetchStudentDepartments({CancelToken? ct}) async {
+    final resp = await _dio.get<dynamic>(
+      'Departments/Get',
+      queryParameters: {'isStudent': true},
+      cancelToken: ct,
+    );
+    final data = resp.data;
+    final raw = switch (data) {
+      final List<dynamic> l => l,
+      final Map<dynamic, dynamic> m when m['data'] is List<dynamic> =>
+        m['data'] as List<dynamic>,
+      _ => const <dynamic>[],
+    };
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(Department.fromJson)
+        .toList();
   }
 }
