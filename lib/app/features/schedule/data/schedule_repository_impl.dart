@@ -1,12 +1,19 @@
+import 'package:ngieuapp/app/features/notifications/schedule_change_notifications_service.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  ScheduleRepositoryImpl(this._api, this._db);
+  ScheduleRepositoryImpl(
+    this._api,
+    this._db, {
+    ScheduleChangeNotificationsService? changeNotifications,
+  }) : _changeNotifications = changeNotifications;
+
   final ScheduleApiDataSource _api;
   final ScheduleDbDataSource _db;
+  final ScheduleChangeNotificationsService? _changeNotifications;
 
   static const _ttl = Duration(hours: 6);
 
@@ -20,6 +27,11 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     if (stale || cached.isEmpty) {
       try {
         final fresh = await _api.fetchSchedule(actorId);
+        await _changeNotifications?.notifyAboutNewChanges(
+          actorId: actorId,
+          oldLessons: cached,
+          freshLessons: fresh,
+        );
         await _db.replaceForActor(actorId, fresh);
         yield fresh
             .where(

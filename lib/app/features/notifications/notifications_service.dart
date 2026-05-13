@@ -90,6 +90,29 @@ class NotificationsService {
     );
   }
 
+  Future<void> showScheduleChangeNotification({
+    required Lesson lesson,
+    required String fingerprint,
+  }) async {
+    await _plugin.show(
+      _idFromString('schedule-change:$fingerprint'),
+      _changeTitle(lesson),
+      _buildBody(lesson),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'schedule_changes',
+          'Изменения расписания',
+          channelDescription: 'Уведомления о новых изменениях в расписании',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          color: _brandColor,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   Future<void> cancelAll() async => _plugin.cancelAll();
 
   Future<void> rescheduleFor(
@@ -119,8 +142,20 @@ class NotificationsService {
     return [t, ...parts].join(' * ');
   }
 
-  String _formatTime(DateTime t) =>
-      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  String _formatTime(DateTime t) {
+    final hour = t.hour.toString().padLeft(2, '0');
+    final minute = t.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String _changeTitle(Lesson l) {
+    if (l.isEvent &&
+        l.subject.toLowerCase() == 'мероприятие' &&
+        l.classroom.isEmpty) {
+      return 'Занятие отменено';
+    }
+    return 'Изменение в расписании: ${l.subject}';
+  }
 
   int _idFromString(String s) {
     var h = 0;

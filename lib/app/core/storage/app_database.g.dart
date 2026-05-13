@@ -1354,6 +1354,345 @@ class ClassroomsCompanion extends UpdateCompanion<Classroom> {
   }
 }
 
+class $SentScheduleChangeNotificationsTable
+    extends SentScheduleChangeNotifications
+    with
+        TableInfo<
+          $SentScheduleChangeNotificationsTable,
+          SentScheduleChangeNotification
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SentScheduleChangeNotificationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actorIdMeta = const VerificationMeta(
+    'actorId',
+  );
+  @override
+  late final GeneratedColumn<String> actorId = GeneratedColumn<String>(
+    'actor_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lessonDateMeta = const VerificationMeta(
+    'lessonDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lessonDate = GeneratedColumn<DateTime>(
+    'lesson_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    fingerprint,
+    actorId,
+    lessonDate,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sent_schedule_change_notifications';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SentScheduleChangeNotification> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fingerprintMeta);
+    }
+    if (data.containsKey('actor_id')) {
+      context.handle(
+        _actorIdMeta,
+        actorId.isAcceptableOrUnknown(data['actor_id']!, _actorIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actorIdMeta);
+    }
+    if (data.containsKey('lesson_date')) {
+      context.handle(
+        _lessonDateMeta,
+        lessonDate.isAcceptableOrUnknown(data['lesson_date']!, _lessonDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lessonDateMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {fingerprint};
+  @override
+  SentScheduleChangeNotification map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SentScheduleChangeNotification(
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      actorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}actor_id'],
+      )!,
+      lessonDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}lesson_date'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SentScheduleChangeNotificationsTable createAlias(String alias) {
+    return $SentScheduleChangeNotificationsTable(attachedDatabase, alias);
+  }
+}
+
+class SentScheduleChangeNotification extends DataClass
+    implements Insertable<SentScheduleChangeNotification> {
+  final String fingerprint;
+  final String actorId;
+  final DateTime lessonDate;
+  final DateTime createdAt;
+  const SentScheduleChangeNotification({
+    required this.fingerprint,
+    required this.actorId,
+    required this.lessonDate,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['actor_id'] = Variable<String>(actorId);
+    map['lesson_date'] = Variable<DateTime>(lessonDate);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SentScheduleChangeNotificationsCompanion toCompanion(bool nullToAbsent) {
+    return SentScheduleChangeNotificationsCompanion(
+      fingerprint: Value(fingerprint),
+      actorId: Value(actorId),
+      lessonDate: Value(lessonDate),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SentScheduleChangeNotification.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SentScheduleChangeNotification(
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      actorId: serializer.fromJson<String>(json['actorId']),
+      lessonDate: serializer.fromJson<DateTime>(json['lessonDate']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'actorId': serializer.toJson<String>(actorId),
+      'lessonDate': serializer.toJson<DateTime>(lessonDate),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SentScheduleChangeNotification copyWith({
+    String? fingerprint,
+    String? actorId,
+    DateTime? lessonDate,
+    DateTime? createdAt,
+  }) => SentScheduleChangeNotification(
+    fingerprint: fingerprint ?? this.fingerprint,
+    actorId: actorId ?? this.actorId,
+    lessonDate: lessonDate ?? this.lessonDate,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SentScheduleChangeNotification copyWithCompanion(
+    SentScheduleChangeNotificationsCompanion data,
+  ) {
+    return SentScheduleChangeNotification(
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      actorId: data.actorId.present ? data.actorId.value : this.actorId,
+      lessonDate: data.lessonDate.present
+          ? data.lessonDate.value
+          : this.lessonDate,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SentScheduleChangeNotification(')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('actorId: $actorId, ')
+          ..write('lessonDate: $lessonDate, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(fingerprint, actorId, lessonDate, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SentScheduleChangeNotification &&
+          other.fingerprint == this.fingerprint &&
+          other.actorId == this.actorId &&
+          other.lessonDate == this.lessonDate &&
+          other.createdAt == this.createdAt);
+}
+
+class SentScheduleChangeNotificationsCompanion
+    extends UpdateCompanion<SentScheduleChangeNotification> {
+  final Value<String> fingerprint;
+  final Value<String> actorId;
+  final Value<DateTime> lessonDate;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const SentScheduleChangeNotificationsCompanion({
+    this.fingerprint = const Value.absent(),
+    this.actorId = const Value.absent(),
+    this.lessonDate = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SentScheduleChangeNotificationsCompanion.insert({
+    required String fingerprint,
+    required String actorId,
+    required DateTime lessonDate,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : fingerprint = Value(fingerprint),
+       actorId = Value(actorId),
+       lessonDate = Value(lessonDate),
+       createdAt = Value(createdAt);
+  static Insertable<SentScheduleChangeNotification> custom({
+    Expression<String>? fingerprint,
+    Expression<String>? actorId,
+    Expression<DateTime>? lessonDate,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (actorId != null) 'actor_id': actorId,
+      if (lessonDate != null) 'lesson_date': lessonDate,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SentScheduleChangeNotificationsCompanion copyWith({
+    Value<String>? fingerprint,
+    Value<String>? actorId,
+    Value<DateTime>? lessonDate,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return SentScheduleChangeNotificationsCompanion(
+      fingerprint: fingerprint ?? this.fingerprint,
+      actorId: actorId ?? this.actorId,
+      lessonDate: lessonDate ?? this.lessonDate,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (actorId.present) {
+      map['actor_id'] = Variable<String>(actorId.value);
+    }
+    if (lessonDate.present) {
+      map['lesson_date'] = Variable<DateTime>(lessonDate.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SentScheduleChangeNotificationsCompanion(')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('actorId: $actorId, ')
+          ..write('lessonDate: $lessonDate, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1361,6 +1700,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $ClassroomsTable classrooms = $ClassroomsTable(this);
+  late final $SentScheduleChangeNotificationsTable
+  sentScheduleChangeNotifications = $SentScheduleChangeNotificationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1368,6 +1709,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     scheduleEntries,
     classrooms,
+    sentScheduleChangeNotifications,
   ];
 }
 
@@ -2025,6 +2367,210 @@ typedef $$ClassroomsTableProcessedTableManager =
       Classroom,
       PrefetchHooks Function()
     >;
+typedef $$SentScheduleChangeNotificationsTableCreateCompanionBuilder =
+    SentScheduleChangeNotificationsCompanion Function({
+      required String fingerprint,
+      required String actorId,
+      required DateTime lessonDate,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$SentScheduleChangeNotificationsTableUpdateCompanionBuilder =
+    SentScheduleChangeNotificationsCompanion Function({
+      Value<String> fingerprint,
+      Value<String> actorId,
+      Value<DateTime> lessonDate,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$SentScheduleChangeNotificationsTableFilterComposer
+    extends Composer<_$AppDatabase, $SentScheduleChangeNotificationsTable> {
+  $$SentScheduleChangeNotificationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actorId => $composableBuilder(
+    column: $table.actorId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lessonDate => $composableBuilder(
+    column: $table.lessonDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SentScheduleChangeNotificationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SentScheduleChangeNotificationsTable> {
+  $$SentScheduleChangeNotificationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actorId => $composableBuilder(
+    column: $table.actorId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lessonDate => $composableBuilder(
+    column: $table.lessonDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SentScheduleChangeNotificationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SentScheduleChangeNotificationsTable> {
+  $$SentScheduleChangeNotificationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actorId =>
+      $composableBuilder(column: $table.actorId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lessonDate => $composableBuilder(
+    column: $table.lessonDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$SentScheduleChangeNotificationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SentScheduleChangeNotificationsTable,
+          SentScheduleChangeNotification,
+          $$SentScheduleChangeNotificationsTableFilterComposer,
+          $$SentScheduleChangeNotificationsTableOrderingComposer,
+          $$SentScheduleChangeNotificationsTableAnnotationComposer,
+          $$SentScheduleChangeNotificationsTableCreateCompanionBuilder,
+          $$SentScheduleChangeNotificationsTableUpdateCompanionBuilder,
+          (
+            SentScheduleChangeNotification,
+            BaseReferences<
+              _$AppDatabase,
+              $SentScheduleChangeNotificationsTable,
+              SentScheduleChangeNotification
+            >,
+          ),
+          SentScheduleChangeNotification,
+          PrefetchHooks Function()
+        > {
+  $$SentScheduleChangeNotificationsTableTableManager(
+    _$AppDatabase db,
+    $SentScheduleChangeNotificationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SentScheduleChangeNotificationsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SentScheduleChangeNotificationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SentScheduleChangeNotificationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> fingerprint = const Value.absent(),
+                Value<String> actorId = const Value.absent(),
+                Value<DateTime> lessonDate = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SentScheduleChangeNotificationsCompanion(
+                fingerprint: fingerprint,
+                actorId: actorId,
+                lessonDate: lessonDate,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String fingerprint,
+                required String actorId,
+                required DateTime lessonDate,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SentScheduleChangeNotificationsCompanion.insert(
+                fingerprint: fingerprint,
+                actorId: actorId,
+                lessonDate: lessonDate,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SentScheduleChangeNotificationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SentScheduleChangeNotificationsTable,
+      SentScheduleChangeNotification,
+      $$SentScheduleChangeNotificationsTableFilterComposer,
+      $$SentScheduleChangeNotificationsTableOrderingComposer,
+      $$SentScheduleChangeNotificationsTableAnnotationComposer,
+      $$SentScheduleChangeNotificationsTableCreateCompanionBuilder,
+      $$SentScheduleChangeNotificationsTableUpdateCompanionBuilder,
+      (
+        SentScheduleChangeNotification,
+        BaseReferences<
+          _$AppDatabase,
+          $SentScheduleChangeNotificationsTable,
+          SentScheduleChangeNotification
+        >,
+      ),
+      SentScheduleChangeNotification,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2033,4 +2579,10 @@ class $AppDatabaseManager {
       $$ScheduleEntriesTableTableManager(_db, _db.scheduleEntries);
   $$ClassroomsTableTableManager get classrooms =>
       $$ClassroomsTableTableManager(_db, _db.classrooms);
+  $$SentScheduleChangeNotificationsTableTableManager
+  get sentScheduleChangeNotifications =>
+      $$SentScheduleChangeNotificationsTableTableManager(
+        _db,
+        _db.sentScheduleChangeNotifications,
+      );
 }

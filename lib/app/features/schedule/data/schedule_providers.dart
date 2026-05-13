@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/core/network/providers.dart';
 import 'package:ngieuapp/app/core/storage/app_database.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
 import 'package:ngieuapp/app/features/schedule/data/actors_api_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
@@ -63,6 +64,7 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
   return ScheduleRepositoryImpl(
     ref.watch(scheduleApiDataSourceProvider),
     ref.watch(scheduleDbDataSourceProvider),
+    changeNotifications: ref.watch(scheduleChangeNotificationsServiceProvider),
   );
 });
 
