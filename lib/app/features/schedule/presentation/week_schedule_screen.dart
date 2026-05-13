@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/day_tabs.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/lesson_tile.dart';
@@ -15,8 +19,13 @@ import 'package:ngieuapp/app/theme/app_theme.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class WeekScheduleScreen extends ConsumerWidget {
-  const WeekScheduleScreen({required this.actorId, super.key});
+  const WeekScheduleScreen({
+    required this.actorId,
+    this.initialActor,
+    super.key,
+  });
   final String actorId;
+  final FavoriteActor? initialActor;
 
   int _todayIndex(DateTime weekStart) {
     final today = DateTime.now();
@@ -39,11 +48,27 @@ class WeekScheduleScreen extends ConsumerWidget {
     final showChanges = ref.watch(appSettingsProvider).showChanges;
     final theme = Theme.of(context);
     final weekTypeAsync = ref.watch(weekTypeProvider(weekStart));
+    final favorites = ref.watch(favoriteActorsProvider).valueOrNull ?? const [];
+    final favorite = _favoriteById(favorites, actorId);
+    final displayActor = favorite ?? _initialActorById(actorId);
+    final isFavorite = favorite != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Расписание'),
+        title: Text(displayActor?.name ?? 'Расписание'),
         actions: [
+          IconButton(
+            icon: Icon(isFavorite ? Icons.star_rounded : Icons.star_border),
+            tooltip: isFavorite
+                ? 'Удалить из избранного'
+                : 'Добавить в избранное',
+            onPressed: () => _toggleFavorite(ref, favorite, displayActor),
+          ),
+          IconButton(
+            icon: const Icon(Icons.swap_horiz_rounded),
+            tooltip: 'Выбрать расписание',
+            onPressed: () => context.push('/schedule/pick'),
+          ),
           IconButton(
             icon: Icon(
               showChanges
@@ -68,6 +93,7 @@ class WeekScheduleScreen extends ConsumerWidget {
             weekStart: weekStart,
             weekEnd: weekEnd,
             weekTypeAsync: weekTypeAsync,
+            departmentName: displayActor?.departmentName,
           ),
           Expanded(
             child: DefaultTabController(
@@ -145,6 +171,44 @@ class WeekScheduleScreen extends ConsumerWidget {
       ),
     );
   }
+
+  FavoriteActor? _favoriteById(List<FavoriteActor> favorites, String actorId) {
+    for (final favorite in favorites) {
+      if (favorite.id == actorId) return favorite;
+    }
+    return null;
+  }
+
+  FavoriteActor? _initialActorById(String actorId) {
+    final actor = initialActor;
+    if (actor == null || actor.id != actorId) return null;
+    return actor;
+  }
+
+  Future<void> _toggleFavorite(
+    WidgetRef ref,
+    FavoriteActor? favorite,
+    FavoriteActor? displayActor,
+  ) async {
+    final repo = ref.read(favoriteActorsLocalDataSourceProvider);
+    if (favorite == null) {
+      await repo.addFavoriteActor(
+        displayActor ??
+            FavoriteActor(
+              id: actorId,
+              name: 'Расписание $actorId',
+              type: ActorType.studentGroup,
+              departmentId: 0,
+              departmentName: '',
+            ),
+      );
+    } else {
+      await repo.removeFavoriteActor(actorId);
+    }
+    ref
+      ..invalidate(favoriteActorsProvider)
+      ..invalidate(activeFavoriteActorIdProvider);
+  }
 }
 
 class _WeekHeader extends ConsumerWidget {
@@ -152,11 +216,13 @@ class _WeekHeader extends ConsumerWidget {
     required this.weekStart,
     required this.weekEnd,
     required this.weekTypeAsync,
+    required this.departmentName,
   });
 
   final DateTime weekStart;
   final DateTime weekEnd;
   final AsyncValue<WeekType> weekTypeAsync;
+  final String? departmentName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -173,14 +239,35 @@ class _WeekHeader extends ConsumerWidget {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: semantic.subtleDivider),
-        ),
+        border: Border(bottom: BorderSide(color: semantic.subtleDivider)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (departmentName != null && departmentName!.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.star_outline,
+                  size: AppSizes.iconSm,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    departmentName!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           Row(
             children: [
               _WeekNavButton(

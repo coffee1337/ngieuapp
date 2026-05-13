@@ -6,7 +6,9 @@ import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/next_lesson_card.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_header.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_tile.dart';
+import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/widget/home_widget_provider.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
@@ -177,10 +179,33 @@ class _ProfileContent extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         const Divider(height: 1),
+        _FavoriteSchedulesSection(currentIdentity: identity),
+        const Divider(height: 1),
         ProfileMenuTile(
           icon: Icons.schedule,
           title: 'Моё расписание',
-          onTap: () => context.push('/schedule/${identity.actorId}'),
+          onTap: () async {
+            await ref
+                .read(favoriteActorsLocalDataSourceProvider)
+                .addFavoriteActor(
+                  FavoriteActor(
+                    id: identity.actorId,
+                    name: identity.displayName,
+                    type: identity.actorType,
+                    departmentId: identity.departmentId ?? 0,
+                    departmentName: identity.departmentName,
+                  ),
+                );
+            await ref
+                .read(favoriteActorsLocalDataSourceProvider)
+                .setActiveActor(identity.actorId);
+            ref
+              ..invalidate(favoriteActorsProvider)
+              ..invalidate(activeFavoriteActorIdProvider);
+            if (context.mounted) {
+              await context.push('/schedule/${identity.actorId}');
+            }
+          },
         ),
         ProfileMenuTile(
           icon: Icons.meeting_room_outlined,
@@ -211,5 +236,66 @@ class _ProfileContent extends ConsumerWidget {
         const SizedBox(height: 32),
       ],
     );
+  }
+}
+
+class _FavoriteSchedulesSection extends ConsumerWidget {
+  const _FavoriteSchedulesSection({required this.currentIdentity});
+
+  final StudentIdentity currentIdentity;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoritesAsync = ref.watch(favoriteActorsProvider);
+    return favoritesAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (favorites) {
+        if (favorites.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Избранные расписания',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            for (final actor in favorites)
+              ProfileMenuTile(
+                icon:
+                    actor.type == currentIdentity.actorType &&
+                        actor.id == currentIdentity.actorId
+                    ? Icons.school_outlined
+                    : Icons.star_outline,
+                title: actor.name,
+                subtitle: actor.departmentName.isEmpty
+                    ? null
+                    : actor.departmentName,
+                onTap: () => _openFavorite(context, ref, actor),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openFavorite(
+    BuildContext context,
+    WidgetRef ref,
+    FavoriteActor actor,
+  ) async {
+    await ref
+        .read(favoriteActorsLocalDataSourceProvider)
+        .setActiveActor(actor.id);
+    ref.invalidate(activeFavoriteActorIdProvider);
+    if (context.mounted) {
+      await context.push('/schedule/${actor.id}', extra: actor);
+    }
   }
 }

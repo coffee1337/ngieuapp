@@ -35,12 +35,16 @@ class FavoriteActorsLocalDataSource {
   Future<void> addFavoriteActor(FavoriteActor actor) async {
     _ensureSupported(actor);
     final favorites = await getFavorites();
+    final shouldSetActive = favorites.isEmpty;
     final updated = [
       for (final favorite in favorites)
         if (favorite.id != actor.id) favorite,
       actor,
     ];
     await _saveFavorites(updated);
+    if (shouldSetActive) {
+      await setActiveActor(actor.id);
+    }
   }
 
   Future<void> removeFavoriteActor(String actorId) async {

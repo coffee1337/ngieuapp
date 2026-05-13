@@ -7,6 +7,7 @@ class ProfileMenuTile extends StatelessWidget {
     required this.onTap,
     this.iconColor,
     this.textColor,
+    this.subtitle,
     super.key,
   });
 
@@ -15,6 +16,7 @@ class ProfileMenuTile extends StatelessWidget {
   final VoidCallback onTap;
   final Color? iconColor;
   final Color? textColor;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class ProfileMenuTile extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+      subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: Icon(
         Icons.chevron_right,
         size: 20,
