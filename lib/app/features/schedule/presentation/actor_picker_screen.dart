@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ngieuapp/app/features/profile/data/profile_providers.dart';
 import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
+import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/department.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
@@ -43,29 +45,48 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
     return all.where((a) => a.name.toLowerCase().contains(_query)).toList();
   }
 
+  String _departmentNameOf(
+    Actor actor,
+    Map<int, String> studentDepartmentNames,
+  ) {
+    if (actor.type == ActorType.studentGroup) {
+      return studentDepartmentNames[actor.departmentId] ?? 'Без института';
+    }
+    return Departments.nameOf(actor.departmentId);
+  }
+
   Future<void> _onActorTap(Actor a) async {
     final studentDepartments = ref.read(studentDepartmentsProvider).valueOrNull;
     final studentDepartmentNames = {
       for (final department in studentDepartments ?? <Department>[])
         department.id: department.name,
     };
-    final repo = ref.read(profileLocalDataSourceProvider);
-    await repo.save(
-      StudentIdentity(
-        actorId: a.id,
-        displayName: a.name,
-        actorType: a.type,
-        departmentName: a.type == ActorType.studentGroup
-            ? studentDepartmentNames[a.departmentId] ?? 'Без института'
-            : Departments.nameOf(a.departmentId),
-        groupName: a.type == ActorType.studentGroup ? a.name : null,
-        departmentId: a.departmentId,
-      ),
+    final departmentName = _departmentNameOf(a, studentDepartmentNames);
+    final selectedActor = FavoriteActor.fromActor(
+      a,
+      departmentName: departmentName,
     );
-    ref.invalidate(studentIdentityProvider);
+    final favoritesRepo = ref.read(favoriteActorsLocalDataSourceProvider);
+    await favoritesRepo.setActiveActor(a.id);
+    ref.invalidate(activeFavoriteActorIdProvider);
+
+    if (a.type == ActorType.studentGroup) {
+      final repo = ref.read(profileLocalDataSourceProvider);
+      await repo.save(
+        StudentIdentity(
+          actorId: a.id,
+          displayName: a.name,
+          actorType: a.type,
+          departmentName: departmentName,
+          groupName: a.type == ActorType.studentGroup ? a.name : null,
+          departmentId: a.departmentId,
+        ),
+      );
+      ref.invalidate(studentIdentityProvider);
+    }
 
     if (mounted) {
-      context.push('/schedule/${a.id}');
+      await context.push('/schedule/${a.id}', extra: selectedActor);
     }
   }
 

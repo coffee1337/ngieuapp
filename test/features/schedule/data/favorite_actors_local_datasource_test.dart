@@ -44,6 +44,12 @@ void main() {
     expect(await sut.getFavorites(), [group, teacher]);
   });
 
+  test('sets first favorite actor as active actor', () async {
+    await sut.addFavoriteActor(group);
+
+    expect(await sut.getActiveActorId(), group.id);
+  });
+
   test('replaces favorite actor with the same id', () async {
     await sut.addFavoriteActor(group);
     await sut.addFavoriteActor(group.copyWith(name: 'Б-22 ИСТ обновлено'));

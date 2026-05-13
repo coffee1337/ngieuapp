@@ -6,8 +6,10 @@ import 'package:ngieuapp/app/features/learning/presentation/learning_webview_scr
 import 'package:ngieuapp/app/features/news/presentation/news_detail_screen.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_list_screen.dart';
 import 'package:ngieuapp/app/features/profile/presentation/profile_screen.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
 import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
@@ -71,8 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/schedule',
-            pageBuilder: (_, __) => _page(const ActorPickerScreen()),
+            pageBuilder: (_, __) => _page(const ScheduleHomeScreen()),
             routes: [
+              GoRoute(
+                path: 'pick',
+                pageBuilder: (_, __) => _page(const ActorPickerScreen()),
+              ),
               GoRoute(
                 path: 'free-rooms',
                 pageBuilder: (_, __) => _page(const FreeRoomsScreen()),
@@ -83,9 +89,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: ':actorId',
-                pageBuilder: (ctx, state) => _page(
-                  WeekScheduleScreen(actorId: state.pathParameters['actorId']!),
-                ),
+                pageBuilder: (ctx, state) {
+                  final extra = state.extra;
+                  return _page(
+                    WeekScheduleScreen(
+                      actorId: state.pathParameters['actorId']!,
+                      initialActor: extra is FavoriteActor ? extra : null,
+                    ),
+                  );
+                },
               ),
             ],
           ),
