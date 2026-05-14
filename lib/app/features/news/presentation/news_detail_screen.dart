@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_list_controller.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/fullscreen_image_viewer.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
 class NewsDetailScreen extends ConsumerWidget {
@@ -46,11 +47,20 @@ class NewsDetailScreen extends ConsumerWidget {
                         preview.imageUrl!.isNotEmpty)
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: CachedNetworkImage(
-                          imageUrl: preview.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => Container(
-                            color: theme.colorScheme.surfaceContainerHigh,
+                        child: Material(
+                          color: theme.colorScheme.surfaceContainerHigh,
+                          child: InkWell(
+                            onTap: () => showFullscreenImageViewer(
+                              context,
+                              preview.imageUrl,
+                            ),
+                            child: CachedNetworkImage(
+                              imageUrl: preview.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                color: theme.colorScheme.surfaceContainerHigh,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -84,6 +94,12 @@ class NewsDetailScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Html(
                         data: detail.contentHtml,
+                        extensions: [
+                          OnImageTapExtension(
+                            onImageTap: (url, _, __) =>
+                                showFullscreenImageViewer(context, url),
+                          ),
+                        ],
                         style: {
                           'body': Style(
                             fontSize: FontSize(16),
