@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:ngieuapp/app/core/network/api_endpoints.dart';
 import 'package:ngieuapp/app/features/schedule/data/lesson_mapper.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
@@ -8,7 +9,7 @@ class ScheduleApiDataSource {
 
   Future<List<Lesson>> fetchSchedule(String actorId, {CancelToken? ct}) async {
     final resp = await _dio.get<dynamic>(
-      'Schedule/Get',
+      ApiEndpoints.scheduleGet,
       queryParameters: {'actorId': actorId},
       cancelToken: ct,
     );

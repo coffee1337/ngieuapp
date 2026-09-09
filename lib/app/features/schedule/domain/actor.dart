@@ -14,19 +14,26 @@ abstract class Actor with _$Actor {
     required ActorType type,
   }) = _Actor;
 
-  factory Actor.fromStudentJson(Map<String, dynamic> json) => Actor(
-    id: json['id'] as String,
-    departmentId: json['departmentId'] as int,
-    name: json['name'] as String,
-    type: ActorType.studentGroup,
-  );
+  factory Actor.fromStudentJson(Map<String, dynamic> json) =>
+      Actor.fromApiJson(json, type: ActorType.studentGroup);
 
-  factory Actor.fromTeacherJson(Map<String, dynamic> json) => Actor(
-    id: json['id'] as String,
-    departmentId: json['departmentId'] as int,
-    name: json['name'] as String,
-    type: ActorType.teacher,
-  );
+  factory Actor.fromTeacherJson(Map<String, dynamic> json) =>
+      Actor.fromApiJson(json, type: ActorType.teacher);
+
+  factory Actor.fromApiJson(
+    Map<String, dynamic> json, {
+    required ActorType type,
+  }) {
+    final rawDepartmentId = json['departmentId'];
+    return Actor(
+      id: json['id']?.toString() ?? '',
+      departmentId: rawDepartmentId is int
+          ? rawDepartmentId
+          : int.tryParse(rawDepartmentId?.toString() ?? '') ?? 0,
+      name: json['name']?.toString().trim() ?? '',
+      type: type,
+    );
+  }
 
   factory Actor.fromJson(Map<String, dynamic> json) => _$ActorFromJson(json);
 }

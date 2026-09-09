@@ -163,7 +163,15 @@ final studentGroupsProvider = FutureProvider<List<Actor>>((ref) {
 });
 
 final studentDepartmentsProvider = FutureProvider<List<Department>>((ref) {
-  return ref.watch(actorsApiDataSourceProvider).fetchStudentDepartments();
+  return ref
+      .watch(actorsApiDataSourceProvider)
+      .fetchDepartments(isStudent: true);
+});
+
+final teacherDepartmentsProvider = FutureProvider<List<Department>>((ref) {
+  return ref
+      .watch(actorsApiDataSourceProvider)
+      .fetchDepartments(isStudent: false);
 });
 
 final teachersProvider = FutureProvider<List<Actor>>((ref) {

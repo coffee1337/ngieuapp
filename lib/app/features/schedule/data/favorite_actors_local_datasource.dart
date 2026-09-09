@@ -7,6 +7,7 @@ import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 class FavoriteActorsLocalDataSource {
   static const _favoritesKey = 'favorite_actors';
   static const _activeActorIdKey = 'active_actor_id';
+  static const _activeActorKey = 'active_actor';
 
   Future<List<FavoriteActor>> getFavorites() async {
     final box = await Hive.openBox<String>(HiveBoxes.favoriteActors);
@@ -32,6 +33,20 @@ class FavoriteActorsLocalDataSource {
     return box.get(_activeActorIdKey);
   }
 
+  Future<FavoriteActor?> getActiveActorDetails() async {
+    final box = await Hive.openBox<String>(HiveBoxes.favoriteActors);
+    final raw = box.get(_activeActorKey);
+    if (raw == null) return null;
+    try {
+      final actor = FavoriteActor.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+      return actor.id.isNotEmpty && actor.isSupported ? actor : null;
+    } on Object {
+      return null;
+    }
+  }
+
   Future<void> addFavoriteActor(FavoriteActor actor) async {
     _ensureSupported(actor);
     final favorites = await getFavorites();
@@ -43,7 +58,7 @@ class FavoriteActorsLocalDataSource {
     ];
     await _saveFavorites(updated);
     if (shouldSetActive) {
-      await setActiveActor(actor.id);
+      await setActiveActorDetails(actor);
     }
   }
 
@@ -58,11 +73,42 @@ class FavoriteActorsLocalDataSource {
     }
   }
 
+  Future<void> replaceFavoriteActorId(
+    String previousId,
+    FavoriteActor replacement,
+  ) async {
+    _ensureSupported(replacement);
+    final favorites = await getFavorites();
+    final updated = <FavoriteActor>[];
+    for (final favorite in favorites) {
+      if (favorite.id == previousId) {
+        updated.add(replacement);
+      } else if (favorite.id != replacement.id) {
+        updated.add(favorite);
+      }
+    }
+    await _saveFavorites(updated);
+    if (await getActiveActorId() == previousId) {
+      await setActiveActorDetails(replacement);
+    }
+  }
+
+  Future<void> setActiveActorDetails(FavoriteActor actor) async {
+    _ensureSupported(actor);
+    final box = await Hive.openBox<String>(HiveBoxes.favoriteActors);
+    await box.put(_activeActorIdKey, actor.id);
+    await box.put(_activeActorKey, jsonEncode(actor.toJson()));
+  }
+
   Future<void> setActiveActor(String? actorId) async {
     final box = await Hive.openBox<String>(HiveBoxes.favoriteActors);
     if (actorId == null || actorId.isEmpty) {
       await box.delete(_activeActorIdKey);
+      await box.delete(_activeActorKey);
       return;
+    }
+    if (box.get(_activeActorIdKey) != actorId) {
+      await box.delete(_activeActorKey);
     }
     await box.put(_activeActorIdKey, actorId);
   }

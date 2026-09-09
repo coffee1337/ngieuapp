@@ -47,11 +47,14 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   String _departmentNameOf(
     Actor actor,
     Map<int, String> studentDepartmentNames,
+    Map<int, String> teacherDepartmentNames,
   ) {
     if (actor.type == ActorType.studentGroup) {
-      return studentDepartmentNames[actor.departmentId] ?? 'Без института';
+      return studentDepartmentNames[actor.departmentId] ??
+          Institutes.nameOf(actor.departmentId);
     }
-    return Departments.nameOf(actor.departmentId);
+    return teacherDepartmentNames[actor.departmentId] ??
+        Departments.nameOf(actor.departmentId);
   }
 
   Future<void> _onActorTap(Actor a) async {
@@ -60,13 +63,22 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
       for (final department in studentDepartments ?? <Department>[])
         department.id: department.name,
     };
-    final departmentName = _departmentNameOf(a, studentDepartmentNames);
+    final teacherDepartments = ref.read(teacherDepartmentsProvider).valueOrNull;
+    final teacherDepartmentNames = {
+      for (final department in teacherDepartments ?? <Department>[])
+        department.id: department.name,
+    };
+    final departmentName = _departmentNameOf(
+      a,
+      studentDepartmentNames,
+      teacherDepartmentNames,
+    );
     final selectedActor = FavoriteActor.fromActor(
       a,
       departmentName: departmentName,
     );
     final favoritesRepo = ref.read(favoriteActorsLocalDataSourceProvider);
-    await favoritesRepo.setActiveActor(a.id);
+    await favoritesRepo.setActiveActorDetails(selectedActor);
     ref.invalidate(activeFavoriteActorIdProvider);
 
     if (a.type == ActorType.studentGroup) {
@@ -93,8 +105,13 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final studentDepartments = ref.watch(studentDepartmentsProvider);
+    final teacherDepartments = ref.watch(teacherDepartmentsProvider);
     final studentDepartmentNames = {
       for (final department in studentDepartments.valueOrNull ?? <Department>[])
+        department.id: department.name,
+    };
+    final teacherDepartmentNames = {
+      for (final department in teacherDepartments.valueOrNull ?? <Department>[])
         department.id: department.name,
     };
 
@@ -178,14 +195,15 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(studentGroupsProvider),
                     departmentNameOf: (id) =>
-                        studentDepartmentNames[id] ?? 'Без института',
+                        studentDepartmentNames[id] ?? Institutes.nameOf(id),
                   ),
                   _ActorList(
                     asyncProvider: ref.watch(teachersProvider),
                     filter: _filter,
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(teachersProvider),
-                    departmentNameOf: Departments.nameOf,
+                    departmentNameOf: (id) =>
+                        teacherDepartmentNames[id] ?? Departments.nameOf(id),
                   ),
                 ],
               ),
