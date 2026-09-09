@@ -172,6 +172,25 @@ void main() {
       expect(result.first.parity, WeekParity.odd);
     });
 
+    test('uses different stable ids for upper and lower week records', () {
+      final base = <String, dynamic>{
+        'dayName': 'Понедельник',
+        'classTime': '8:30 / 10:00',
+        'classNumberName': '1 пара',
+        'subjects': ['Математика'],
+        'notes': ['Лекция'],
+        'offices': ['121'],
+        'groups': ['ИТ-21'],
+        'instructors': ['Иванов И.И.'],
+        'isChange': false,
+      };
+
+      final upper = LessonMapper.fromApi({...base, 'isUpperWeek': true});
+      final lower = LessonMapper.fromApi({...base, 'isUpperWeek': false});
+
+      expect(upper.first.id, isNot(lower.first.id));
+    });
+
     test('handles null/empty fields gracefully', () {
       final json = {
         'dayName': 'Суббота',

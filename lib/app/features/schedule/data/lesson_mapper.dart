@@ -42,7 +42,7 @@ class LessonMapper {
         DateTime(explicitDate.year, explicitDate.month, explicitDate.day),
       ];
     } else {
-      dates = _expandDates(dayIndex, isUpperWeek);
+      dates = _expandDates(dayIndex);
     }
 
     final parity = _parityFromApi(isUpperWeek);
@@ -64,7 +64,15 @@ class LessonMapper {
         times.$2.minute,
       );
 
-      final id = _stableId(date, pairNum, office, groups, subject, isChange);
+      final id = _stableId(
+        date,
+        pairNum,
+        office,
+        groups,
+        subject,
+        isUpperWeek,
+        isChange,
+      );
 
       result.add(
         Lesson(
@@ -162,7 +170,7 @@ class LessonMapper {
     return s.isEmpty ? const [] : [s];
   }
 
-  static List<DateTime> _expandDates(int weekday, bool? isUpperWeek) {
+  static List<DateTime> _expandDates(int weekday) {
     final thisWeekMonday = DateTime.now().startOfWeek;
     final baseOffset = weekday - 1;
     return List.generate(5, (i) {
@@ -177,10 +185,16 @@ class LessonMapper {
     String room,
     List<String> groups,
     String subject,
+    bool? isUpperWeek,
     bool isChange,
   ) {
+    final weekKind = switch (isUpperWeek) {
+      true => 'upper',
+      false => 'lower',
+      null => 'any',
+    };
     final key =
-        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|${isChange ? 'c' : 'p'}';
+        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|$weekKind|${isChange ? 'c' : 'p'}';
     // FNV-1a 32-bit hash — short, stable, no import needed
     var hash = 0x811c9dc5;
     for (var i = 0; i < key.length; i++) {

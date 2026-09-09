@@ -95,7 +95,10 @@ class ScheduleDbDataSource {
     DateTime cachedAt,
   ) {
     return ScheduleEntriesCompanion.insert(
-      id: l.id,
+      // The table is shared by every actor while its legacy primary key only
+      // contains `id`. Prefixing prevents one group's lesson from replacing
+      // the same lesson loaded for another group.
+      id: '$actorId:${l.id}',
       actorId: actorId,
       date: l.date,
       startTime: l.startTime,

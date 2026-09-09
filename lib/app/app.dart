@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/router.dart';
+import 'package:ngieuapp/app/shared/widgets/app_launch_splash.dart';
 import 'package:ngieuapp/app/theme/app_theme.dart';
 
 class NgieuApp extends ConsumerWidget {
@@ -31,11 +32,13 @@ class NgieuApp extends ConsumerWidget {
       builder: (context, child) {
         // Применяем пользовательский масштаб шрифта
         final mq = MediaQuery.of(context);
-        return MediaQuery(
-          data: mq.copyWith(
-            textScaler: TextScaler.linear(settings.fontScale.value),
+        return AppLaunchSplash(
+          child: MediaQuery(
+            data: mq.copyWith(
+              textScaler: TextScaler.linear(settings.fontScale.value),
+            ),
+            child: child!,
           ),
-          child: child!,
         );
       },
       localizationsDelegates: const [

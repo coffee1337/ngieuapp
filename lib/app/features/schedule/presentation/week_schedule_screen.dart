@@ -205,9 +205,13 @@ class _WeekHeader extends ConsumerWidget {
     final theme = Theme.of(context);
     final semantic = theme.extension<AppSemanticColors>()!;
     final fmt = DateFormat('d MMM', 'ru_RU');
+    final isCurrentWeek = DateUtils.isSameDay(
+      weekStart,
+      DateTime.now().startOfWeek,
+    );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(bottom: BorderSide(color: semantic.subtleDivider)),
@@ -265,19 +269,23 @@ class _WeekHeader extends ConsumerWidget {
               ),
             ],
           ),
-          Center(
-            child: TextButton.icon(
-              onPressed: () =>
-                  ref.read(currentWeekStartProvider.notifier).thisWeek(),
-              icon: const Icon(Icons.today_rounded, size: 18),
-              label: const Text('Сегодня'),
+          if (!isCurrentWeek)
+            Center(
+              child: TextButton.icon(
+                onPressed: () =>
+                    ref.read(currentWeekStartProvider.notifier).thisWeek(),
+                icon: const Icon(Icons.today_rounded, size: 18),
+                label: const Text('Вернуться к текущей неделе'),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           weekTypeAsync.when(
-            data: (weekType) => _WeekTypeSelector(weekType: weekType),
+            data: (weekType) => _WeekTypeIndicator(
+              isUpperWeek: weekType.isUpperWeek,
+              isCurrentWeek: isCurrentWeek,
+            ),
             loading: () => Container(
-              height: AppSizes.buttonHeightSm,
+              height: 64,
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHigh,
                 borderRadius: AppRadius.mdBr,
@@ -292,7 +300,7 @@ class _WeekHeader extends ConsumerWidget {
               ),
             ),
             error: (_, __) => Container(
-              height: AppSizes.buttonHeightSm,
+              height: 64,
               decoration: BoxDecoration(
                 color: theme.colorScheme.errorContainer,
                 borderRadius: AppRadius.mdBr,
@@ -354,29 +362,105 @@ class _WeekNavButton extends StatelessWidget {
   }
 }
 
-class _WeekTypeSelector extends ConsumerWidget {
-  const _WeekTypeSelector({required this.weekType});
-  final WeekType weekType;
+class _WeekTypeIndicator extends StatelessWidget {
+  const _WeekTypeIndicator({
+    required this.isUpperWeek,
+    required this.isCurrentWeek,
+  });
+
+  final bool isUpperWeek;
+  final bool isCurrentWeek;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final override = ref.watch(weekTypeOverrideProvider);
-    final isEven = override ?? weekType.isEvenWeek;
-    return SizedBox(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final foreground = isCurrentWeek
+        ? scheme.onPrimaryContainer
+        : scheme.onSurface;
+
+    return AnimatedContainer(
+      duration: AppDurations.normal,
+      curve: Curves.easeOutCubic,
       width: double.infinity,
-      child: SegmentedButton<bool>(
-        showSelectedIcon: false,
-        style: SegmentedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          shape: const RoundedRectangleBorder(borderRadius: AppRadius.xlBr),
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.lg,
+      ),
+      decoration: BoxDecoration(
+        color: isCurrentWeek
+            ? scheme.primaryContainer
+            : scheme.surfaceContainerHigh,
+        borderRadius: AppRadius.xlBr,
+        border: Border.all(
+          color: isCurrentWeek ? scheme.primary : scheme.outlineVariant,
         ),
-        segments: const [
-          ButtonSegment(value: true, label: Text('Верхняя')),
-          ButtonSegment(value: false, label: Text('Нижняя')),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isCurrentWeek
+                  ? scheme.primary.withValues(alpha: 0.12)
+                  : scheme.surfaceContainerHighest,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isUpperWeek
+                  ? Icons.keyboard_double_arrow_up_rounded
+                  : Icons.keyboard_double_arrow_down_rounded,
+              color: isCurrentWeek ? scheme.primary : scheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isUpperWeek ? 'Верхняя неделя' : 'Нижняя неделя',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'Определено автоматически по дате',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isCurrentWeek
+                        ? scheme.onPrimaryContainer.withValues(alpha: 0.78)
+                        : scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isCurrentWeek) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                borderRadius: AppRadius.pillBr,
+              ),
+              child: Text(
+                'Сейчас',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
         ],
-        selected: {isEven},
-        onSelectionChanged: (selection) =>
-            ref.read(weekTypeOverrideProvider.notifier).state = selection.first,
       ),
     );
   }
