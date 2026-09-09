@@ -9,8 +9,6 @@ import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
-import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
-import 'package:ngieuapp/app/features/widget/home_widget_provider.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
@@ -128,20 +126,6 @@ class _ProfileContent extends ConsumerWidget {
       weekStart: DateTime(weekStart.year, weekStart.month, weekStart.day),
     );
     final lessonsAsync = ref.watch(weekScheduleProvider(key));
-    final settings = ref.watch(appSettingsProvider);
-
-    ref.listen(weekScheduleProvider(key), (_, next) {
-      next.whenData(
-        (lessons) => ref
-            .read(homeWidgetServiceProvider)
-            .updateNextLesson(
-              lessons,
-              enabled: settings.homeWidgetEnabled,
-              showRoom: settings.homeWidgetShowRoom,
-            ),
-      );
-    });
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
@@ -193,9 +177,7 @@ class _ProfileContent extends ConsumerWidget {
               departmentId: identity.departmentId ?? 0,
               departmentName: identity.departmentName,
             );
-            final favorites = ref.read(
-              favoriteActorsLocalDataSourceProvider,
-            );
+            final favorites = ref.read(favoriteActorsLocalDataSourceProvider);
             await favorites.addFavoriteActor(actor);
             await favorites.setActiveActorDetails(actor);
             ref

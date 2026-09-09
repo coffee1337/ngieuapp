@@ -2,17 +2,22 @@ import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
 import 'package:ngieuapp/app/features/notifications/sent_schedule_change_notifications_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/detect_schedule_change_notifications.dart';
+import 'package:ngieuapp/app/features/settings/domain/smart_notification_settings.dart';
 
 class ScheduleChangeNotificationsService {
   ScheduleChangeNotificationsService(
     this._notifications,
     this._sentNotifications,
     this._detectChanges,
-  );
+    this._preferences, {
+    required this.enabled,
+  });
 
   final NotificationsService _notifications;
   final SentScheduleChangeNotificationsDataSource _sentNotifications;
   final DetectScheduleChangeNotifications _detectChanges;
+  final SmartNotificationSettings _preferences;
+  final bool enabled;
 
   Future<void> notifyAboutNewChanges({
     required String actorId,
@@ -20,6 +25,7 @@ class ScheduleChangeNotificationsService {
     required List<Lesson> freshLessons,
     DateTime? now,
   }) async {
+    if (!enabled || !_preferences.scheduleChangesEnabled) return;
     final sentFingerprints = await _sentNotifications.getSentFingerprints(
       actorId,
     );
@@ -35,6 +41,7 @@ class ScheduleChangeNotificationsService {
       await _notifications.showScheduleChangeNotification(
         lesson: change.lesson,
         fingerprint: change.fingerprint,
+        preferences: _preferences,
       );
       await _sentNotifications.markSent(
         fingerprint: change.fingerprint,

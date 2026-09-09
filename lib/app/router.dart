@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ngieuapp/app/features/learning/presentation/learning_webview_screen.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_detail_screen.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_list_screen.dart';
+import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
 import 'package:ngieuapp/app/features/profile/presentation/profile_screen.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
@@ -12,6 +13,8 @@ import 'package:ngieuapp/app/features/schedule/presentation/free_rooms_screen.da
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
+import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
 import 'package:ngieuapp/app/shared/widgets/offline_banner.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
@@ -44,8 +47,23 @@ CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/news',
+    initialLocation: '/',
+    refreshListenable: NotificationsService.instance.selectedRoute,
+    redirect: (_, state) {
+      final route = NotificationsService.instance.takeSelectedRoute();
+      if (route != null && route != state.uri.path) return route;
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/',
+        redirect: (_, __) async {
+          final settings = await ref
+              .read(navigationSettingsRepositoryProvider)
+              .load();
+          return settings.defaultTab.path;
+        },
+      ),
       ShellRoute(
         builder: (context, state, child) => _RootShell(child: child),
         routes: [
@@ -120,30 +138,34 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class _RootShell extends StatelessWidget {
+class _RootShell extends ConsumerWidget {
   const _RootShell({required this.child});
   final Widget child;
 
   static const _tabs = [
     (
+      id: AppTab.news,
       path: '/news',
       icon: Icons.article_outlined,
       activeIcon: Icons.article_rounded,
       label: 'Новости',
     ),
     (
+      id: AppTab.schedule,
       path: '/schedule',
       icon: Icons.calendar_today_outlined,
       activeIcon: Icons.calendar_today_rounded,
       label: 'Расписание',
     ),
     (
+      id: AppTab.profile,
       path: '/profile',
       icon: Icons.person_outline,
       activeIcon: Icons.person_rounded,
       label: 'Профиль',
     ),
     (
+      id: AppTab.learning,
       path: '/learning',
       icon: Icons.school_outlined,
       activeIcon: Icons.school_rounded,
@@ -152,12 +174,16 @@ class _RootShell extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigation = ref.watch(navigationSettingsProvider);
+    final tabs = _tabs
+        .where((tab) => navigation.visibleTabs.contains(tab.id))
+        .toList(growable: false);
     final location = GoRouterState.of(context).uri.path;
-    final matchedIndex = _tabs.indexWhere(
+    final matchedIndex = tabs.indexWhere(
       (tab) => location.startsWith(tab.path),
     );
-    final index = matchedIndex < 0 ? 0 : matchedIndex;
+    final index = matchedIndex < 0 ? tabs.length : matchedIndex;
     final theme = Theme.of(context);
     final wide =
         MediaQuery.sizeOf(context).width >= AppLayout.navigationRailBreakpoint;
@@ -186,7 +212,13 @@ class _RootShell extends StatelessWidget {
                   right: false,
                   child: NavigationRail(
                     selectedIndex: index,
-                    onDestinationSelected: (i) => context.go(_tabs[i].path),
+                    onDestinationSelected: (i) {
+                      if (i == tabs.length) {
+                        _showMoreMenu(context, navigation);
+                      } else {
+                        context.go(tabs[i].path);
+                      }
+                    },
                     labelType: MediaQuery.sizeOf(context).height < 600
                         ? NavigationRailLabelType.none
                         : NavigationRailLabelType.all,
@@ -204,12 +236,17 @@ class _RootShell extends StatelessWidget {
                             ),
                           ),
                     destinations: [
-                      for (final tab in _tabs)
+                      for (final tab in tabs)
                         NavigationRailDestination(
                           icon: Icon(tab.icon),
                           selectedIcon: Icon(tab.activeIcon),
                           label: Text(tab.label),
                         ),
+                      const NavigationRailDestination(
+                        icon: Icon(Icons.more_horiz_rounded),
+                        selectedIcon: Icon(Icons.more_rounded),
+                        label: Text('Ещё'),
+                      ),
                     ],
                   ),
                 ),
@@ -229,19 +266,64 @@ class _RootShell extends StatelessWidget {
               ),
               child: NavigationBar(
                 selectedIndex: index,
-                onDestinationSelected: (i) => context.go(_tabs[i].path),
+                onDestinationSelected: (i) {
+                  if (i == tabs.length) {
+                    _showMoreMenu(context, navigation);
+                  } else {
+                    context.go(tabs[i].path);
+                  }
+                },
                 height: AppSizes.navBarHeight,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                 destinations: [
-                  for (final tab in _tabs)
+                  for (final tab in tabs)
                     NavigationDestination(
                       icon: Icon(tab.icon),
                       selectedIcon: Icon(tab.activeIcon),
                       label: tab.label,
                     ),
+                  const NavigationDestination(
+                    icon: Icon(Icons.more_horiz_rounded),
+                    selectedIcon: Icon(Icons.more_rounded),
+                    label: 'Ещё',
+                  ),
                 ],
               ),
             ),
     );
+  }
+
+  Future<void> _showMoreMenu(
+    BuildContext context,
+    AppNavigationSettings navigation,
+  ) async {
+    final hidden = _tabs
+        .where((tab) => !navigation.visibleTabs.contains(tab.id))
+        .toList(growable: false);
+    final path = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hidden.isNotEmpty)
+              for (final tab in hidden)
+                ListTile(
+                  leading: Icon(tab.icon),
+                  title: Text(tab.label),
+                  onTap: () => Navigator.pop(context, tab.path),
+                ),
+            ListTile(
+              leading: const Icon(Icons.tune_rounded),
+              title: const Text('Настройки'),
+              subtitle: const Text('Вкладки, оформление и уведомления'),
+              onTap: () => Navigator.pop(context, '/profile/settings'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (path != null && context.mounted) context.go(path);
   }
 }

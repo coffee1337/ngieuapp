@@ -145,12 +145,13 @@ final weekScheduleProvider = FutureProvider.autoDispose
       final weekType = await ref.watch(weekTypeProvider(key.weekStart).future);
 
       final filter = ref.watch(filterWeekScheduleProvider);
-      return filter(
+      final filtered = filter(
         lessons: rawAsync,
         weekStart: key.weekStart,
         isUpperWeek: weekType.isUpperWeek,
         showChanges: showChanges,
       );
+      return filtered;
     });
 
 final studentGroupsProvider = FutureProvider<List<Actor>>((ref) {

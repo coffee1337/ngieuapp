@@ -8,51 +8,30 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/widget_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:letterSpacing="0.12"
-        android:maxLines="1"
-        android:text="СЛЕДУЮЩАЯ ПАРА"
+        android:letterSpacing="0.1"
+        android:text="РАСПИСАНИЕ НА СЕГОДНЯ"
         android:textColor="#FFFFFF"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
+    <TextView android:id="@+id/widget_item_0" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_1" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_2" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_3" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_4" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_5" style="@style/ScheduleWidgetRow.Large" />
+    <TextView android:id="@+id/widget_item_6" style="@style/ScheduleWidgetRow.Large" />
     <TextView
-        android:id="@+id/widget_subject"
+        android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
         android:layout_weight="1"
-        android:ellipsize="end"
         android:gravity="center_vertical"
-        android:maxLines="3"
-        android:text="Загрузка…"
+        android:text="Сегодня пар нет"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/widget_time"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#EEFFFFFF"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/widget_room"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#CCFFFFFF"
-        android:textSize="13sp" />
-
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 </LinearLayout>
