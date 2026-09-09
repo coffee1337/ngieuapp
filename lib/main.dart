@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +17,6 @@ Future<void> main() async {
 
   await initializeDateFormatting('ru_RU');
   await Hive.initFlutter();
-  await NotificationsService.instance.init();
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -29,4 +30,19 @@ Future<void> main() async {
   );
 
   runApp(const ProviderScope(child: NgieuApp()));
+
+  // Notifications are an optional platform integration. Some Android OEMs
+  // can reject exact-alarm or notification initialization on first launch.
+  // Starting it after runApp keeps the application usable even when that
+  // integration is unavailable and lets the user fix permissions later.
+  unawaited(_initializeOptionalServices());
+}
+
+Future<void> _initializeOptionalServices() async {
+  try {
+    await NotificationsService.instance.init();
+  } catch (error, stackTrace) {
+    debugPrint('Notifications initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }

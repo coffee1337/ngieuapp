@@ -14,13 +14,29 @@ class NotificationsService {
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  Future<void>? _initializing;
   bool _canScheduleExact = true;
   final selectedRoute = ValueNotifier<String?>(null);
 
   static const _brandColor = Color(0xFF9F003D);
 
   Future<void> init() async {
+    final inProgress = _initializing;
+    if (inProgress != null) return inProgress;
     if (_initialized) return;
+
+    final initialization = _initialize();
+    _initializing = initialization;
+    try {
+      await initialization;
+    } finally {
+      if (identical(_initializing, initialization)) {
+        _initializing = null;
+      }
+    }
+  }
+
+  Future<void> _initialize() async {
     tzdata.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Europe/Moscow'));
     const androidInit = AndroidInitializationSettings('ic_stat_ngieu');
@@ -57,22 +73,34 @@ class NotificationsService {
         selectedRoute.value = response.payload;
       },
     );
-    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
-    if (launchDetails?.didNotificationLaunchApp ?? false) {
-      selectedRoute.value = launchDetails?.notificationResponse?.payload;
+    _initialized = true;
+
+    try {
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        selectedRoute.value = launchDetails?.notificationResponse?.payload;
+      }
+    } catch (_) {
+      // Notification launch details are optional and must not block startup.
     }
     if (Platform.isAndroid) {
-      final android = _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
-      _canScheduleExact =
-          await android?.canScheduleExactNotifications() ?? false;
+      try {
+        final android = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        _canScheduleExact =
+            await android?.canScheduleExactNotifications() ?? false;
+      } catch (_) {
+        // Samsung and other OEM builds may restrict this call until the user
+        // opens the app settings. Inexact notifications remain available.
+        _canScheduleExact = false;
+      }
     }
-    _initialized = true;
   }
 
   Future<bool> requestPermissions() async {
+    await init();
     if (Platform.isAndroid) {
       final status = await Permission.notification.request();
       if (!status.isGranted) return false;
@@ -106,6 +134,7 @@ class NotificationsService {
     int minutesBefore = 15,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
+    await init();
     final notifyTime = lesson.startTime.subtract(
       Duration(minutes: minutesBefore),
     );
@@ -157,6 +186,7 @@ class NotificationsService {
     required String fingerprint,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
+    await init();
     if (!preferences.scheduleChangesEnabled) return;
     final quiet = preferences.isQuietTime(DateTime.now());
     await _plugin.show(
@@ -231,7 +261,10 @@ class NotificationsService {
     );
   }
 
-  Future<void> cancelAll() async => _plugin.cancelAll();
+  Future<void> cancelAll() async {
+    await init();
+    await _plugin.cancelAll();
+  }
 
   String? takeSelectedRoute() {
     final route = selectedRoute.value;
@@ -245,6 +278,7 @@ class NotificationsService {
     required bool enabled,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
+    await init();
     await _cancelLessonReminders();
     if (!enabled) return;
     final now = DateTime.now();
