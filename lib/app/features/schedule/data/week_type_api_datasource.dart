@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:ngieuapp/app/core/network/api_endpoints.dart';
 
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 
@@ -18,7 +19,7 @@ class WeekTypeApiDataSource {
     final dateStr = DateFormat('dd.MM.yyyy').format(date);
 
     final response = await _dio.get<List<dynamic>>(
-      'WeekType/Get',
+      ApiEndpoints.weekTypeGet,
       queryParameters: {'date': dateStr},
       cancelToken: cancelToken,
     );

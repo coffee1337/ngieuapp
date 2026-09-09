@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
+import 'package:ngieuapp/app/features/schedule/data/active_actor_provider.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
@@ -11,21 +11,21 @@ class ScheduleHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeActorId = ref.watch(activeFavoriteActorIdProvider);
+    final activeActor = ref.watch(resolvedActiveActorProvider);
 
-    return activeActorId.when(
+    return activeActor.when(
       loading: () => const Scaffold(body: ScheduleSkeleton()),
       error: (error, _) => Scaffold(
         body: ErrorView(
           error: error,
-          onRetry: () => ref.invalidate(activeFavoriteActorIdProvider),
+          onRetry: () => ref.invalidate(resolvedActiveActorProvider),
         ),
       ),
-      data: (actorId) {
-        if (actorId == null || actorId.isEmpty) {
+      data: (actor) {
+        if (actor == null) {
           return const ActorPickerScreen();
         }
-        return WeekScheduleScreen(actorId: actorId);
+        return WeekScheduleScreen(actorId: actor.id);
       },
     );
   }

@@ -186,25 +186,23 @@ class _ProfileContent extends ConsumerWidget {
           icon: Icons.schedule,
           title: 'Моё расписание',
           onTap: () async {
-            await ref
-                .read(favoriteActorsLocalDataSourceProvider)
-                .addFavoriteActor(
-                  FavoriteActor(
-                    id: identity.actorId,
-                    name: identity.displayName,
-                    type: identity.actorType,
-                    departmentId: identity.departmentId ?? 0,
-                    departmentName: identity.departmentName,
-                  ),
-                );
-            await ref
-                .read(favoriteActorsLocalDataSourceProvider)
-                .setActiveActor(identity.actorId);
+            final actor = FavoriteActor(
+              id: identity.actorId,
+              name: identity.displayName,
+              type: identity.actorType,
+              departmentId: identity.departmentId ?? 0,
+              departmentName: identity.departmentName,
+            );
+            final favorites = ref.read(
+              favoriteActorsLocalDataSourceProvider,
+            );
+            await favorites.addFavoriteActor(actor);
+            await favorites.setActiveActorDetails(actor);
             ref
               ..invalidate(favoriteActorsProvider)
               ..invalidate(activeFavoriteActorIdProvider);
             if (context.mounted) {
-              await context.push('/schedule/${identity.actorId}');
+              await context.push('/schedule');
             }
           },
         ),
@@ -293,10 +291,10 @@ class _FavoriteSchedulesSection extends ConsumerWidget {
   ) async {
     await ref
         .read(favoriteActorsLocalDataSourceProvider)
-        .setActiveActor(actor.id);
+        .setActiveActorDetails(actor);
     ref.invalidate(activeFavoriteActorIdProvider);
     if (context.mounted) {
-      await context.push('/schedule/${actor.id}', extra: actor);
+      await context.push('/schedule');
     }
   }
 }
