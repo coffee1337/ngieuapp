@@ -143,6 +143,7 @@ class _ProfileContent extends ConsumerWidget {
     });
 
     return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
         ProfileHeader(
           identity: identity,
@@ -171,16 +172,16 @@ class _ProfileContent extends ConsumerWidget {
             final l = getNext(lessons);
             if (l == null) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+              padding: const EdgeInsets.only(top: 20, bottom: 12),
               child: NextLessonCard(lesson: l),
             );
           },
           orElse: () => const SizedBox.shrink(),
         ),
         const SizedBox(height: 8),
-        const Divider(height: 1),
+        const SizedBox(height: 12),
         _FavoriteSchedulesSection(currentIdentity: identity),
-        const Divider(height: 1),
+        const SizedBox(height: 12),
         ProfileMenuTile(
           icon: Icons.schedule,
           title: 'Моё расписание',
@@ -222,7 +223,7 @@ class _ProfileContent extends ConsumerWidget {
           title: 'Настройки',
           onTap: () => context.push('/profile/settings'),
         ),
-        const Divider(height: 1),
+        const SizedBox(height: 12),
         ProfileMenuTile(
           icon: Icons.logout,
           title: 'Сменить группу',
@@ -257,7 +258,7 @@ class _FavoriteSchedulesSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
               child: Text(
                 'Избранные расписания',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(

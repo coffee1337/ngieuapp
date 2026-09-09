@@ -50,8 +50,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     onAvailability: Colors.white,
     availabilityContainer: Color(0xFFE8F5E9),
     onAvailabilityContainer: Color(0xFF1B5E20),
-    cardBorder: Color(0xFFDCDCDC),
-    subtleDivider: Color(0xFFEEEEEE),
+    cardBorder: Color(0xFFE3E6EE),
+    subtleDivider: Color(0xFFEBEDF3),
   );
 
   static const dark = AppSemanticColors(
@@ -67,8 +67,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     onAvailability: Color(0xFF003300),
     availabilityContainer: Color(0xFF1B3A1B),
     onAvailabilityContainer: Color(0xFFC8E6C9),
-    cardBorder: Color(0xFF3A393F),
-    subtleDivider: Color(0xFF2F2E34),
+    cardBorder: Color(0xFF333B4A),
+    subtleDivider: Color(0xFF252B38),
   );
 
   @override
@@ -156,11 +156,27 @@ class AppTheme {
       tertiary: AppColors.orange,
     );
     final scheme = base.copyWith(
-      surface: const Color(0xFFFAFAFA),
+      primary: AppColors.primary,
+      onPrimary: Colors.white,
+      secondary: const Color(0xFF4A5E89),
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFE8EEF8),
+      onSecondaryContainer: const Color(0xFF1D3358),
+      tertiary: const Color(0xFF855700),
+      onTertiary: Colors.white,
+      tertiaryContainer: const Color(0xFFFFEDCC),
+      onTertiaryContainer: const Color(0xFF513400),
+      primaryContainer: const Color(0xFFFBE8EF),
+      onPrimaryContainer: const Color(0xFF72002C),
+      onSurface: AppColors.textPrimary,
+      onSurfaceVariant: AppColors.textSecondary,
+      outline: const Color(0xFF767E8F),
+      outlineVariant: const Color(0xFFE0E4ED),
+      surface: AppColors.surfaceLight,
       surfaceContainer: const Color(0xFFFFFFFF),
-      surfaceContainerHigh: const Color(0xFFF2F2F2),
-      surfaceContainerHighest: const Color(0xFFEAEAEA),
-      surfaceContainerLow: const Color(0xFFF6F6F6),
+      surfaceContainerHigh: const Color(0xFFF0F2F7),
+      surfaceContainerHighest: const Color(0xFFE8EBF2),
+      surfaceContainerLow: const Color(0xFFF7F8FB),
       surfaceContainerLowest: const Color(0xFFFFFFFF),
     );
     return _build(scheme, AppSemanticColors.light);
@@ -173,10 +189,10 @@ class AppTheme {
       onPrimary: Color(0xFF680025),
       primaryContainer: Color(0xFF9F003D),
       onPrimaryContainer: Color(0xFFFFD9E0),
-      secondary: Color(0xFFCF9FDB),
-      onSecondary: Color(0xFF3B004F),
-      secondaryContainer: Color(0xFF621472),
-      onSecondaryContainer: Color(0xFFF0DBF6),
+      secondary: Color(0xFFACC2EB),
+      onSecondary: Color(0xFF162B50),
+      secondaryContainer: Color(0xFF283957),
+      onSecondaryContainer: Color(0xFFDFE9FF),
       tertiary: Color(0xFFFFB870),
       onTertiary: Color(0xFF4A2800),
       tertiaryContainer: Color(0xFFFFA300),
@@ -185,18 +201,18 @@ class AppTheme {
       onError: Color(0xFF690005),
       errorContainer: Color(0xFF93000A),
       onErrorContainer: Color(0xFFFFDAD6),
-      surface: Color(0xFF1A1A1F),
+      surface: Color(0xFF11141C),
       onSurface: Color(0xFFE3E1E6),
-      surfaceContainer: Color(0xFF252429),
-      surfaceContainerHigh: Color(0xFF2F2E34),
-      surfaceContainerHighest: Color(0xFF3A393F),
-      surfaceContainerLow: Color(0xFF1E1D23),
+      surfaceContainer: Color(0xFF1B202B),
+      surfaceContainerHigh: Color(0xFF252B38),
+      surfaceContainerHighest: Color(0xFF333B4A),
+      surfaceContainerLow: Color(0xFF161B25),
       surfaceContainerLowest: Color(0xFF141418),
       onSurfaceVariant: Color(0xFFC7C5CA),
       outline: Color(0xFF919095),
       outlineVariant: Color(0xFF4B4B50),
       inverseSurface: Color(0xFFE3E1E6),
-      onInverseSurface: Color(0xFF1A1A1F),
+      onInverseSurface: Color(0xFF11141C),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
     );
@@ -207,11 +223,9 @@ class AppTheme {
     ColorScheme scheme,
     AppSemanticColors semanticColors,
   ) {
-    final isDark = scheme.brightness == Brightness.dark;
-
     final textTheme = TextTheme(
       headlineLarge: TextStyle(
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.5,
         color: scheme.onSurface,
@@ -239,37 +253,37 @@ class AppTheme {
         color: scheme.onSurface,
       ),
       bodyLarge: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
-        height: 1.35,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
         color: scheme.onSurface,
       ),
       bodyMedium: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        height: 1.35,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
         color: scheme.onSurface,
       ),
       bodySmall: TextStyle(
         fontSize: 12,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         height: 1.3,
         color: scheme.onSurfaceVariant,
       ),
       labelLarge: TextStyle(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.1,
         color: scheme.onSurface,
       ),
       labelMedium: TextStyle(
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
         color: scheme.onSurfaceVariant,
       ),
       labelSmall: TextStyle(
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.3,
         color: scheme.onSurfaceVariant,
@@ -285,19 +299,19 @@ class AppTheme {
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        toolbarHeight: 68,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
       ),
       cardTheme: CardThemeData(
-        elevation: isDark ? 0 : 1,
-        shadowColor: isDark ? Colors.transparent : Colors.black12,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.lgBr,
-          side: BorderSide(
-            color: semanticColors.cardBorder,
-            width: isDark ? 1 : 0.5,
-          ),
+          borderRadius: AppRadius.xxlBr,
+          side: BorderSide(color: semanticColors.cardBorder),
         ),
         color: scheme.surfaceContainer,
       ),
@@ -313,7 +327,15 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest,
+        fillColor: scheme.surfaceContainer,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.xlBr,
+          borderSide: BorderSide(color: semanticColors.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.xlBr,
+          borderSide: BorderSide(color: scheme.primary, width: 2),
+        ),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.lgBr,
           borderSide: BorderSide.none,
@@ -336,13 +358,14 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         surfaceTintColor: Colors.transparent,
-        backgroundColor: scheme.surface,
-        indicatorColor: scheme.primaryContainer.withValues(alpha: 0.3),
+        backgroundColor: scheme.surfaceContainer,
+        elevation: 0,
+        indicatorColor: scheme.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: scheme.primary, size: 22);
+            return IconThemeData(color: scheme.primary, size: 24);
           }
-          return IconThemeData(color: scheme.onSurfaceVariant, size: 22);
+          return IconThemeData(color: scheme.onSurfaceVariant, size: 24);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -354,7 +377,33 @@ class AppTheme {
           return textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant);
         }),
       ),
-      listTileTheme: ListTileThemeData(iconColor: scheme.primary),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surfaceContainer,
+        indicatorColor: scheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.primary),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelTextStyle: textTheme.labelLarge?.copyWith(
+          color: scheme.primary,
+        ),
+        unselectedLabelTextStyle: textTheme.labelLarge,
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: scheme.primary,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        minVerticalPadding: 12,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.xlBr),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surfaceContainer,
+        showDragHandle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlBr),
+      ),
       dividerTheme: DividerThemeData(
         color: semanticColors.subtleDivider,
         thickness: 1,

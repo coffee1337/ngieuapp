@@ -13,7 +13,6 @@ import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
 import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
-import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/offline_banner.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
@@ -121,17 +120,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class _RootShell extends StatefulWidget {
+class _RootShell extends StatelessWidget {
   const _RootShell({required this.child});
   final Widget child;
-
-  @override
-  State<_RootShell> createState() => _RootShellState();
-}
-
-class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
-  late final AnimationController _animController;
-  bool _initialized = false;
 
   static const _tabs = [
     (
@@ -161,77 +152,96 @@ class _RootShellState extends State<_RootShell> with TickerProviderStateMixin {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: AppDurations.fast,
-    );
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  int _indexFromLocation(String loc) {
-    for (var i = 0; i < _tabs.length; i++) {
-      if (loc.startsWith(_tabs[i].path)) return i;
-    }
-    return 0;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
-    final idx = _indexFromLocation(location);
+    final location = GoRouterState.of(context).uri.path;
+    final matchedIndex = _tabs.indexWhere(
+      (tab) => location.startsWith(tab.path),
+    );
+    final index = matchedIndex < 0 ? 0 : matchedIndex;
     final theme = Theme.of(context);
-
-    if (!_initialized) {
-      _initialized = true;
-      _animController.value = 1.0;
-    } else {
-      _animController.forward(from: 0);
-    }
+    final wide =
+        MediaQuery.sizeOf(context).width >= AppLayout.navigationRailBreakpoint;
+    final content = Column(
+      children: [
+        const OfflineBanner(),
+        Expanded(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppLayout.contentMaxWidth,
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ],
+    );
 
     return Scaffold(
-      body: Column(
-        children: [
-          const OfflineBanner(),
-          Expanded(
-            child: FadeTransition(
-              opacity: _animController,
-              child: widget.child,
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const AppGradientBar(height: 1),
-          NavigationBar(
-            selectedIndex: idx,
-            onDestinationSelected: (i) => context.go(_tabs[i].path),
-            height: AppSizes.navBarHeight,
-            backgroundColor: theme.colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            indicatorColor: theme.colorScheme.primaryContainer.withValues(
-              alpha: 0.3,
-            ),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: [
-              for (final t in _tabs)
-                NavigationDestination(
-                  icon: Icon(t.icon, size: AppSizes.iconLg),
-                  selectedIcon: Icon(t.activeIcon, size: AppSizes.iconLg),
-                  label: t.label,
+      body: wide
+          ? Row(
+              children: [
+                SafeArea(
+                  right: false,
+                  child: NavigationRail(
+                    selectedIndex: index,
+                    onDestinationSelected: (i) => context.go(_tabs[i].path),
+                    labelType: MediaQuery.sizeOf(context).height < 600
+                        ? NavigationRailLabelType.none
+                        : NavigationRailLabelType.all,
+                    minWidth: 112,
+                    groupAlignment: -0.65,
+                    leading: MediaQuery.sizeOf(context).height < 600
+                        ? null
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'НГИЭУ',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                    destinations: [
+                      for (final tab in _tabs)
+                        NavigationRailDestination(
+                          icon: Icon(tab.icon),
+                          selectedIcon: Icon(tab.activeIcon),
+                          label: Text(tab.label),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-        ],
-      ),
+                const VerticalDivider(width: 1),
+                Expanded(child: content),
+              ],
+            )
+          : content,
+      bottomNavigationBar: wide
+          ? null
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
+              ),
+              child: NavigationBar(
+                selectedIndex: index,
+                onDestinationSelected: (i) => context.go(_tabs[i].path),
+                height: AppSizes.navBarHeight,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: [
+                  for (final tab in _tabs)
+                    NavigationDestination(
+                      icon: Icon(tab.icon),
+                      selectedIcon: Icon(tab.activeIcon),
+                      label: tab.label,
+                    ),
+                ],
+              ),
+            ),
     );
   }
 }
