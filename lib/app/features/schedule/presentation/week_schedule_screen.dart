@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
@@ -90,6 +91,7 @@ class WeekScheduleScreen extends ConsumerWidget {
             headerSliverBuilder: (context, innerScrolled) => [
               SliverToBoxAdapter(
                 child: _WeekHeader(
+                  actorId: actorId,
                   weekStart: weekStart,
                   weekEnd: weekEnd,
                   weekTypeAsync: weekTypeAsync,
@@ -122,8 +124,7 @@ class WeekScheduleScreen extends ConsumerWidget {
                   return RefreshIndicator(
                     color: theme.colorScheme.primary,
                     backgroundColor: theme.colorScheme.surfaceContainer,
-                    onRefresh: () async =>
-                        ref.invalidate(rawWeekScheduleProvider(key)),
+                    onRefresh: () => _refresh(context, ref, key),
                     child: ListView.builder(
                       key: PageStorageKey(
                         '${actorId}_${day.toIso8601String()}',
@@ -146,6 +147,25 @@ class WeekScheduleScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _refresh(
+    BuildContext context,
+    WidgetRef ref,
+    WeekKey key,
+  ) async {
+    try {
+      await ref.read(refreshWeekScheduleProvider)(key);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не удалось обновить расписание. Сохранённые данные доступны офлайн.',
+          ),
+        ),
+      );
+    }
   }
 
   FavoriteActor? _favoriteById(List<FavoriteActor> favorites, String actorId) {
@@ -189,12 +209,14 @@ class WeekScheduleScreen extends ConsumerWidget {
 
 class _WeekHeader extends ConsumerWidget {
   const _WeekHeader({
+    required this.actorId,
     required this.weekStart,
     required this.weekEnd,
     required this.weekTypeAsync,
     required this.departmentName,
   });
 
+  final String actorId;
   final DateTime weekStart;
   final DateTime weekEnd;
   final AsyncValue<WeekType> weekTypeAsync;
@@ -204,6 +226,8 @@ class _WeekHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final semantic = theme.extension<AppSemanticColors>()!;
+    final isOnline = ref.watch(connectivityProvider);
+    final lastUpdated = ref.watch(scheduleLastUpdatedProvider(actorId));
     final fmt = DateFormat('d MMM', 'ru_RU');
     final isCurrentWeek = DateUtils.isSameDay(
       weekStart,
@@ -243,6 +267,11 @@ class _WeekHeader extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
           ],
+          _ScheduleFreshness(
+            isOnline: isOnline,
+            lastUpdated: lastUpdated.valueOrNull,
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
               _WeekNavButton(
@@ -332,6 +361,55 @@ class _WeekHeader extends ConsumerWidget {
     if (picked != null) {
       ref.read(currentWeekStartProvider.notifier).setDate(picked);
     }
+  }
+}
+
+class _ScheduleFreshness extends StatelessWidget {
+  const _ScheduleFreshness({required this.isOnline, required this.lastUpdated});
+
+  final bool isOnline;
+  final DateTime? lastUpdated;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final timestamp = lastUpdated;
+    final text = switch ((isOnline, timestamp)) {
+      (false, final DateTime value) =>
+        'Офлайн • данные от ${_formatUpdatedAt(value)}',
+      (false, null) => 'Офлайн • сохранённого расписания пока нет',
+      (true, final DateTime value) =>
+        'Последнее обновление: ${_formatUpdatedAt(value)}',
+      (true, null) => 'Расписание ещё не сохранено',
+    };
+
+    return Row(
+      children: [
+        Icon(
+          isOnline ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+          size: AppSizes.iconSm,
+          color: isOnline ? theme.colorScheme.primary : theme.colorScheme.error,
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatUpdatedAt(DateTime value) {
+    final pattern = DateUtils.isSameDay(value, DateTime.now())
+        ? 'Сегодня, HH:mm'
+        : 'd MMM, HH:mm';
+    return DateFormat(pattern, 'ru_RU').format(value);
   }
 }
 

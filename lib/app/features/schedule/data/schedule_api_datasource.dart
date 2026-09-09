@@ -18,11 +18,19 @@ class ScheduleApiDataSource {
       final List l => l,
       final Map m when m['data'] is List => m['data'] as List,
       final Map m when m['schedule'] is List => m['schedule'] as List,
-      _ => const [],
+      _ => throw const FormatException(
+        'API расписания вернул неизвестный формат',
+      ),
     };
-    return raw
+    final lessons = raw
         .whereType<Map<String, dynamic>>()
         .expand(LessonMapper.fromApi)
         .toList();
+    if (raw.isNotEmpty && lessons.isEmpty) {
+      throw const FormatException(
+        'API расписания вернул данные, которые не удалось распознать',
+      );
+    }
+    return lessons;
   }
 }

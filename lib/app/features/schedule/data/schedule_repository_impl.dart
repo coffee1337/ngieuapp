@@ -26,18 +26,8 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     final stale = await _db.isStale(actorId, _ttl);
     if (stale || cached.isEmpty) {
       try {
-        final fresh = await _api.fetchSchedule(actorId);
-        await _changeNotifications?.notifyAboutNewChanges(
-          actorId: actorId,
-          oldLessons: cached,
-          freshLessons: fresh,
-        );
-        await _db.replaceForActor(actorId, fresh);
-        yield fresh
-            .where(
-              (l) => !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd),
-            )
-            .toList();
+        final fresh = await _fetchAndStore(actorId, cached);
+        yield _lessonsForWeek(fresh, weekStart, weekEnd);
       } catch (e) {
         if (cached.isEmpty) rethrow;
       }
@@ -45,6 +35,36 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   }
 
   @override
+  Future<List<Lesson>> refreshWeek(String actorId, DateTime weekStart) async {
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final cached = await _db.getLessonsInRange(actorId, weekStart, weekEnd);
+    final fresh = await _fetchAndStore(actorId, cached);
+    return _lessonsForWeek(fresh, weekStart, weekEnd);
+  }
+
+  @override
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) =>
       _db.getAllLessonsForDate(date);
+
+  Future<List<Lesson>> _fetchAndStore(
+    String actorId,
+    List<Lesson> previous,
+  ) async {
+    final fresh = await _api.fetchSchedule(actorId);
+    await _changeNotifications?.notifyAboutNewChanges(
+      actorId: actorId,
+      oldLessons: previous,
+      freshLessons: fresh,
+    );
+    await _db.replaceForActor(actorId, fresh);
+    return fresh;
+  }
+
+  List<Lesson> _lessonsForWeek(
+    List<Lesson> lessons,
+    DateTime weekStart,
+    DateTime weekEnd,
+  ) => lessons
+      .where((l) => !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd))
+      .toList();
 }
