@@ -126,9 +126,6 @@ final currentWeekStartProvider =
       return CurrentWeekStartNotifier();
     });
 
-/// Провайдер для пользовательского выбора типа недели (null = использовать тип из API)
-final weekTypeOverrideProvider = StateProvider<bool?>((ref) => null);
-
 // ---- Data streams ----
 
 typedef WeekKey = ({String actorId, DateTime weekStart});
@@ -146,14 +143,12 @@ final weekScheduleProvider = FutureProvider.autoDispose
       final showChanges = ref.watch(appSettingsProvider).showChanges;
 
       final weekType = await ref.watch(weekTypeProvider(key.weekStart).future);
-      final weekTypeOverride = ref.watch(weekTypeOverrideProvider);
-      final isEvenWeek = weekTypeOverride ?? weekType.isEvenWeek;
 
       final filter = ref.watch(filterWeekScheduleProvider);
       return filter(
         lessons: rawAsync,
         weekStart: key.weekStart,
-        isEvenWeek: isEvenWeek,
+        isUpperWeek: weekType.isUpperWeek,
         showChanges: showChanges,
       );
     });
@@ -192,12 +187,14 @@ typedef FreeRoomsKey = ({
 });
 
 final freeRoomsProvider = FutureProvider.autoDispose
-    .family<List<ClassroomAvailability>, FreeRoomsKey>((ref, key) {
+    .family<List<ClassroomAvailability>, FreeRoomsKey>((ref, key) async {
+      final weekType = await ref.watch(weekTypeProvider(key.date).future);
       final uc = ref.watch(findFreeClassroomsProvider);
-      return uc.call(
+      return uc(
         date: key.date,
         from: TimeOfDay(hour: key.fromHour, minute: key.fromMinute),
         to: TimeOfDay(hour: key.toHour, minute: key.toMinute),
+        isUpperWeek: weekType.isUpperWeek,
         minDuration: Duration(minutes: key.minDurationMinutes),
         buildingFilter: key.buildingFilter.isEmpty ? null : key.buildingFilter,
         instituteFilter: key.instituteFilter.isEmpty
@@ -210,5 +207,18 @@ final freeRoomsProvider = FutureProvider.autoDispose
 
 final scheduleSearchResultsProvider = FutureProvider.autoDispose
     .family<List<SearchScheduleResult>, String>((ref, query) {
-      return ref.watch(searchScheduleProvider).call(query);
+      final weekTypes = <DateTime, Future<bool>>{};
+      final weekTypeRepository = ref.watch(weekTypeRepositoryProvider);
+      final searchSchedule = ref.watch(searchScheduleProvider);
+      Future<bool> resolveWeekType(DateTime date) {
+        final weekStart = date.startOfWeek;
+        return weekTypes.putIfAbsent(
+          weekStart,
+          () => weekTypeRepository
+              .getWeekType(weekStart)
+              .then((weekType) => weekType.isUpperWeek),
+        );
+      }
+
+      return searchSchedule(query, resolveIsUpperWeek: resolveWeekType);
     });

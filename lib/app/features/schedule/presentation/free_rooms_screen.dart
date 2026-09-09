@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +10,6 @@ import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
-import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 import 'package:ngieuapp/app/theme/app_theme.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
@@ -41,10 +39,18 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
   }
 
   String _shortInstitute(String full) {
-    if (full.contains('экономики')) return 'ИЭиУ';
-    if (full.contains('информационных')) return 'ИИТиСС';
-    if (full.contains('Инженерный')) return 'ИИ';
+    final lower = full.toLowerCase();
+    if (lower.contains('экономик')) return 'ИЭиУ';
+    if (lower.contains('информационн')) return 'ИИТиСС';
+    if (lower.contains('инженерн')) return 'ИИ';
     return full;
+  }
+
+  void _changeFilter(VoidCallback change) {
+    setState(() {
+      change();
+      _searched = false;
+    });
   }
 
   Future<void> _pickDate() async {
@@ -55,7 +61,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       lastDate: DateTime.now().add(const Duration(days: 180)),
       locale: const Locale('ru'),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) _changeFilter(() => _date = picked);
   }
 
   Future<void> _pickTime(bool isFrom) async {
@@ -64,8 +70,23 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       initialTime: isFrom ? _from : _to,
     );
     if (picked != null) {
-      setState(() => isFrom ? _from = picked : _to = picked);
+      _changeFilter(() => isFrom ? _from = picked : _to = picked);
     }
+  }
+
+  void _runSearch() {
+    final fromMinutes = _from.hour * 60 + _from.minute;
+    final toMinutes = _to.hour * 60 + _to.minute;
+    if (toMinutes <= fromMinutes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Время «До» должно быть позже времени «С»'),
+        ),
+      );
+      return;
+    }
+    ref.invalidate(freeRoomsProvider);
+    setState(() => _searched = true);
   }
 
   @override
@@ -86,52 +107,72 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
           child: AppGradientBar(),
         ),
       ),
-      body: Column(
-        children: [
-          AnimatedSize(
-            duration: AppDurations.normal,
-            curve: Curves.easeOut,
-            alignment: Alignment.topCenter,
-            child: kDebugMode && loader.isLoading
-                ? LoadingBanner(loader: loader)
-                : const SizedBox.shrink(),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: AnimatedSize(
+              duration: AppDurations.normal,
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: loader.isLoading
+                  ? LoadingBanner(loader: loader)
+                  : const SizedBox.shrink(),
+            ),
           ),
-          FreeRoomsFilterPanel(
-            semantic: semantic,
-            dateFmt: dateFmt,
-            date: _date,
-            from: _from,
-            to: _to,
-            minDurationMinutes: minDurationMinutes,
-            instituteFilter: _instituteFilter,
-            loader: loader,
-            onPickDate: _pickDate,
-            onPickTimeFrom: () => _pickTime(true),
-            onPickTimeTo: () => _pickTime(false),
-            onDurationPicked: (v) => setState(() => _minDurationMinutes = v),
-            onInstitutePicked: (v) =>
-                setState(() => _instituteFilter = v.isEmpty ? null : v),
-            onSearch: () => setState(() => _searched = true),
-            onLoadSchedule: () =>
-                ref.read(backgroundLoaderProvider.notifier).run(),
-            shortInstitute: _shortInstitute,
+          SliverToBoxAdapter(
+            child: FreeRoomsFilterPanel(
+              semantic: semantic,
+              dateFmt: dateFmt,
+              date: _date,
+              from: _from,
+              to: _to,
+              minDurationMinutes: minDurationMinutes,
+              instituteFilter: _instituteFilter,
+              loader: loader,
+              onPickDate: _pickDate,
+              onPickTimeFrom: () => _pickTime(true),
+              onPickTimeTo: () => _pickTime(false),
+              onDurationPicked: (value) =>
+                  _changeFilter(() => _minDurationMinutes = value),
+              onInstitutePicked: (value) => _changeFilter(
+                () => _instituteFilter = value.isEmpty ? null : value,
+              ),
+              onSearch: _runSearch,
+              onLoadSchedule: () =>
+                  ref.read(backgroundLoaderProvider.notifier).run(),
+              shortInstitute: _shortInstitute,
+            ),
           ),
-          Expanded(child: _buildResults()),
+          ..._buildResultSlivers(),
         ],
       ),
     );
   }
 
-  Widget _buildResults() {
+  List<Widget> _buildResultSlivers() {
     if (!_searched) {
-      return const EmptyView(
-        text: 'Выберите параметры\nи нажмите «Найти»',
-        icon: Icons.search,
-      );
+      return const [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 220,
+            child: EmptyView(
+              text: 'Выберите параметры\nи нажмите «Найти»',
+              icon: Icons.search_rounded,
+            ),
+          ),
+        ),
+      ];
     }
     final loader = ref.watch(backgroundLoaderProvider);
     if (loader.isLoading) {
-      return FreeRoomsLoadingView(loader: kDebugMode ? loader : null);
+      return [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 300,
+            child: FreeRoomsLoadingView(loader: loader),
+          ),
+        ),
+      ];
     }
     final minDurationMinutes =
         _minDurationMinutes ??
@@ -147,56 +188,161 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       instituteFilter: _instituteFilter ?? '',
     );
     final asyncValue = ref.watch(freeRoomsProvider(key));
-    return asyncValue.when(
-      loading: () => const ListSkeleton(),
-      error: (e, _) => ErrorView(error: e),
+    return asyncValue.when<List<Widget>>(
+      loading: () => const [
+        SliverToBoxAdapter(
+          child: SizedBox(height: 280, child: FreeRoomsLoadingView()),
+        ),
+      ],
+      error: (e, _) => [
+        SliverToBoxAdapter(
+          child: SizedBox(height: 240, child: ErrorView(error: e)),
+        ),
+      ],
       data: (rooms) {
         if (rooms.isEmpty) {
-          return const EmptyView(
-            text:
-                'Свободных аудиторий не найдено.\n'
-                'Попробуйте изменить параметры поиска.',
-            icon: Icons.meeting_room_outlined,
-          );
+          return const [
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 240,
+                child: EmptyView(
+                  text:
+                      'Свободных аудиторий не найдено.\n'
+                      'Попробуйте изменить параметры поиска.',
+                  icon: Icons.meeting_room_outlined,
+                ),
+              ),
+            ),
+          ];
         }
-        return ListView.separated(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.xl,
-            right: AppSpacing.xl,
-            top: AppSpacing.md,
-            bottom: 80,
+        return [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.lg,
+              AppSpacing.xl,
+              AppSpacing.md,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Свободные аудитории',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: AppRadius.pillBr,
+                    ),
+                    child: Text(
+                      '${rooms.length}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          itemCount: rooms.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-          itemBuilder: (_, i) => RoomCard(room: rooms[i]),
-        );
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              0,
+              AppSpacing.xl,
+              80,
+            ),
+            sliver: SliverList.separated(
+              itemCount: rooms.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (_, index) =>
+                  RoomCard(room: rooms[index], animationIndex: index),
+            ),
+          ),
+        ];
       },
     );
   }
 }
 
-class FreeRoomsLoadingView extends StatelessWidget {
+class FreeRoomsLoadingView extends StatefulWidget {
   const FreeRoomsLoadingView({super.key, this.loader});
 
   final BackgroundLoaderState? loader;
+
+  @override
+  State<FreeRoomsLoadingView> createState() => _FreeRoomsLoadingViewState();
+}
+
+class _FreeRoomsLoadingViewState extends State<FreeRoomsLoadingView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.colorScheme.onSurfaceVariant;
 
-    return Center(
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxxl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxxl,
+          vertical: AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: theme.colorScheme.primary,
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) => Transform.scale(
+                scale: 0.92 + _controller.value * 0.12,
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primaryContainer.withValues(
+                      alpha: 0.55 + _controller.value * 0.35,
+                    ),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(
+                        alpha: 0.25 + _controller.value * 0.35,
+                      ),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.meeting_room_rounded,
+                    size: 32,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.xxl),
@@ -219,15 +365,15 @@ class FreeRoomsLoadingView extends StatelessWidget {
               borderRadius: AppRadius.xsBr,
               child: LinearProgressIndicator(
                 minHeight: 4,
-                value: loader?.progress,
+                value: widget.loader?.progress,
                 backgroundColor: theme.colorScheme.surfaceContainerHighest,
                 color: theme.colorScheme.primary,
               ),
             ),
-            if (loader != null) ...[
+            if (widget.loader != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(
-                '${loader!.loaded}/${loader!.total}',
+                '${widget.loader!.loaded}/${widget.loader!.total}',
                 style: theme.textTheme.labelSmall?.copyWith(color: color),
               ),
             ],

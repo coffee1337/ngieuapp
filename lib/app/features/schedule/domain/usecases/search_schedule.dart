@@ -15,7 +15,10 @@ class SearchSchedule {
 
   /// Ищет занятия в БД за последние 2 недели и на 2 недели вперёд.
   /// Пустой запрос → пустой список.
-  Future<List<SearchScheduleResult>> call(String query) async {
+  Future<List<SearchScheduleResult>> call(
+    String query, {
+    required Future<bool> Function(DateTime date) resolveIsUpperWeek,
+  }) async {
     final q = query.trim().toLowerCase();
     if (q.length < 2) return const [];
 
@@ -28,7 +31,9 @@ class SearchSchedule {
     // Идём по дням и собираем всё, что совпадает
     for (var d = from; d.isBefore(to); d = d.add(const Duration(days: 1))) {
       final dayLessons = await _repo.getAllLessonsForDate(d);
+      final isUpperWeek = await resolveIsUpperWeek(d);
       for (final l in dayLessons) {
+        if (!l.parity.matchesUpperWeek(isUpperWeek)) continue;
         final match = _matchType(l, q);
         if (match == null) continue;
         // Дедупликация — одно и то же занятие может быть повторено (разные группы)
