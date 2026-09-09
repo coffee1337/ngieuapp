@@ -46,6 +46,9 @@ NGIE University App — это pet-project, представляющий соб�
 - Чистая структура проекта
 - Работа с Flutter widgets
 - Масштабируемая архитектура
+- Настраиваемая нижняя навигация
+- Виджеты расписания трёх размеров для Android и iOS
+- Напоминания о парах и изменениях расписания
 
 ---
 
@@ -124,6 +127,19 @@ flutter run
 ```bash
 flutter build apk
 ```
+
+### iOS
+
+```bash
+cd ios
+pod install
+cd ..
+flutter build ios
+```
+
+Для подписи iOS-приложения и WidgetKit-extension в Apple Developer должен
+быть доступен App Group `group.ru.ngieu.mobile.ngieuapp`. Он уже подключён к
+таргетам `Runner` и `NgieuWidgets` в Xcode-проекте.
 
 ### Web
 

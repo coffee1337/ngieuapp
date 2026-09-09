@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
 import 'package:ngieuapp/app/features/notifications/reschedule_notifications.dart';
+import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
@@ -13,6 +16,12 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(appSettingsProvider);
     final notifier = ref.read(appSettingsProvider.notifier);
+    final navigation = ref.watch(navigationSettingsProvider);
+    final navigationNotifier = ref.read(navigationSettingsProvider.notifier);
+    final smartNotifications = ref.watch(smartNotificationSettingsProvider);
+    final smartNotificationsNotifier = ref.read(
+      smartNotificationSettingsProvider.notifier,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Настройки')),
@@ -94,6 +103,67 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           _SettingsSection(
+            title: 'Навигация',
+            icon: Icons.space_dashboard_outlined,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: DropdownButtonFormField<AppTab>(
+                  key: ValueKey(navigation.defaultTab),
+                  initialValue: navigation.defaultTab,
+                  decoration: const InputDecoration(
+                    labelText: 'Открывать при запуске',
+                    prefixIcon: Icon(Icons.rocket_launch_outlined),
+                  ),
+                  items: [
+                    for (final tab in AppTab.values)
+                      DropdownMenuItem(value: tab, child: Text(tab.label)),
+                  ],
+                  onChanged: (tab) {
+                    if (tab != null) navigationNotifier.setDefaultTab(tab);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text(
+                  'Вкладки в нижнем меню',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              for (final tab in AppTab.values)
+                SwitchListTile(
+                  secondary: Icon(_tabIcon(tab)),
+                  title: Text(tab.label),
+                  subtitle: tab == navigation.defaultTab
+                      ? const Text('Стартовая вкладка')
+                      : null,
+                  value: navigation.visibleTabs.contains(tab),
+                  onChanged: (visible) async {
+                    final changed = await navigationNotifier.setTabVisible(
+                      tab,
+                      visible: visible,
+                    );
+                    if (!changed && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Оставьте хотя бы одну вкладку'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
+                child: Text(
+                  'Скрытые разделы останутся доступны через вкладку «Ещё».',
+                ),
+              ),
+            ],
+          ),
+          _SettingsSection(
             title: 'Расписание',
             icon: Icons.calendar_today_outlined,
             children: [
@@ -150,21 +220,34 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           _SettingsSection(
-            title: 'Виджет',
+            title: 'Виджеты',
             icon: Icons.widgets_outlined,
             children: [
               SwitchListTile(
-                title: const Text('Обновлять виджет «Следующая пара»'),
-                subtitle: const Text('Для виджета на домашнем экране'),
+                title: const Text('Обновлять виджеты расписания'),
+                subtitle: const Text(
+                  'Маленький, средний и большой · Android и iPhone',
+                ),
                 value: s.homeWidgetEnabled,
-                onChanged: notifier.setHomeWidgetEnabled,
+                onChanged: (value) async {
+                  await notifier.setHomeWidgetEnabled(value);
+                },
+              ),
+              const ListTile(
+                leading: Icon(Icons.view_quilt_outlined),
+                title: Text('Доступные варианты'),
+                subtitle: Text(
+                  'Следующая пара · Три ближайшие пары · Расписание на сегодня',
+                ),
               ),
               SwitchListTile(
                 title: const Text('В виджете показывать аудиторию'),
                 subtitle: const Text('Отключите, чтобы скрыть аудиторию'),
                 value: s.homeWidgetShowRoom,
                 onChanged: s.homeWidgetEnabled
-                    ? notifier.setHomeWidgetShowRoom
+                    ? (value) async {
+                        await notifier.setHomeWidgetShowRoom(value);
+                      }
                     : null,
               ),
             ],
@@ -189,9 +272,13 @@ class SettingsScreen extends ConsumerWidget {
                     if (!granted) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
+                          SnackBar(
+                            content: const Text(
                               'Разрешение не предоставлено. Включите уведомления в настройках телефона.',
+                            ),
+                            action: SnackBarAction(
+                              label: 'Открыть',
+                              onPressed: _openNotificationSettings,
                             ),
                           ),
                         );
@@ -204,6 +291,137 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
               if (s.notificationsEnabled) ...[
+                SwitchListTile(
+                  secondary: const Icon(Icons.change_circle_outlined),
+                  title: const Text('Сообщать об изменениях'),
+                  subtitle: const Text('Отмены, переносы и замены аудитории'),
+                  value: smartNotifications.scheduleChangesEnabled,
+                  onChanged: (value) => smartNotificationsNotifier.update(
+                    smartNotifications.copyWith(scheduleChangesEnabled: value),
+                  ),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.bedtime_outlined),
+                  title: const Text('Тихие часы'),
+                  subtitle: Text(
+                    '${smartNotifications.quietHoursStart.toString().padLeft(2, '0')}:00–'
+                    '${smartNotifications.quietHoursEnd.toString().padLeft(2, '0')}:00 · изменения придут без звука',
+                  ),
+                  value: smartNotifications.quietHoursEnabled,
+                  onChanged: (value) async {
+                    await smartNotificationsNotifier.update(
+                      smartNotifications.copyWith(quietHoursEnabled: value),
+                    );
+                    await rescheduleNotifications(ref);
+                  },
+                ),
+                if (smartNotifications.quietHoursEnabled)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            key: ValueKey(
+                              'quiet-start-${smartNotifications.quietHoursStart}',
+                            ),
+                            initialValue: smartNotifications.quietHoursStart,
+                            decoration: const InputDecoration(
+                              labelText: 'Начало',
+                            ),
+                            items: [
+                              for (var hour = 0; hour < 24; hour++)
+                                DropdownMenuItem(
+                                  value: hour,
+                                  child: Text(
+                                    '${hour.toString().padLeft(2, '0')}:00',
+                                  ),
+                                ),
+                            ],
+                            onChanged: (hour) async {
+                              if (hour == null) return;
+                              await smartNotificationsNotifier.update(
+                                smartNotifications.copyWith(
+                                  quietHoursStart: hour,
+                                ),
+                              );
+                              await rescheduleNotifications(ref);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            key: ValueKey(
+                              'quiet-end-${smartNotifications.quietHoursEnd}',
+                            ),
+                            initialValue: smartNotifications.quietHoursEnd,
+                            decoration: const InputDecoration(
+                              labelText: 'Окончание',
+                            ),
+                            items: [
+                              for (var hour = 0; hour < 24; hour++)
+                                DropdownMenuItem(
+                                  value: hour,
+                                  child: Text(
+                                    '${hour.toString().padLeft(2, '0')}:00',
+                                  ),
+                                ),
+                            ],
+                            onChanged: (hour) async {
+                              if (hour == null) return;
+                              await smartNotificationsNotifier.update(
+                                smartNotifications.copyWith(
+                                  quietHoursEnd: hour,
+                                ),
+                              );
+                              await rescheduleNotifications(ref);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.volume_up_outlined),
+                  title: const Text('Звук'),
+                  value: smartNotifications.soundEnabled,
+                  onChanged: (value) async {
+                    await smartNotificationsNotifier.update(
+                      smartNotifications.copyWith(soundEnabled: value),
+                    );
+                    await rescheduleNotifications(ref);
+                  },
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.vibration_rounded),
+                  title: const Text('Вибрация'),
+                  value: smartNotifications.vibrationEnabled,
+                  onChanged: (value) async {
+                    await smartNotificationsNotifier.update(
+                      smartNotifications.copyWith(vibrationEnabled: value),
+                    );
+                    await rescheduleNotifications(ref);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notification_add_outlined),
+                  title: const Text('Проверить уведомление'),
+                  subtitle: const Text('Отправить тест прямо сейчас'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () async {
+                    await ref
+                        .read(notificationsServiceProvider)
+                        .showTestNotification(preferences: smartNotifications);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Тестовое уведомление отправлено'),
+                        ),
+                      );
+                    }
+                  },
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Text(
@@ -240,6 +458,17 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  IconData _tabIcon(AppTab tab) => switch (tab) {
+    AppTab.news => Icons.article_outlined,
+    AppTab.schedule => Icons.calendar_today_outlined,
+    AppTab.profile => Icons.person_outline,
+    AppTab.learning => Icons.school_outlined,
+  };
+
+  static void _openNotificationSettings() {
+    NotificationsService.instance.openSystemSettings();
   }
 }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ScheduleWidgetRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">#F2FFFFFF</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="ScheduleWidgetRow.Large">
+        <item name="android:textSize">13sp</item>
+    </style>
+</resources>

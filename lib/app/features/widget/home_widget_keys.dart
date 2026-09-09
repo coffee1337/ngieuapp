@@ -21,4 +21,14 @@ abstract final class HomeWidgetKeys {
   static const item2Time = 'widget_item_2_time';
   static const item2Subject = 'widget_item_2_subject';
   static const item2Room = 'widget_item_2_room';
+
+  static String itemTime(int index) => 'widget_item_${index}_time';
+  static String itemSubject(int index) => 'widget_item_${index}_subject';
+  static String itemRoom(int index) => 'widget_item_${index}_room';
+
+  static String upcomingTime(int index) => 'widget_upcoming_${index}_time';
+  static String upcomingSubject(int index) =>
+      'widget_upcoming_${index}_subject';
+  static String upcomingRoom(int index) => 'widget_upcoming_${index}_room';
+  static const upcomingCount = 'widget_upcoming_count';
 }

@@ -98,7 +98,7 @@ class HomeWidgetPayload {
     final item1 = items.elementAtOrNull(1);
     final item2 = items.elementAtOrNull(2);
 
-    return {
+    final data = <String, Object?>{
       HomeWidgetKeys.header: header,
       HomeWidgetKeys.subject: subject,
       HomeWidgetKeys.time: time,
@@ -120,5 +120,12 @@ class HomeWidgetPayload {
       HomeWidgetKeys.item2Subject: item2?.subject ?? '',
       HomeWidgetKeys.item2Room: item2?.room ?? '',
     };
+    for (var index = 0; index < 7; index++) {
+      final item = items.elementAtOrNull(index);
+      data[HomeWidgetKeys.itemTime(index)] = item?.time ?? '';
+      data[HomeWidgetKeys.itemSubject(index)] = item?.subject ?? '';
+      data[HomeWidgetKeys.itemRoom(index)] = item?.room ?? '';
+    }
+    return data;
   }
 }

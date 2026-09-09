@@ -4,6 +4,8 @@ import 'package:ngieuapp/app/features/notifications/schedule_change_notification
 import 'package:ngieuapp/app/features/notifications/sent_schedule_change_notifications_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/detect_schedule_change_notifications.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
 
 final notificationsServiceProvider = Provider<NotificationsService>((ref) {
   return NotificationsService.instance;
@@ -27,5 +29,7 @@ final scheduleChangeNotificationsServiceProvider =
         ref.watch(notificationsServiceProvider),
         ref.watch(sentScheduleChangeNotificationsDataSourceProvider),
         ref.watch(detectScheduleChangeNotificationsProvider),
+        ref.watch(smartNotificationSettingsProvider),
+        enabled: ref.watch(appSettingsProvider).notificationsEnabled,
       );
     });
