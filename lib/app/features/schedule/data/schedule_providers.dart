@@ -132,10 +132,33 @@ typedef WeekKey = ({String actorId, DateTime weekStart});
 
 final rawWeekScheduleProvider = StreamProvider.autoDispose
     .family<List<Lesson>, WeekKey>((ref, key) {
-      return ref
+      final stream = ref
           .watch(scheduleRepositoryProvider)
           .watchWeek(key.actorId, key.weekStart);
+      return stream.map((lessons) {
+        ref.invalidate(scheduleLastUpdatedProvider(key.actorId));
+        return lessons;
+      });
     });
+
+final scheduleLastUpdatedProvider = FutureProvider.autoDispose
+    .family<DateTime?, String>((ref, actorId) {
+      return ref.watch(scheduleDbDataSourceProvider).getLastUpdated(actorId);
+    });
+
+final refreshWeekScheduleProvider = Provider<Future<void> Function(WeekKey)>((
+  ref,
+) {
+  return (key) async {
+    await ref
+        .read(scheduleRepositoryProvider)
+        .refreshWeek(key.actorId, key.weekStart);
+    ref
+      ..invalidate(scheduleLastUpdatedProvider(key.actorId))
+      ..invalidate(rawWeekScheduleProvider(key));
+    await ref.read(rawWeekScheduleProvider(key).future);
+  };
+});
 
 final weekScheduleProvider = FutureProvider.autoDispose
     .family<List<Lesson>, WeekKey>((ref, key) async {

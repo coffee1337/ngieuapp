@@ -49,13 +49,18 @@ class ScheduleDbDataSource {
   }
 
   Future<bool> isStale(String actorId, Duration ttl) async {
+    final lastUpdated = await getLastUpdated(actorId);
+    if (lastUpdated == null) return true;
+    return DateTime.now().difference(lastUpdated) > ttl;
+  }
+
+  Future<DateTime?> getLastUpdated(String actorId) async {
     final query = _db.select(_db.scheduleEntries)
       ..where((t) => t.actorId.equals(actorId))
       ..orderBy([(t) => OrderingTerm.desc(t.cachedAt)])
       ..limit(1);
     final row = await query.getSingleOrNull();
-    if (row == null) return true;
-    return DateTime.now().difference(row.cachedAt) > ttl;
+    return row?.cachedAt;
   }
 
   // ---- Mapping ----
