@@ -10,7 +10,6 @@ import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/department.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
-import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
@@ -103,7 +102,7 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Выберите расписание'),
+          title: const Text('Расписание'),
           actions: [
             IconButton(
               tooltip: 'Поиск по расписанию',
@@ -128,11 +127,10 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
         ),
         body: Column(
           children: [
-            const AppGradientBar(),
             // Search bar with clear visual separation
             Container(
               color: theme.colorScheme.surface,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: SearchBar(
                 controller: _searchCtrl,
                 onChanged: _onQueryChanged,
@@ -153,11 +151,11 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                 ],
                 elevation: WidgetStateProperty.all(0),
                 backgroundColor: WidgetStateProperty.all(
-                  theme.colorScheme.surfaceContainerHighest,
+                  theme.colorScheme.surfaceContainer,
                 ),
                 shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 padding: WidgetStateProperty.all(
@@ -299,7 +297,7 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
     return Container(
       color: isDark
           ? theme.colorScheme.surfaceContainerLow
-          : theme.colorScheme.surfaceContainerHighest,
+          : theme.colorScheme.surfaceContainer,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.centerLeft,
       child: Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
-import 'package:ngieuapp/app/theme/app_colors.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
@@ -9,7 +10,6 @@ class ProfileHeader extends StatelessWidget {
     required this.todayStats,
     super.key,
   });
-
   final StudentIdentity identity;
   final Widget courseStats;
   final Widget todayStats;
@@ -17,21 +17,11 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       decoration: BoxDecoration(
-        gradient: AppColors.brandGradient,
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        gradient: theme.extension<BrandColors>()!.brandGradient,
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,42 +29,66 @@ class ProfileHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.xlBr,
                 ),
-                child: const Icon(Icons.school, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.school_outlined,
+                  color: Colors.white,
+                  size: 26,
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      identity.displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      identity.departmentName,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  identity.isStudentGroup ? 'Моя группа' : 'Преподаватель',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(children: [courseStats, const SizedBox(width: 8), todayStats]),
+          const SizedBox(height: AppSpacing.xxl),
+          Text(
+            identity.displayName,
+            style: theme.textTheme.headlineLarge?.copyWith(color: Colors.white),
+          ),
+          if (identity.departmentName.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              identity.departmentName,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xxxl),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 260 ||
+                  MediaQuery.textScalerOf(context).scale(16) > 24) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    courseStats,
+                    const SizedBox(height: AppSpacing.md),
+                    todayStats,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: courseStats),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(child: todayStats),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -88,34 +102,29 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: AppRadius.xlBr,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85),
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+          ),
+        ],
       ),
     );
   }

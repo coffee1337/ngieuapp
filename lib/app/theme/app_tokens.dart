@@ -10,6 +10,7 @@ abstract final class AppSpacing {
   static const double xl = 16;
   static const double xxl = 20;
   static const double xxxl = 24;
+  static const double section = 32;
 }
 
 /// Design-system border-radius tokens.
@@ -33,19 +34,19 @@ abstract final class AppRadius {
 
 /// Fixed sizes for common UI elements.
 abstract final class AppSizes {
-  static const double navBarHeight = 64;
+  static const double navBarHeight = 80;
   static const double gradientBarHeight = 3;
-  static const double fieldHeight = 40;
-  static const double buttonHeight = 44;
-  static const double buttonHeightSm = 36;
+  static const double fieldHeight = 48;
+  static const double buttonHeight = 52;
+  static const double buttonHeightSm = 48;
   static const double iconSm = 14;
   static const double iconMd = 18;
   static const double iconLg = 22;
   static const double lessonTimeColumnWidth = 52;
   static const double roomNumberColumnWidth = 60;
   static const double roomNumberColumnWidthWide = 74;
-  static const double dayChipMinHeight = 38;
-  static const double weekNavButtonSize = 36;
+  static const double dayChipMinHeight = 72;
+  static const double weekNavButtonSize = 48;
 }
 
 /// Animation duration tokens.
@@ -53,4 +54,10 @@ abstract final class AppDurations {
   static const Duration fast = Duration(milliseconds: 150);
   static const Duration normal = Duration(milliseconds: 250);
   static const Duration slow = Duration(milliseconds: 350);
+}
+
+/// Comfortable reading widths and adaptive navigation breakpoints.
+abstract final class AppLayout {
+  static const double navigationRailBreakpoint = 840;
+  static const double contentMaxWidth = 960;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class ProfileMenuTile extends StatelessWidget {
   const ProfileMenuTile({
@@ -10,7 +11,6 @@ class ProfileMenuTile extends StatelessWidget {
     this.subtitle,
     super.key,
   });
-
   final IconData icon;
   final String title;
   final VoidCallback onTap;
@@ -21,22 +21,34 @@ class ProfileMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? theme.colorScheme.primary),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: textColor ?? theme.colorScheme.onSurface,
-          fontWeight: FontWeight.w500,
+    final accent = iconColor ?? theme.colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Material(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: AppRadius.xlBr,
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.08),
+              borderRadius: AppRadius.lgBr,
+            ),
+            child: Icon(icon, color: accent, size: 22),
+          ),
+          title: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(color: textColor),
+          ),
+          subtitle: subtitle == null ? null : Text(subtitle!),
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: textColor ?? theme.colorScheme.onSurfaceVariant,
+          ),
+          onTap: onTap,
         ),
       ),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      trailing: Icon(
-        Icons.chevron_right,
-        size: 20,
-        color: textColor ?? theme.colorScheme.onSurfaceVariant,
-      ),
-      onTap: onTap,
     );
   }
 }
