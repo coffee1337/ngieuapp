@@ -30,5 +30,7 @@ abstract final class HomeWidgetKeys {
   static String upcomingSubject(int index) =>
       'widget_upcoming_${index}_subject';
   static String upcomingRoom(int index) => 'widget_upcoming_${index}_room';
+  static String upcomingStart(int index) => 'widget_upcoming_${index}_start';
+  static String upcomingEnd(int index) => 'widget_upcoming_${index}_end';
   static const upcomingCount = 'widget_upcoming_count';
 }
