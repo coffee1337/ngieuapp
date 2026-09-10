@@ -10,6 +10,7 @@ class CampusMapBuilding {
     required this.height,
     this.tone = CampusBuildingTone.academic,
     this.name,
+    this.labelAnchor,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class CampusMapBuilding {
   final double height;
   final CampusBuildingTone tone;
   final String? name;
+  final Offset? labelAnchor;
 
   Path get path => Path()..addPolygon(footprint, true);
 
@@ -177,37 +179,11 @@ abstract final class CampusMapLayout {
 
   static const buildings = <CampusMapBuilding>[
     CampusMapBuilding(
-      id: 'building-01',
-      number: 1,
-      height: 18,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(43, 64),
-        Offset(123, 62),
-        Offset(123, 92),
-        Offset(113, 98),
-        Offset(113, 239),
-        Offset(81, 242),
-        Offset(78, 96),
-        Offset(43, 96),
-      ],
-    ),
-    CampusMapBuilding(
-      id: 'building-02',
-      number: 2,
-      height: 20,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(189, 59),
-        Offset(226, 58),
-        Offset(228, 150),
-        Offset(191, 153),
-      ],
-    ),
-    CampusMapBuilding(
       id: 'building-03',
       number: 3,
       height: 24,
+      name: 'Инженерный институт',
+      labelAnchor: Offset(329, 286),
       footprint: [
         Offset(269, 156),
         Offset(317, 154),
@@ -224,6 +200,8 @@ abstract final class CampusMapLayout {
       number: 4,
       height: 20,
       tone: CampusBuildingTone.utility,
+      name: 'Ангар-склад',
+      labelAnchor: Offset(467, 253),
       footprint: [
         Offset(445, 150),
         Offset(487, 148),
@@ -236,6 +214,8 @@ abstract final class CampusMapLayout {
       number: 5,
       height: 17,
       tone: CampusBuildingTone.utility,
+      name: 'Учебный корпус',
+      labelAnchor: Offset(636, 270),
       footprint: [
         Offset(525, 210),
         Offset(746, 207),
@@ -244,25 +224,11 @@ abstract final class CampusMapLayout {
       ],
     ),
     CampusMapBuilding(
-      id: 'building-06',
-      number: 6,
-      height: 22,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(767, 22),
-        Offset(864, 20),
-        Offset(864, 57),
-        Offset(816, 58),
-        Offset(816, 178),
-        Offset(786, 181),
-        Offset(785, 58),
-        Offset(767, 58),
-      ],
-    ),
-    CampusMapBuilding(
       id: 'building-07',
       number: 7,
       height: 25,
+      name: 'Институт информационных технологий и систем связи',
+      labelAnchor: Offset(458, 413),
       footprint: [
         Offset(380, 326),
         Offset(532, 323),
@@ -275,6 +241,8 @@ abstract final class CampusMapLayout {
       number: 8,
       height: 29,
       tone: CampusBuildingTone.residence,
+      name: 'Общежитие №1',
+      labelAnchor: Offset(296, 606),
       footprint: [
         Offset(269, 377),
         Offset(310, 375),
@@ -286,6 +254,8 @@ abstract final class CampusMapLayout {
       id: 'building-09',
       number: 9,
       height: 27,
+      name: 'Главный корпус НГИЭУ',
+      labelAnchor: Offset(469, 551),
       footprint: [
         Offset(389, 470),
         Offset(568, 467),
@@ -299,6 +269,8 @@ abstract final class CampusMapLayout {
       id: 'building-10',
       number: 10,
       height: 31,
+      name: 'Институт педагогики · Институт экономики и управления',
+      labelAnchor: Offset(625, 548),
       footprint: [
         Offset(570, 420),
         Offset(607, 420),
@@ -307,81 +279,17 @@ abstract final class CampusMapLayout {
       ],
     ),
     CampusMapBuilding(
-      id: 'building-11',
-      number: 11,
-      height: 20,
-      tone: CampusBuildingTone.residence,
-      footprint: [
-        Offset(674, 472),
-        Offset(789, 470),
-        Offset(790, 509),
-        Offset(676, 512),
-      ],
-    ),
-    CampusMapBuilding(
       id: 'building-12',
       number: 12,
-      height: 13,
+      height: 12,
       tone: CampusBuildingTone.utility,
+      name: 'Лыжная база',
+      labelAnchor: Offset(341, 149),
       footprint: [
-        Offset(18, 8),
-        Offset(171, 5),
-        Offset(172, 28),
-        Offset(20, 32),
-      ],
-    ),
-    CampusMapBuilding(
-      id: 'building-13',
-      number: 13,
-      height: 13,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(193, 4),
-        Offset(342, 2),
-        Offset(343, 28),
-        Offset(194, 31),
-      ],
-    ),
-    CampusMapBuilding(
-      id: 'building-14',
-      number: 14,
-      height: 14,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(376, 1),
-        Offset(559, 0),
-        Offset(559, 20),
-        Offset(377, 23),
-      ],
-    ),
-    CampusMapBuilding(
-      id: 'building-15',
-      number: 15,
-      height: 14,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(589, 1),
-        Offset(719, 0),
-        Offset(719, 15),
-        Offset(590, 18),
-      ],
-    ),
-    CampusMapBuilding(
-      id: 'building-16',
-      number: 16,
-      height: 19,
-      tone: CampusBuildingTone.utility,
-      footprint: [
-        Offset(706, 213),
-        Offset(752, 211),
-        Offset(753, 345),
-        Offset(770, 345),
-        Offset(770, 372),
-        Offset(711, 374),
-        Offset(711, 354),
-        Offset(687, 354),
-        Offset(687, 315),
-        Offset(706, 315),
+        Offset(294, 125),
+        Offset(383, 123),
+        Offset(384, 145),
+        Offset(295, 148),
       ],
     ),
   ];

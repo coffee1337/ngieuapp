@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,9 @@ import 'package:ngieuapp/app/features/campus/domain/campus_map_layout.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class Campus3DMap extends StatefulWidget {
-  const Campus3DMap({super.key});
+  const Campus3DMap({super.key, this.fullscreen = false});
+
+  final bool fullscreen;
 
   @override
   State<Campus3DMap> createState() => _Campus3DMapState();
@@ -23,9 +26,17 @@ class _Campus3DMapState extends State<Campus3DMap> {
   }
 
   void _selectBuilding(Offset point, Size size) {
+    final scale = math.min(
+      size.width / CampusMapLayout.canvasSize.width,
+      size.height / CampusMapLayout.canvasSize.height,
+    );
+    final origin = Offset(
+      (size.width - CampusMapLayout.canvasSize.width * scale) / 2,
+      (size.height - CampusMapLayout.canvasSize.height * scale) / 2,
+    );
     final layoutPoint = Offset(
-      point.dx * CampusMapLayout.canvasSize.width / size.width,
-      point.dy * CampusMapLayout.canvasSize.height / size.height,
+      (point.dx - origin.dx) / scale,
+      (point.dy - origin.dy) / scale,
     );
     setState(() {
       _selectedBuilding = CampusMapLayout.hitTest(layoutPoint);
@@ -37,10 +48,33 @@ class _Campus3DMapState extends State<Campus3DMap> {
     setState(() => _selectedBuilding = null);
   }
 
+  void _openFullscreen() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const CampusMapFullscreenScreen(),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final mapSurface = _buildMapSurface(
+      scheme,
+      showFullscreenButton: !widget.fullscreen,
+    );
+    final selectionDetails = _buildSelectionDetails(theme, scheme);
+
+    if (widget.fullscreen) {
+      return Column(
+        children: [
+          Expanded(child: mapSurface),
+          selectionDetails,
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,122 +109,165 @@ class _Campus3DMapState extends State<Campus3DMap> {
           aspectRatio:
               CampusMapLayout.canvasSize.width /
               CampusMapLayout.canvasSize.height,
-          child: ClipRRect(
-            borderRadius: AppRadius.xxlBr,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLow,
-                border: Border.all(
-                  color: scheme.outlineVariant.withValues(alpha: 0.7),
-                ),
-                borderRadius: AppRadius.xxlBr,
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: InteractiveViewer(
-                        transformationController: _transformationController,
-                        minScale: 1,
-                        maxScale: 4,
-                        boundaryMargin: const EdgeInsets.all(80),
-                        clipBehavior: Clip.hardEdge,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final size = constraints.biggest;
-                            return Semantics(
-                              label: 'Интерактивная трёхмерная схема кампуса',
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTapUp: (details) => _selectBuilding(
-                                  details.localPosition,
-                                  size,
-                                ),
-                                child: CustomPaint(
-                                  size: size,
-                                  painter: _CampusMapPainter(
-                                    colorScheme: scheme,
-                                    selectedBuildingId: _selectedBuilding?.id,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+          child: mapSurface,
+        ),
+        selectionDetails,
+      ],
+    );
+  }
+
+  Widget _buildMapSurface(
+    ColorScheme scheme, {
+    required bool showFullscreenButton,
+  }) {
+    return ClipRRect(
+      borderRadius: AppRadius.xxlBr,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLow,
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.7),
+          ),
+          borderRadius: AppRadius.xxlBr,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: InteractiveViewer(
+                  transformationController: _transformationController,
+                  minScale: 1,
+                  maxScale: 5,
+                  boundaryMargin: const EdgeInsets.all(80),
+                  clipBehavior: Clip.hardEdge,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final size = constraints.biggest;
+                      return Semantics(
+                        label: 'Интерактивная трёхмерная схема кампуса',
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: (details) =>
+                              _selectBuilding(details.localPosition, size),
+                          child: CustomPaint(
+                            size: size,
+                            painter: _CampusMapPainter(
+                              colorScheme: scheme,
+                              selectedBuildingId: _selectedBuilding?.id,
+                            ),
+                          ),
                         ),
-                      ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: AppSpacing.md,
+              left: AppSpacing.md,
+              child: _MapBadge(
+                icon: Icons.view_in_ar_rounded,
+                label: 'План кампуса',
+                color: scheme.tertiary,
+              ),
+            ),
+            if (showFullscreenButton)
+              Positioned(
+                top: AppSpacing.md,
+                right: AppSpacing.md,
+                child: IconButton.filledTonal(
+                  tooltip: 'Открыть на весь экран',
+                  onPressed: _openFullscreen,
+                  icon: const Icon(Icons.fullscreen_rounded),
+                ),
+              ),
+            Positioned(
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: IconButton.filledTonal(
+                tooltip: 'Сбросить масштаб',
+                onPressed: _resetView,
+                icon: const Icon(Icons.center_focus_strong_rounded),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionDetails(ThemeData theme, ColorScheme scheme) {
+    return AnimatedSwitcher(
+      duration: AppDurations.fast,
+      child: _selectedBuilding == null
+          ? Padding(
+              key: const ValueKey('map-help'),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Text(
+                'Нажмите на корпус, чтобы увидеть его название.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          : Container(
+              key: ValueKey(_selectedBuilding!.id),
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer.withValues(alpha: 0.55),
+                borderRadius: AppRadius.lgBr,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.apartment_rounded, color: scheme.primary),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      _selectedBuilding!.name ??
+                          'Здание ${_selectedBuilding!.number}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall,
                     ),
                   ),
-                  Positioned(
-                    top: AppSpacing.md,
-                    left: AppSpacing.md,
-                    child: _MapBadge(
-                      icon: Icons.view_in_ar_rounded,
-                      label: 'План кампуса',
-                      color: scheme.tertiary,
-                    ),
-                  ),
-                  Positioned(
-                    right: AppSpacing.md,
-                    bottom: AppSpacing.md,
-                    child: IconButton.filledTonal(
-                      tooltip: 'Сбросить масштаб',
-                      onPressed: _resetView,
-                      icon: const Icon(Icons.center_focus_strong_rounded),
+                  const SizedBox(width: AppSpacing.md),
+                  Text(
+                    '№${_selectedBuilding!.number}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+}
+
+class CampusMapFullscreenScreen extends StatelessWidget {
+  const CampusMapFullscreenScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('План кампуса')),
+      body: const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
+          child: Campus3DMap(fullscreen: true),
         ),
-        AnimatedSwitcher(
-          duration: AppDurations.fast,
-          child: _selectedBuilding == null
-              ? Padding(
-                  key: const ValueKey('map-help'),
-                  padding: const EdgeInsets.only(top: AppSpacing.md),
-                  child: Text(
-                    'Нажмите на здание. Названия корпусов добавим после '
-                    'уточнения.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                )
-              : Container(
-                  key: ValueKey(_selectedBuilding!.id),
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(top: AppSpacing.md),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer.withValues(alpha: 0.55),
-                    borderRadius: AppRadius.lgBr,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.apartment_rounded, color: scheme.primary),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(
-                          _selectedBuilding!.name ??
-                              'Здание ${_selectedBuilding!.number}',
-                          style: theme.textTheme.titleSmall,
-                        ),
-                      ),
-                      Text(
-                        'Ожидает подписи',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -243,15 +320,22 @@ class _CampusMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = colorScheme.surfaceContainerLow,
+    );
+    final scale = math.min(
+      size.width / CampusMapLayout.canvasSize.width,
+      size.height / CampusMapLayout.canvasSize.height,
+    );
+    final origin = Offset(
+      (size.width - CampusMapLayout.canvasSize.width * scale) / 2,
+      (size.height - CampusMapLayout.canvasSize.height * scale) / 2,
+    );
     canvas
       ..save()
-      ..scale(
-        size.width / CampusMapLayout.canvasSize.width,
-        size.height / CampusMapLayout.canvasSize.height,
-      );
-
-    final bounds = Offset.zero & CampusMapLayout.canvasSize;
-    canvas.drawRect(bounds, Paint()..color = colorScheme.surfaceContainerLow);
+      ..translate(origin.dx, origin.dy)
+      ..scale(scale);
 
     final grassPaint = Paint()
       ..color = Color.alphaBlend(
@@ -271,17 +355,7 @@ class _CampusMapPainter extends CustomPainter {
         ..drawPath(path, grassOutline);
     }
 
-    final stadium = RRect.fromRectAndRadius(
-      const Rect.fromLTRB(107, 313, 243, 590),
-      const Radius.circular(70),
-    );
-    canvas.drawRRect(
-      stadium,
-      Paint()
-        ..color = const Color(0xFF659E4C).withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    _paintFacilities(canvas);
 
     for (final road in CampusMapLayout.roads) {
       final path = Path()..moveTo(road.points.first.dx, road.points.first.dy);
@@ -317,8 +391,204 @@ class _CampusMapPainter extends CustomPainter {
     for (final building in CampusMapLayout.buildings) {
       _paintBuilding(canvas, building);
     }
+    for (final building in CampusMapLayout.buildings) {
+      final name = building.name;
+      final anchor = building.labelAnchor;
+      if (name != null && anchor != null) {
+        _paintMapLabel(canvas, name, anchor, maxWidth: 190);
+      }
+    }
     _paintCompass(canvas);
     canvas.restore();
+  }
+
+  void _paintFacilities(Canvas canvas) {
+    final lineColor = colorScheme.outline.withValues(alpha: 0.55);
+    final sportsColor = Color.alphaBlend(
+      const Color(0xFF78A85D).withValues(alpha: 0.22),
+      colorScheme.surfaceContainerLow,
+    );
+
+    final stadium = RRect.fromRectAndRadius(
+      const Rect.fromLTRB(107, 313, 243, 590),
+      const Radius.circular(70),
+    );
+    final stadiumInner = RRect.fromRectAndRadius(
+      const Rect.fromLTRB(120, 330, 230, 572),
+      const Radius.circular(58),
+    );
+    canvas
+      ..drawRRect(stadium, Paint()..color = sportsColor)
+      ..drawRRect(
+        stadium,
+        Paint()
+          ..color = const Color(0xFF659E4C).withValues(alpha: 0.72)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3,
+      )
+      ..drawRRect(
+        stadiumInner,
+        Paint()
+          ..color = const Color(0xFF659E4C).withValues(alpha: 0.48)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    _paintMapLabel(canvas, 'Стадион', const Offset(175, 444), maxWidth: 96);
+
+    final volleyballCourt = RRect.fromRectAndRadius(
+      const Rect.fromLTRB(107, 265, 177, 304),
+      const Radius.circular(5),
+    );
+    canvas
+      ..drawRRect(volleyballCourt, Paint()..color = sportsColor)
+      ..drawRRect(
+        volleyballCourt,
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      )
+      ..drawLine(
+        const Offset(142, 266),
+        const Offset(142, 303),
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 1.5,
+      );
+    _paintMapLabel(
+      canvas,
+      'Волейбольная площадка',
+      const Offset(142, 251),
+      maxWidth: 130,
+      compact: true,
+    );
+
+    final equipmentPaint = Paint()
+      ..color = colorScheme.tertiary.withValues(alpha: 0.75)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    for (final x in [194.0, 211.0, 228.0]) {
+      canvas
+        ..drawLine(Offset(x, 274), Offset(x, 296), equipmentPaint)
+        ..drawLine(Offset(x - 5, 280), Offset(x + 5, 280), equipmentPaint)
+        ..drawCircle(Offset(x, 270), 3, equipmentPaint);
+    }
+    _paintMapLabel(
+      canvas,
+      'Тренажёры',
+      const Offset(211, 311),
+      maxWidth: 92,
+      compact: true,
+    );
+
+    final sportsBox = RRect.fromRectAndRadius(
+      const Rect.fromLTRB(248, 49, 404, 123),
+      const Radius.circular(28),
+    );
+    canvas
+      ..drawRRect(
+        sportsBox,
+        Paint()
+          ..color = const Color(0xFF659E4C).withValues(alpha: 0.58)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      )
+      ..drawLine(
+        const Offset(326, 51),
+        const Offset(326, 121),
+        Paint()
+          ..color = const Color(0xFF659E4C).withValues(alpha: 0.38)
+          ..strokeWidth = 1.5,
+      );
+    _paintMapLabel(
+      canvas,
+      'Спортивная коробка',
+      const Offset(326, 85),
+      maxWidth: 135,
+      compact: true,
+    );
+
+    final drivingTrack = Path()
+      ..moveTo(512, 92)
+      ..lineTo(743, 87)
+      ..quadraticBezierTo(787, 88, 790, 126)
+      ..lineTo(790, 178)
+      ..quadraticBezierTo(787, 195, 760, 197)
+      ..lineTo(524, 201)
+      ..quadraticBezierTo(507, 197, 508, 180)
+      ..lineTo(508, 112)
+      ..quadraticBezierTo(507, 99, 512, 92)
+      ..close();
+    canvas.drawPath(
+      drivingTrack,
+      Paint()
+        ..color = colorScheme.outlineVariant.withValues(alpha: 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5,
+    );
+    final conePaint = Paint()..color = colorScheme.tertiary;
+    for (final point in const [
+      Offset(562, 145),
+      Offset(620, 119),
+      Offset(681, 164),
+      Offset(740, 132),
+    ]) {
+      final cone = Path()
+        ..moveTo(point.dx, point.dy - 5)
+        ..lineTo(point.dx - 5, point.dy + 5)
+        ..lineTo(point.dx + 5, point.dy + 5)
+        ..close();
+      canvas.drawPath(cone, conePaint);
+    }
+    _paintMapLabel(
+      canvas,
+      'Площадка для вождения',
+      const Offset(649, 177),
+      maxWidth: 150,
+      compact: true,
+    );
+  }
+
+  void _paintMapLabel(
+    Canvas canvas,
+    String text,
+    Offset anchor, {
+    required double maxWidth,
+    bool compact = false,
+  }) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: compact ? 13 : 15,
+          height: 1.15,
+          fontWeight: compact ? FontWeight.w600 : FontWeight.w700,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: ui.TextDirection.ltr,
+      maxLines: 3,
+      ellipsis: '…',
+    )..layout(maxWidth: maxWidth);
+    final offset = Offset(
+      anchor.dx - textPainter.width / 2,
+      anchor.dy - textPainter.height / 2,
+    );
+    final background = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        offset.dx - 5,
+        offset.dy - 3,
+        textPainter.width + 10,
+        textPainter.height + 6,
+      ),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(
+      background,
+      Paint()..color = colorScheme.surface.withValues(alpha: 0.84),
+    );
+    textPainter.paint(canvas, offset);
   }
 
   void _paintBuilding(Canvas canvas, CampusMapBuilding building) {
@@ -431,7 +701,7 @@ class _CampusMapPainter extends CustomPainter {
   }
 
   void _paintCompass(Canvas canvas) {
-    const center = Offset(950, 72);
+    const center = Offset(820, 72);
     final color = colorScheme.onSurfaceVariant;
     canvas
       ..drawCircle(
