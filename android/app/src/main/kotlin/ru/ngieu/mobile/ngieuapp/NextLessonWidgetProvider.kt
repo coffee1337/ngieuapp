@@ -32,6 +32,15 @@ abstract class ScheduleWidgetProvider(
     protected fun text(context: Context, key: String): String =
         HomeWidgetPlugin.getData(context).getString(key, "") ?: ""
 
+    protected fun timestamp(context: Context, key: String): Long {
+        val data = HomeWidgetPlugin.getData(context)
+        return try {
+            data.getLong(key, 0L)
+        } catch (_: ClassCastException) {
+            data.getString(key, "0")?.toLongOrNull() ?: 0L
+        }
+    }
+
     protected fun bindRows(
         context: Context,
         views: RemoteViews,
@@ -40,6 +49,7 @@ abstract class ScheduleWidgetProvider(
     ): Boolean {
         var hasLessons = false
         rowIds.forEachIndexed { index, id ->
+            val end = timestamp(context, "${prefix}_${index}_end")
             val time = text(context, "${prefix}_${index}_time")
             val subject = text(context, "${prefix}_${index}_subject")
             val room = text(context, "${prefix}_${index}_room")
@@ -47,8 +57,9 @@ abstract class ScheduleWidgetProvider(
                 .filter { it.isNotBlank() }
                 .joinToString("  •  ")
             views.setTextViewText(id, details)
-            views.setViewVisibility(id, if (subject.isBlank()) View.GONE else View.VISIBLE)
-            if (subject.isNotBlank()) hasLessons = true
+            val visible = subject.isNotBlank() && (end == 0L || end > System.currentTimeMillis())
+            views.setViewVisibility(id, if (visible) View.VISIBLE else View.GONE)
+            if (visible) hasLessons = true
         }
         return hasLessons
     }
@@ -59,11 +70,26 @@ abstract class ScheduleWidgetProvider(
         shortHeader: Boolean = false,
         startTimeOnly: Boolean = false,
     ) {
-        val storedHeader = text(context, "widget_header")
-        val storedSubject = text(context, "widget_subject")
-        val storedTime = text(context, "widget_time")
-        val storedRoom = text(context, "widget_room")
-        val header = if (shortHeader) "ПАРА" else storedHeader.ifBlank { "РАСПИСАНИЕ" }
+        val now = System.currentTimeMillis()
+        val nextIndex = (0 until 3).firstOrNull { index ->
+            val subject = text(context, "widget_upcoming_${index}_subject")
+            val end = timestamp(context, "widget_upcoming_${index}_end")
+            subject.isNotBlank() && (end == 0L || end > now)
+        }
+        val storedHeader = if (nextIndex == null) text(context, "widget_header") else ""
+        val storedSubject = nextIndex?.let { text(context, "widget_upcoming_${it}_subject") }
+            ?: text(context, "widget_subject")
+        val storedTime = nextIndex?.let { text(context, "widget_upcoming_${it}_time") }
+            ?: text(context, "widget_time")
+        val storedRoom = nextIndex?.let { text(context, "widget_upcoming_${it}_room") }
+            ?: text(context, "widget_room")
+        val start = nextIndex?.let { timestamp(context, "widget_upcoming_${it}_start") } ?: 0L
+        val header = when {
+            shortHeader -> "ПАРА"
+            start in 1..now -> "СЕЙЧАС"
+            nextIndex != null -> "СЛЕДУЮЩАЯ ПАРА"
+            else -> storedHeader.ifBlank { "РАСПИСАНИЕ" }
+        }
         val time = if (startTimeOnly) {
             storedTime.substringBefore('—').substringBefore('–').trim()
         } else {
