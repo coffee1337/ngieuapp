@@ -2,7 +2,7 @@ import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class LessonMapper {
-  static List<Lesson> fromApi(Map<String, dynamic> j) {
+  static List<Lesson> fromApi(Map<String, dynamic> j, {DateTime? anchorDate}) {
     final dayName = (j['dayName'] ?? '').toString();
     final dayIndex = _dayIndex(dayName);
     if (dayIndex < 0) return const [];
@@ -42,7 +42,7 @@ class LessonMapper {
         DateTime(explicitDate.year, explicitDate.month, explicitDate.day),
       ];
     } else {
-      dates = _expandDates(dayIndex);
+      dates = _expandDates(dayIndex, anchorDate ?? DateTime.now());
     }
 
     final parity = _parityFromApi(isUpperWeek);
@@ -170,8 +170,8 @@ class LessonMapper {
     return s.isEmpty ? const [] : [s];
   }
 
-  static List<DateTime> _expandDates(int weekday) {
-    final thisWeekMonday = DateTime.now().startOfWeek;
+  static List<DateTime> _expandDates(int weekday, DateTime anchorDate) {
+    final thisWeekMonday = anchorDate.startOfWeek;
     final baseOffset = weekday - 1;
     return List.generate(5, (i) {
       final monday = thisWeekMonday.add(Duration(days: (i - 2) * 7));

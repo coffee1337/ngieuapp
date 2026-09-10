@@ -44,4 +44,15 @@ void main() {
 
     expect(result, cachedWeek);
   });
+
+  test('uses the server response date for the current week', () async {
+    final serverWeek = WeekType(
+      date: DateTime(2025, 3, 13),
+      isUpperWeek: false,
+    );
+    when(() => api.getCurrentWeekType()).thenAnswer((_) async => serverWeek);
+    when(() => cache.saveWeekType(serverWeek)).thenAnswer((_) async {});
+
+    expect(await repository.getCurrentWeekType(), serverWeek);
+  });
 }

@@ -8,6 +8,12 @@ Actor? resolveActorId({
   required List<Actor> currentActors,
 }) {
   if (savedName == null || savedType == null) return null;
+  final matchingId = currentActors.where(
+    (actor) => actor.id == savedId && actor.type == savedType,
+  );
+  if (_isTechnicalFallback(savedName, savedId) && matchingId.length == 1) {
+    return matchingId.single;
+  }
   final normalizedName = _normalizeActorName(savedName);
   if (normalizedName.isEmpty) return null;
 
@@ -36,3 +42,9 @@ Actor? resolveActorId({
 
 String _normalizeActorName(String value) =>
     value.toLowerCase().replaceAll(RegExp(r'[^0-9a-zа-яё]'), '');
+
+bool _isTechnicalFallback(String name, String id) {
+  final normalized = name.trim().toLowerCase();
+  return normalized == id.trim().toLowerCase() ||
+      normalized == 'расписание ${id.trim().toLowerCase()}';
+}

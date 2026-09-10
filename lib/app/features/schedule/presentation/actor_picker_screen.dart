@@ -81,20 +81,19 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
     await favoritesRepo.setActiveActorDetails(selectedActor);
     ref.invalidate(activeFavoriteActorIdProvider);
 
-    if (a.type == ActorType.studentGroup) {
-      final repo = ref.read(profileLocalDataSourceProvider);
-      await repo.save(
-        StudentIdentity(
-          actorId: a.id,
-          displayName: a.name,
-          actorType: a.type,
-          departmentName: departmentName,
-          groupName: a.type == ActorType.studentGroup ? a.name : null,
-          departmentId: a.departmentId,
-        ),
-      );
-      ref.invalidate(studentIdentityProvider);
-    }
+    final profileRepo = ref.read(profileLocalDataSourceProvider);
+    await profileRepo.save(
+      StudentIdentity(
+        actorId: a.id,
+        displayName: a.name,
+        actorType: a.type,
+        departmentName: departmentName,
+        groupName: a.type == ActorType.studentGroup ? a.name : null,
+        fullName: a.type == ActorType.teacher ? a.name : null,
+        departmentId: a.departmentId,
+      ),
+    );
+    ref.invalidate(studentIdentityProvider);
 
     if (mounted) {
       await context.push('/schedule/${a.id}', extra: selectedActor);

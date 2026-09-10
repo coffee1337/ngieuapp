@@ -21,7 +21,8 @@ class _CampusDirectionsScreenState
   String? _error;
 
   static final _mapUrl = WebUri(
-    'https://yandex.ru/maps/?text=${Uri.encodeComponent(CampusCatalog.mainCampusAddress)}',
+    'https://yandex.ru/maps/?mode=routes&rtext=~'
+    '${Uri.encodeComponent(CampusCatalog.mainCampusAddress)}&rtt=auto',
   );
 
   @override
@@ -64,6 +65,9 @@ class _CampusDirectionsScreenState
               initialSettings: InAppWebViewSettings(
                 transparentBackground: true,
                 useShouldOverrideUrlLoading: true,
+                javaScriptEnabled: true,
+                domStorageEnabled: true,
+                cacheEnabled: true,
               ),
               onWebViewCreated: (controller) => _controller = controller,
               onProgressChanged: (_, progress) {

@@ -33,8 +33,16 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
   }
 
   @override
-  Future<WeekType> getCurrentWeekType() {
-    return getWeekType(DateTime.now());
+  Future<WeekType> getCurrentWeekType() async {
+    try {
+      final weekType = await _api.getCurrentWeekType();
+      await _cache.saveWeekType(weekType);
+      return weekType;
+    } catch (_) {
+      final cached = await _cache.loadWeekType(allowExpired: true);
+      if (cached != null) return cached;
+      return _fallbackWeekType(DateTime.now());
+    }
   }
 
   /// Проверяет, что даты относятся к одной неделе

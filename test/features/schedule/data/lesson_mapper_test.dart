@@ -4,6 +4,22 @@ import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 void main() {
   group('LessonMapper.fromApi', () {
+    test('anchors recurring lessons to the requested API week', () {
+      final result = LessonMapper.fromApi({
+        'dayName': 'Среда',
+        'classTime': '8:30 / 10:00',
+        'classNumberName': '1 пара',
+        'subjects': ['Математика'],
+        'isChange': false,
+        'isUpperWeek': true,
+      }, anchorDate: DateTime(2030, 4, 15));
+
+      expect(
+        result.map((lesson) => lesson.date),
+        contains(DateTime(2030, 4, 17)),
+      );
+    });
+
     test('parses valid API response into lessons', () {
       final json = {
         'dayName': 'Понедельник',

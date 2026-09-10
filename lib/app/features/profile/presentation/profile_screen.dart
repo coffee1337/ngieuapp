@@ -9,6 +9,7 @@ import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
@@ -76,7 +77,7 @@ class _NotSetYet extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Вы ещё не выбрали группу',
+                        'Профиль ещё не выбран',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
@@ -84,8 +85,8 @@ class _NotSetYet extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Откройте расписание, выберите свою группу\n'
-                        'и она появится в профиле',
+                        'Откройте расписание и выберите свою группу или себя '
+                        'в списке преподавателей',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -95,7 +96,7 @@ class _NotSetYet extends StatelessWidget {
                       FilledButton.icon(
                         onPressed: () => context.go('/schedule'),
                         icon: const Icon(Icons.arrow_forward),
-                        label: const Text('Выбрать группу'),
+                        label: const Text('Выбрать профиль'),
                       ),
                     ],
                   ),
@@ -119,7 +120,8 @@ class _ProfileContent extends ConsumerWidget {
     final theme = Theme.of(context);
     final isStudentGroup = identity.isStudentGroup;
 
-    final today = DateTime.now();
+    final today =
+        ref.watch(currentWeekTypeProvider).valueOrNull?.date ?? DateTime.now();
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
     final key = (
       actorId: identity.actorId,
@@ -211,12 +213,17 @@ class _ProfileContent extends ConsumerWidget {
         const SizedBox(height: 12),
         ProfileMenuTile(
           icon: Icons.logout,
-          title: 'Сменить группу',
+          title: 'Сменить профиль',
           iconColor: theme.colorScheme.error,
           textColor: theme.colorScheme.error,
           onTap: () async {
             await ref.read(profileLocalDataSourceProvider).clear();
-            ref.invalidate(studentIdentityProvider);
+            await ref
+                .read(favoriteActorsLocalDataSourceProvider)
+                .setActiveActor(null);
+            ref
+              ..invalidate(studentIdentityProvider)
+              ..invalidate(activeFavoriteActorIdProvider);
           },
         ),
         const SizedBox(height: 32),
@@ -233,6 +240,10 @@ class _FavoriteSchedulesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final favoritesAsync = ref.watch(favoriteActorsProvider);
+    final currentActors = <Actor>[
+      ...?ref.watch(studentGroupsProvider).valueOrNull,
+      ...?ref.watch(teachersProvider).valueOrNull,
+    ];
     return favoritesAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
@@ -252,18 +263,23 @@ class _FavoriteSchedulesSection extends ConsumerWidget {
                 ),
               ),
             ),
-            for (final actor in favorites)
-              ProfileMenuTile(
-                icon:
-                    actor.type == currentIdentity.actorType &&
-                        actor.id == currentIdentity.actorId
-                    ? Icons.school_outlined
-                    : Icons.star_outline,
-                title: actor.name,
-                subtitle: actor.departmentName.isEmpty
-                    ? null
-                    : actor.departmentName,
-                onTap: () => _openFavorite(context, ref, actor),
+            for (final savedActor in favorites)
+              Builder(
+                builder: (context) {
+                  final actor = _resolvedFavorite(savedActor, currentActors);
+                  return ProfileMenuTile(
+                    icon:
+                        actor.type == currentIdentity.actorType &&
+                            actor.id == currentIdentity.actorId
+                        ? Icons.school_outlined
+                        : Icons.star_outline,
+                    title: _favoriteTitle(actor),
+                    subtitle: actor.departmentName.isEmpty
+                        ? null
+                        : actor.departmentName,
+                    onTap: () => _openFavorite(context, ref, actor),
+                  );
+                },
               ),
           ],
         );
@@ -271,15 +287,39 @@ class _FavoriteSchedulesSection extends ConsumerWidget {
     );
   }
 
+  FavoriteActor _resolvedFavorite(
+    FavoriteActor saved,
+    List<Actor> currentActors,
+  ) {
+    for (final actor in currentActors) {
+      if (actor.id == saved.id && actor.type == saved.type) {
+        return saved.copyWith(
+          name: actor.name,
+          departmentId: actor.departmentId,
+        );
+      }
+    }
+    return saved;
+  }
+
+  String _favoriteTitle(FavoriteActor actor) {
+    final technicalTitle = 'Расписание ${actor.id}'.toLowerCase();
+    return actor.name.trim().toLowerCase() == technicalTitle
+        ? 'Сохранённое расписание'
+        : actor.name;
+  }
+
   Future<void> _openFavorite(
     BuildContext context,
     WidgetRef ref,
     FavoriteActor actor,
   ) async {
-    await ref
-        .read(favoriteActorsLocalDataSourceProvider)
-        .setActiveActorDetails(actor);
-    ref.invalidate(activeFavoriteActorIdProvider);
+    final favorites = ref.read(favoriteActorsLocalDataSourceProvider);
+    await favorites.addFavoriteActor(actor);
+    await favorites.setActiveActorDetails(actor);
+    ref
+      ..invalidate(favoriteActorsProvider)
+      ..invalidate(activeFavoriteActorIdProvider);
     if (context.mounted) {
       await context.push('/schedule');
     }

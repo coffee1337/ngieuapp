@@ -135,6 +135,7 @@ void main() {
                   controller = DefaultTabController.of(context);
                   return DayTabs(
                     weekStart: DateTime(2026, 9, 7),
+                    currentDate: DateTime(2026, 9, 9),
                     tabController: controller,
                   );
                 },

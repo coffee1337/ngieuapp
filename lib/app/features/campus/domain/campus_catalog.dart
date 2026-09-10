@@ -5,13 +5,11 @@ class CampusInstitute {
     required this.name,
     required this.shortName,
     required this.roomPrefix,
-    required this.floorHint,
   });
 
   final String name;
   final String shortName;
   final String roomPrefix;
-  final String floorHint;
 }
 
 class CampusRoomResult {
@@ -44,7 +42,6 @@ abstract final class CampusCatalog {
       name: 'Институт экономики и управления',
       shortName: 'ИЭУ',
       roomPrefix: '1xx',
-      floorHint: 'Этаж определяется второй цифрой номера',
     ),
     CampusInstitute(
       name:
@@ -52,13 +49,11 @@ abstract final class CampusCatalog {
           'и систем связи',
       shortName: 'ИИТиСС',
       roomPrefix: '2xx',
-      floorHint: 'Для 2xx этаж на один больше второй цифры',
     ),
     CampusInstitute(
       name: 'Инженерный институт',
       shortName: 'ИИ',
       roomPrefix: '3xx',
-      floorHint: 'Для 3xx этаж на один больше второй цифры',
     ),
   ];
 
@@ -85,8 +80,7 @@ abstract final class CampusCatalog {
           (institute) =>
               institute.name.toLowerCase().contains(query) ||
               institute.shortName.toLowerCase().contains(query) ||
-              institute.roomPrefix.toLowerCase().contains(query) ||
-              institute.floorHint.toLowerCase().contains(query),
+              institute.roomPrefix.toLowerCase().contains(query),
         )
         .toList(growable: false);
   }

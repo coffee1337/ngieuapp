@@ -62,6 +62,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
 
     final apiDs = _ref.read(scheduleApiDataSourceProvider);
     final dbDs = _ref.read(scheduleDbDataSourceProvider);
+    final anchorDate = (await _ref.read(currentWeekTypeProvider.future)).date;
     _ref.invalidate(freeRoomsProvider);
 
     const batchSize = 3;
@@ -75,7 +76,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
           batch.map((g) async {
             try {
               final lessons = await apiDs
-                  .fetchSchedule(g.id)
+                  .fetchSchedule(g.id, anchorDate: anchorDate)
                   .timeout(const Duration(seconds: 10));
               await dbDs.replaceForActor(g.id, lessons);
             } catch (_) {}
