@@ -31,4 +31,12 @@ void main() {
     expect(restored.defaultTab, AppTab.learning);
     expect(restored.visibleTabs, [AppTab.schedule, AppTab.learning]);
   });
+
+  test('shows the campus map by default without overcrowding navigation', () {
+    const settings = AppNavigationSettings();
+
+    expect(settings.visibleTabs, contains(AppTab.campus));
+    expect(settings.visibleTabs, isNot(contains(AppTab.learning)));
+    expect(settings.visibleTabs, hasLength(4));
+  });
 }

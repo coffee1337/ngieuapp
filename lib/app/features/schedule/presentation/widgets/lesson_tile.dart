@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson_type_ext.dart';
 import 'package:ngieuapp/app/shared/widgets/app_components.dart';
@@ -72,6 +73,11 @@ class LessonTile extends StatelessWidget {
                   'Ауд. ${lesson.classroom}',
                 if (lesson.building.trim().isNotEmpty) lesson.building,
               ].join(' · '),
+              onTap: lesson.classroom.trim().isEmpty
+                  ? null
+                  : () => context.push(
+                      '/campus?room=${Uri.encodeQueryComponent(lesson.classroom.trim())}',
+                    ),
             ),
           if (lesson.teacherNames.isNotEmpty)
             _LessonDetail(
@@ -138,37 +144,56 @@ class LessonTile extends StatelessWidget {
 }
 
 class _LessonDetail extends StatelessWidget {
-  const _LessonDetail({required this.icon, required this.text});
+  const _LessonDetail({required this.icon, required this.text, this.onTap});
   final IconData icon;
   final String text;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(
-              icon,
-              size: 18,
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(
+            icon,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+        ),
+        if (onTap != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
-      ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: onTap == null
+          ? content
+          : InkWell(
+              onTap: onTap,
+              borderRadius: AppRadius.mdBr,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: content,
+              ),
+            ),
     );
   }
 }

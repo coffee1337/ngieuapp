@@ -194,6 +194,11 @@ class _ProfileContent extends ConsumerWidget {
           onTap: () => context.push('/schedule/free-rooms'),
         ),
         ProfileMenuTile(
+          icon: Icons.map_outlined,
+          title: 'Карта кампуса и кабинетов',
+          onTap: () => context.push('/campus'),
+        ),
+        ProfileMenuTile(
           icon: Icons.search,
           title: 'Поиск по расписанию',
           onTap: () => context.push('/schedule/search'),

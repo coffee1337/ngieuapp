@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:ngieuapp/app/features/campus/presentation/campus_directions_screen.dart';
+import 'package:ngieuapp/app/features/campus/presentation/campus_map_screen.dart';
 import 'package:ngieuapp/app/features/learning/presentation/learning_webview_screen.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_detail_screen.dart';
 import 'package:ngieuapp/app/features/news/presentation/news_list_screen.dart';
@@ -129,6 +131,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            path: '/campus',
+            pageBuilder: (_, state) => _page(
+              CampusMapScreen(initialRoom: state.uri.queryParameters['room']),
+            ),
+            routes: [
+              GoRoute(
+                path: 'directions',
+                pageBuilder: (_, __) => _page(const CampusDirectionsScreen()),
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/learning',
             pageBuilder: (_, __) => _page(const LearningWebViewScreen()),
           ),
@@ -156,6 +170,13 @@ class _RootShell extends ConsumerWidget {
       icon: Icons.calendar_today_outlined,
       activeIcon: Icons.calendar_today_rounded,
       label: 'Расписание',
+    ),
+    (
+      id: AppTab.campus,
+      path: '/campus',
+      icon: Icons.map_outlined,
+      activeIcon: Icons.map_rounded,
+      label: 'Карта',
     ),
     (
       id: AppTab.profile,
