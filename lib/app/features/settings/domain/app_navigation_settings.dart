@@ -1,6 +1,7 @@
 enum AppTab {
   news('/news', 'Новости'),
   schedule('/schedule', 'Расписание'),
+  campus('/campus', 'Карта'),
   profile('/profile', 'Профиль'),
   learning('/learning', 'Обучение');
 
@@ -10,10 +11,17 @@ enum AppTab {
   final String label;
 }
 
+const defaultVisibleAppTabs = <AppTab>[
+  AppTab.news,
+  AppTab.schedule,
+  AppTab.campus,
+  AppTab.profile,
+];
+
 class AppNavigationSettings {
   const AppNavigationSettings({
     this.defaultTab = AppTab.news,
-    this.visibleTabs = AppTab.values,
+    this.visibleTabs = defaultVisibleAppTabs,
   });
 
   final AppTab defaultTab;
@@ -63,7 +71,7 @@ class AppNavigationSettings {
     return AppNavigationSettings(
       defaultTab: defaultTab,
       visibleTabs: visible.isEmpty && !json.containsKey('visibleTabs')
-          ? AppTab.values
+          ? defaultVisibleAppTabs
           : visible,
     ).normalized();
   }
