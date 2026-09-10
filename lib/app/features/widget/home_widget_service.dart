@@ -15,12 +15,15 @@ class HomeWidgetService {
 
   static const _appGroupId = 'group.ru.ngieu.mobile.ngieuapp';
   static const _androidProviders = [
+    'NextLessonSquareWidgetProvider',
+    'NextLessonTallWidgetProvider',
     'UpcomingLessonsWidgetProvider',
     'TodayScheduleWidgetProvider',
     'NextLessonWidgetProvider',
   ];
   static const _iosWidgets = [
     'NextLessonWidget',
+    'WideNextLessonWidget',
     'UpcomingLessonsWidget',
     'TodayScheduleWidget',
   ];

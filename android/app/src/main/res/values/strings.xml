@@ -2,9 +2,13 @@
 <resources>
     <string name="widget_description">Следующая пара в расписании</string>
     <string name="widget_next_lesson_description">Следующая пара — компактно</string>
+    <string name="widget_square_description">Следующая пара — виджет 1 на 1</string>
+    <string name="widget_tall_description">Следующая пара — виджет 1 на 2</string>
     <string name="widget_upcoming_description">Три ближайшие пары</string>
     <string name="widget_today_description">Полное расписание на сегодня</string>
-    <string name="widget_next_lesson_name">НГИЭУ: следующая пара</string>
+    <string name="widget_next_lesson_name">НГИЭУ: следующая пара 2×1</string>
+    <string name="widget_square_name">НГИЭУ: следующая пара 1×1</string>
+    <string name="widget_tall_name">НГИЭУ: следующая пара 1×2</string>
     <string name="widget_upcoming_name">НГИЭУ: ближайшие пары</string>
     <string name="widget_today_name">НГИЭУ: расписание дня</string>
 </resources>

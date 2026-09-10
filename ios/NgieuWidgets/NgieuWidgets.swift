@@ -74,10 +74,58 @@ struct NextLessonView: View {
             Text(value("widget_subject").isEmpty ? "Откройте приложение" : value("widget_subject"))
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.white)
-                .lineLimit(3)
+                .lineLimit(2)
             Text(value("widget_time"))
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
+            if !value("widget_room").isEmpty {
+                Text(value("widget_room"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(1)
+            }
+        }
+        .padding(15)
+        .scheduleWidgetBackground()
+        .widgetURL(URL(string: "ngieuapp:///schedule"))
+    }
+}
+
+struct WideNextLessonView: View {
+    var entry: ScheduleEntry
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value("widget_header").isEmpty ? "ПАРА" : value("widget_header"))
+                    .font(.caption2.weight(.bold))
+                    .tracking(0.7)
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(1)
+                Text(value("widget_time"))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            }
+            .frame(width: 112, alignment: .leading)
+
+            Rectangle()
+                .fill(.white.opacity(0.22))
+                .frame(width: 1)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(value("widget_subject").isEmpty ? "Откройте приложение" : value("widget_subject"))
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                if !value("widget_room").isEmpty {
+                    Text(value("widget_room"))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.78))
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(15)
         .scheduleWidgetBackground()
@@ -154,6 +202,18 @@ struct UpcomingLessonsWidget: Widget {
     }
 }
 
+struct WideNextLessonWidget: Widget {
+    let kind = "WideNextLessonWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: ScheduleProvider()) { entry in
+            WideNextLessonView(entry: entry)
+        }
+        .configurationDisplayName("Следующая пара — широко")
+        .description("Время, предмет и аудитория крупным текстом")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
 struct TodayScheduleWidget: Widget {
     let kind = "TodayScheduleWidget"
     var body: some WidgetConfiguration {
@@ -170,6 +230,7 @@ struct TodayScheduleWidget: Widget {
 struct NgieuWidgetBundle: WidgetBundle {
     var body: some Widget {
         NextLessonWidget()
+        WideNextLessonWidget()
         UpcomingLessonsWidget()
         TodayScheduleWidget()
     }
