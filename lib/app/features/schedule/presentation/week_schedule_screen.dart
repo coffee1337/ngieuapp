@@ -6,7 +6,6 @@ import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
-import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
@@ -49,6 +48,8 @@ class WeekScheduleScreen extends ConsumerWidget {
     final showChanges = ref.watch(appSettingsProvider).showChanges;
     final theme = Theme.of(context);
     final weekTypeAsync = ref.watch(weekTypeProvider(weekStart));
+    final currentDate =
+        ref.watch(currentWeekTypeProvider).valueOrNull?.date ?? DateTime.now();
     final favorites = ref.watch(favoriteActorsProvider).valueOrNull ?? const [];
     final favorite = _favoriteById(favorites, actorId);
     final displayActor = favorite ?? _initialActorById(actorId);
@@ -63,7 +64,9 @@ class WeekScheduleScreen extends ConsumerWidget {
             tooltip: isFavorite
                 ? 'Удалить из избранного'
                 : 'Добавить в избранное',
-            onPressed: () => _toggleFavorite(ref, favorite, displayActor),
+            onPressed: displayActor == null
+                ? null
+                : () => _toggleFavorite(ref, favorite, displayActor),
           ),
           IconButton(
             icon: const Icon(Icons.swap_horiz_rounded),
@@ -103,6 +106,7 @@ class WeekScheduleScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: DayTabs(
                   weekStart: weekStart,
+                  currentDate: currentDate,
                   tabController: DefaultTabController.of(context),
                 ),
               ),
@@ -207,16 +211,7 @@ class WeekScheduleScreen extends ConsumerWidget {
   ) async {
     final repo = ref.read(favoriteActorsLocalDataSourceProvider);
     if (favorite == null) {
-      await repo.addFavoriteActor(
-        displayActor ??
-            FavoriteActor(
-              id: actorId,
-              name: 'Расписание $actorId',
-              type: ActorType.studentGroup,
-              departmentId: 0,
-              departmentName: '',
-            ),
-      );
+      await repo.addFavoriteActor(displayActor!);
     } else {
       await repo.removeFavoriteActor(actorId);
     }
@@ -248,9 +243,11 @@ class _WeekHeader extends ConsumerWidget {
     final isOnline = ref.watch(connectivityProvider);
     final lastUpdated = ref.watch(scheduleLastUpdatedProvider(actorId));
     final fmt = DateFormat('d MMM', 'ru_RU');
+    final currentDate =
+        ref.watch(currentWeekTypeProvider).valueOrNull?.date ?? DateTime.now();
     final isCurrentWeek = DateUtils.isSameDay(
       weekStart,
-      DateTime.now().startOfWeek,
+      currentDate.startOfWeek,
     );
 
     return Container(

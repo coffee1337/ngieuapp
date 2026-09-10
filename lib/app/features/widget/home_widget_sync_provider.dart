@@ -14,7 +14,9 @@ final homeWidgetSyncProvider = FutureProvider<void>((ref) async {
   final identity = await ref.watch(studentIdentityProvider.future);
   if (identity == null) return;
 
-  final weekStart = DateTime.now().startOfWeek;
+  final weekStart = (await ref.watch(
+    currentWeekTypeProvider.future,
+  )).date.startOfWeek;
   final lessons = await ref.watch(
     weekScheduleProvider((
       actorId: identity.actorId,

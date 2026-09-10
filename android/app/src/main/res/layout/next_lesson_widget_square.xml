@@ -6,7 +6,7 @@
     android:background="@drawable/widget_background"
     android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="7dp">
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/widget_header"
@@ -16,8 +16,10 @@
         android:maxLines="1"
         android:text="ПАРА"
         android:textColor="#CCFFFFFF"
-        android:textSize="7sp"
-        android:textStyle="bold" />
+        android:includeFontPadding="false"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/widget_time"
@@ -27,7 +29,8 @@
         android:maxLines="1"
         android:text="--:--"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
+        android:includeFontPadding="false"
+        android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
@@ -37,10 +40,11 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:gravity="center_vertical"
-        android:maxLines="1"
+        android:maxLines="2"
         android:text="Откройте приложение"
         android:textColor="#F2FFFFFF"
-        android:textSize="9sp"
+        android:includeFontPadding="false"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
     <TextView
@@ -51,6 +55,8 @@
         android:maxLines="1"
         android:text=""
         android:textColor="#CCFFFFFF"
-        android:textSize="9sp" />
+        android:includeFontPadding="false"
+        android:textSize="10sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

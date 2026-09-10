@@ -19,7 +19,8 @@
         android:maxLines="1"
         android:text="СЛЕДУЮЩАЯ ПАРА"
         android:textColor="#CCFFFFFF"
-        android:textSize="7sp"
+        android:includeFontPadding="false"
+        android:textSize="9sp"
         android:textStyle="bold" />
 
     <TextView
@@ -29,10 +30,11 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:gravity="center_vertical"
-        android:maxLines="1"
+        android:maxLines="2"
         android:text="Откройте приложение"
         android:textColor="#FFFFFF"
-        android:textSize="13sp"
+        android:includeFontPadding="false"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -50,7 +52,8 @@
             android:maxLines="1"
             android:text="--:-- — --:--"
             android:textColor="#EEFFFFFF"
-            android:textSize="10sp"
+            android:includeFontPadding="false"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
         <TextView
@@ -62,7 +65,9 @@
             android:maxLines="1"
             android:text=""
             android:textColor="#CCFFFFFF"
-            android:textSize="10sp" />
+            android:includeFontPadding="false"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

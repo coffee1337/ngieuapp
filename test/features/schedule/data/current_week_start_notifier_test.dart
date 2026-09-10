@@ -36,4 +36,18 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 30));
     expect(notifier.state, DateTime(2026, 10, 19));
   });
+
+  test('uses server date until the user navigates manually', () {
+    final notifier = CurrentWeekStartNotifier(
+      initialDate: DateTime(2026, 9, 7),
+    );
+    addTearDown(notifier.dispose);
+
+    notifier.syncServerDate(DateTime(2026, 9, 23));
+    expect(notifier.state, DateTime(2026, 9, 21));
+
+    notifier.nextWeek();
+    notifier.syncServerDate(DateTime(2026, 10, 7));
+    expect(notifier.state, DateTime(2026, 9, 28));
+  });
 }

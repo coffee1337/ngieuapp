@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/profile/data/profile_providers.dart';
+import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
@@ -53,8 +54,6 @@ final resolvedActiveActorProvider = FutureProvider<Actor?>((ref) async {
     await localFavorites.setActiveActor(null);
     return null;
   }
-  if (resolved.id == activeId) return resolved;
-
   if (savedFavorite != null) {
     await localFavorites.replaceFavoriteActorId(
       activeId,
@@ -80,7 +79,25 @@ final resolvedActiveActorProvider = FutureProvider<Actor?>((ref) async {
   }
 
   final savedIdentity = identity;
-  if (savedIdentity != null && savedIdentity.actorId == activeId) {
+  if (savedIdentity == null) {
+    await profileSource.save(
+      StudentIdentity(
+        actorId: resolved.id,
+        displayName: resolved.name,
+        actorType: resolved.type,
+        departmentName:
+            savedActiveActor?.departmentName ??
+            savedFavorite?.departmentName ??
+            '',
+        groupName: resolved.type == ActorType.studentGroup
+            ? resolved.name
+            : null,
+        fullName: resolved.type == ActorType.teacher ? resolved.name : null,
+        departmentId: resolved.departmentId,
+      ),
+    );
+    ref.invalidate(studentIdentityProvider);
+  } else if (savedIdentity.actorId == activeId) {
     await profileSource.save(
       savedIdentity.copyWith(
         actorId: resolved.id,

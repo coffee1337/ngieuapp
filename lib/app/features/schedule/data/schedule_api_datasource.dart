@@ -7,7 +7,11 @@ class ScheduleApiDataSource {
   ScheduleApiDataSource(this._dio);
   final Dio _dio;
 
-  Future<List<Lesson>> fetchSchedule(String actorId, {CancelToken? ct}) async {
+  Future<List<Lesson>> fetchSchedule(
+    String actorId, {
+    required DateTime anchorDate,
+    CancelToken? ct,
+  }) async {
     final resp = await _dio.get<dynamic>(
       ApiEndpoints.scheduleGet,
       queryParameters: {'actorId': actorId},
@@ -24,7 +28,7 @@ class ScheduleApiDataSource {
     };
     final lessons = raw
         .whereType<Map<String, dynamic>>()
-        .expand(LessonMapper.fromApi)
+        .expand((item) => LessonMapper.fromApi(item, anchorDate: anchorDate))
         .toList();
     if (raw.isNotEmpty && lessons.isEmpty) {
       throw const FormatException(

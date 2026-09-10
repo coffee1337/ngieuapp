@@ -41,7 +41,7 @@ void main() {
     expect(await repository.watchWeek(actorId, weekStart).toList(), [
       [cachedLesson],
     ]);
-    verifyNever(() => api.fetchSchedule(any()));
+    verifyNever(() => api.fetchSchedule(actorId, anchorDate: weekStart));
   });
 
   test('keeps cached lessons when a background refresh fails', () async {
@@ -51,7 +51,9 @@ void main() {
     when(
       () => db.isStale(actorId, const Duration(hours: 6)),
     ).thenAnswer((_) async => true);
-    when(() => api.fetchSchedule(actorId)).thenThrow(Exception('offline'));
+    when(
+      () => api.fetchSchedule(actorId, anchorDate: weekStart),
+    ).thenThrow(Exception('offline'));
 
     expect(await repository.watchWeek(actorId, weekStart).toList(), [
       [cachedLesson],
@@ -63,7 +65,7 @@ void main() {
       () => db.getLessonsInRange(actorId, weekStart, weekEnd),
     ).thenAnswer((_) async => [cachedLesson]);
     when(
-      () => api.fetchSchedule(actorId),
+      () => api.fetchSchedule(actorId, anchorDate: weekStart),
     ).thenAnswer((_) async => freshLessons);
     when(
       () => db.replaceForActor(actorId, freshLessons),
@@ -72,7 +74,7 @@ void main() {
     final result = await repository.refreshWeek(actorId, weekStart);
 
     expect(result, [freshLesson]);
-    verify(() => api.fetchSchedule(actorId)).called(1);
+    verify(() => api.fetchSchedule(actorId, anchorDate: weekStart)).called(1);
     verify(() => db.replaceForActor(actorId, freshLessons)).called(1);
   });
 }

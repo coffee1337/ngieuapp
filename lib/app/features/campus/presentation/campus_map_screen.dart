@@ -91,46 +91,14 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
               child: SizeTransition(sizeFactor: animation, child: child),
             ),
             child: hasRoomQuery
-                ? _RoomResultCard(key: ValueKey(_query), result: room)
+                ? _RoomResultCard(
+                    key: ValueKey(_query),
+                    result: room,
+                    onDirections: isOnline
+                        ? () => context.push('/campus/directions')
+                        : null,
+                  )
                 : _InstituteResults(key: ValueKey(_query), items: institutes),
-          ),
-          const SizedBox(height: AppSpacing.section),
-          Text('Как найти аудиторию', style: theme.textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLow,
-              borderRadius: AppRadius.xlBr,
-              border: Border.all(color: scheme.outlineVariant),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.signpost_outlined, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Навигация работает офлайн',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Первая цифра номера определяет институт, остальные '
-                        'цифры — этаж и аудиторию. Точный этаж и подразделение '
-                        'появятся сразу после ввода номера кабинета.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -195,9 +163,14 @@ class _CampusHeader extends StatelessWidget {
 }
 
 class _RoomResultCard extends StatelessWidget {
-  const _RoomResultCard({required this.result, super.key});
+  const _RoomResultCard({
+    required this.result,
+    required this.onDirections,
+    super.key,
+  });
 
   final CampusRoomResult result;
+  final VoidCallback? onDirections;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +230,19 @@ class _RoomResultCard extends StatelessWidget {
             icon: Icons.offline_bolt_outlined,
             text: 'Информация доступна без интернета',
           ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onDirections,
+              icon: const Icon(Icons.directions_outlined),
+              label: Text(
+                onDirections == null
+                    ? 'Маршрут недоступен офлайн'
+                    : 'Маршрут до корпуса',
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -294,9 +280,9 @@ class _InstituteResults extends StatelessWidget {
                 title: Text(institute.name),
                 subtitle: Text(
                   '${institute.shortName} · аудитории ${institute.roomPrefix}\n'
-                  '${institute.floorHint}\n${CampusCatalog.mainCampusAddress}',
+                  '${CampusCatalog.mainCampusAddress}',
                 ),
-                isThreeLine: true,
+                isThreeLine: false,
               ),
             ),
           ),

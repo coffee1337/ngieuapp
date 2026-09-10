@@ -22,6 +22,18 @@ void main() {
     expect(resolved, currentTeacher);
   });
 
+  test('repairs a legacy technical schedule title using its current id', () {
+    final resolved = resolveActorId(
+      savedId: currentTeacher.id,
+      savedName: 'Расписание ${currentTeacher.id}',
+      savedType: currentTeacher.type,
+      savedDepartmentId: currentTeacher.departmentId,
+      currentActors: const [currentTeacher],
+    );
+
+    expect(resolved, currentTeacher);
+  });
+
   test('does not trust a reused id without saved actor details', () {
     final resolved = resolveActorId(
       savedId: currentTeacher.id,

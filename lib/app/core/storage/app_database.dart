@@ -14,7 +14,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'ngieu_app'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,24 @@ class AppDatabase extends _$AppDatabase {
         // Previous cache keys could collide between actors and week types.
         // Schedule data is fully recoverable from the API, so rebuild only
         // this cache table and keep user profile/settings untouched.
+        await m.deleteTable('schedule_entries');
+        await m.createTable(scheduleEntries);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_date '
+          'ON schedule_entries(date);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_classroom '
+          'ON schedule_entries(classroom, building);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_actor '
+          'ON schedule_entries(actor_id);',
+        );
+      }
+      if (from < 5) {
+        // Rebuild dates that older versions anchored to the device clock.
+        // The table is only a recoverable schedule cache.
         await m.deleteTable('schedule_entries');
         await m.createTable(scheduleEntries);
         await customStatement(

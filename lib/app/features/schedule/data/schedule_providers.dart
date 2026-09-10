@@ -110,8 +110,7 @@ final weekTypeProvider = FutureProvider.autoDispose.family<WeekType, DateTime>((
 
 /// Провайдер для получения типа текущей недели
 final currentWeekTypeProvider = FutureProvider.autoDispose<WeekType>((ref) {
-  final now = DateTime.now();
-  return ref.watch(weekTypeProvider(now).future);
+  return ref.watch(weekTypeRepositoryProvider).getCurrentWeekType();
 });
 
 class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
@@ -127,11 +126,14 @@ class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
   final Duration _navigationDebounce;
   DateTime _targetWeek;
   Timer? _navigationTimer;
+  bool _hasUserNavigated = false;
+  DateTime? _serverDate;
 
   void nextWeek() => _moveBy(const Duration(days: 7));
   void prevWeek() => _moveBy(const Duration(days: -7));
 
   void _moveBy(Duration offset) {
+    _hasUserNavigated = true;
     _targetWeek = _targetWeek.add(offset);
 
     // The first tap stays instant. Further taps during the short window are
@@ -144,8 +146,21 @@ class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
     });
   }
 
-  void thisWeek() => _setImmediately(DateTime.now().startOfWeek);
-  void setDate(DateTime date) => _setImmediately(date.startOfWeek);
+  void thisWeek() {
+    _hasUserNavigated = false;
+    _setImmediately((_serverDate ?? DateTime.now()).startOfWeek);
+  }
+
+  void setDate(DateTime date) {
+    _hasUserNavigated = true;
+    _setImmediately(date.startOfWeek);
+  }
+
+  void syncServerDate(DateTime date) {
+    _serverDate = date;
+    if (_hasUserNavigated) return;
+    _setImmediately(date.startOfWeek);
+  }
 
   void _setImmediately(DateTime week) {
     _navigationTimer?.cancel();
@@ -163,7 +178,11 @@ class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
 
 final currentWeekStartProvider =
     StateNotifierProvider<CurrentWeekStartNotifier, DateTime>((ref) {
-      return CurrentWeekStartNotifier();
+      final notifier = CurrentWeekStartNotifier();
+      ref.listen(currentWeekTypeProvider, (_, next) {
+        next.whenData((weekType) => notifier.syncServerDate(weekType.date));
+      }, fireImmediately: true);
+      return notifier;
     });
 
 // ---- Data streams ----

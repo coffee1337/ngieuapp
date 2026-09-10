@@ -18,9 +18,26 @@ class WeekTypeApiDataSource {
     // Форматируем дату в формат dd.MM.yyyy
     final dateStr = DateFormat('dd.MM.yyyy').format(date);
 
+    return _request(dateStr, cancelToken: cancelToken);
+  }
+
+  /// Получает текущую дату и тип недели с сервера.
+  Future<WeekType> getCurrentWeekType({CancelToken? cancelToken}) async {
+    try {
+      return await _request(null, cancelToken: cancelToken);
+    } on DioException catch (error) {
+      if (error.response?.statusCode != 400) rethrow;
+      // Older API deployments require an explicit value. Keep them working,
+      // while newer deployments can provide their authoritative current date.
+      final fallbackDate = DateFormat('dd.MM.yyyy').format(DateTime.now());
+      return _request(fallbackDate, cancelToken: cancelToken);
+    }
+  }
+
+  Future<WeekType> _request(String? date, {CancelToken? cancelToken}) async {
     final response = await _dio.get<List<dynamic>>(
       ApiEndpoints.weekTypeGet,
-      queryParameters: {'date': dateStr},
+      queryParameters: date == null ? null : {'date': date},
       cancelToken: cancelToken,
     );
 
@@ -33,10 +50,5 @@ class WeekTypeApiDataSource {
 
     // Используем фабричный метод для создания WeekType из данных API
     return WeekType.fromApiJson(firstItem);
-  }
-
-  /// Получает тип недели для текущей даты
-  Future<WeekType> getCurrentWeekType({CancelToken? cancelToken}) {
-    return getWeekType(DateTime.now(), cancelToken: cancelToken);
   }
 }

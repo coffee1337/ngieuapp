@@ -69,6 +69,7 @@ abstract class ScheduleWidgetProvider(
         views: RemoteViews,
         shortHeader: Boolean = false,
         startTimeOnly: Boolean = false,
+        hideHeader: Boolean = false,
     ) {
         val now = System.currentTimeMillis()
         val nextIndex = (0 until 3).firstOrNull { index ->
@@ -97,6 +98,10 @@ abstract class ScheduleWidgetProvider(
         }
 
         views.setTextViewText(R.id.widget_header, header)
+        views.setViewVisibility(
+            R.id.widget_header,
+            if (hideHeader) View.GONE else View.VISIBLE,
+        )
         views.setTextViewText(
             R.id.widget_subject,
             storedSubject.ifBlank { "Откройте приложение" },
@@ -129,6 +134,7 @@ class NextLessonSquareWidgetProvider : ScheduleWidgetProvider(
             views,
             shortHeader = true,
             startTimeOnly = true,
+            hideHeader = true,
         )
     }
 }

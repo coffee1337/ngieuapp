@@ -11,10 +11,12 @@ class DayTab {
 class DayTabs extends StatefulWidget {
   const DayTabs({
     required this.weekStart,
+    required this.currentDate,
     required this.tabController,
     super.key,
   });
   final DateTime weekStart;
+  final DateTime currentDate;
   final TabController tabController;
 
   @override
@@ -30,7 +32,6 @@ class _DayTabsState extends State<DayTabs> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final now = DateTime.now();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: LayoutBuilder(
@@ -53,7 +54,7 @@ class _DayTabsState extends State<DayTabs> {
                       1.0,
                     );
                     final selected = selection > 0.5;
-                    final today = DateUtils.isSameDay(date, now);
+                    final today = DateUtils.isSameDay(date, widget.currentDate);
                     final background = Color.lerp(
                       scheme.surfaceContainer,
                       scheme.primary,

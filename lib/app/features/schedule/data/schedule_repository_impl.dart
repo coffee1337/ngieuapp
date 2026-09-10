@@ -26,7 +26,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     final stale = await _db.isStale(actorId, _ttl);
     if (stale || cached.isEmpty) {
       try {
-        final fresh = await _fetchAndStore(actorId, cached);
+        final fresh = await _fetchAndStore(actorId, cached, weekStart);
         yield _lessonsForWeek(fresh, weekStart, weekEnd);
       } catch (e) {
         if (cached.isEmpty) rethrow;
@@ -38,7 +38,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   Future<List<Lesson>> refreshWeek(String actorId, DateTime weekStart) async {
     final weekEnd = weekStart.add(const Duration(days: 7));
     final cached = await _db.getLessonsInRange(actorId, weekStart, weekEnd);
-    final fresh = await _fetchAndStore(actorId, cached);
+    final fresh = await _fetchAndStore(actorId, cached, weekStart);
     return _lessonsForWeek(fresh, weekStart, weekEnd);
   }
 
@@ -49,8 +49,9 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   Future<List<Lesson>> _fetchAndStore(
     String actorId,
     List<Lesson> previous,
+    DateTime anchorDate,
   ) async {
-    final fresh = await _api.fetchSchedule(actorId);
+    final fresh = await _api.fetchSchedule(actorId, anchorDate: anchorDate);
     await _changeNotifications?.notifyAboutNewChanges(
       actorId: actorId,
       oldLessons: previous,
