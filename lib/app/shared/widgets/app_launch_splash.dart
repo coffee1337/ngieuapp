@@ -21,7 +21,7 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
     _controller =
         AnimationController(
             vsync: this,
-            duration: const Duration(milliseconds: 1750),
+            duration: const Duration(milliseconds: 900),
           )
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed && mounted) {

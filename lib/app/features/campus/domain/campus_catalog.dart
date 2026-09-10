@@ -5,11 +5,13 @@ class CampusInstitute {
     required this.name,
     required this.shortName,
     required this.roomPrefix,
+    required this.floorHint,
   });
 
   final String name;
   final String shortName;
   final String roomPrefix;
+  final String floorHint;
 }
 
 class CampusRoomResult {
@@ -33,12 +35,16 @@ abstract final class CampusCatalog {
   static const mainCampusAddress =
       'Нижегородская область, г. Княгинино, '
       'ул. Октябрьская, д. 22 А';
+  static const phone = '+7 (83166) 4-15-50';
+  static const email = 'ngieu_vuz@mail.52gov.ru';
+  static const website = 'ngieu.ru';
 
   static const institutes = <CampusInstitute>[
     CampusInstitute(
       name: 'Институт экономики и управления',
       shortName: 'ИЭУ',
       roomPrefix: '1xx',
+      floorHint: 'Этаж определяется второй цифрой номера',
     ),
     CampusInstitute(
       name:
@@ -46,11 +52,13 @@ abstract final class CampusCatalog {
           'и систем связи',
       shortName: 'ИИТиСС',
       roomPrefix: '2xx',
+      floorHint: 'Для 2xx этаж на один больше второй цифры',
     ),
     CampusInstitute(
       name: 'Инженерный институт',
       shortName: 'ИИ',
       roomPrefix: '3xx',
+      floorHint: 'Для 3xx этаж на один больше второй цифры',
     ),
   ];
 
@@ -77,7 +85,8 @@ abstract final class CampusCatalog {
           (institute) =>
               institute.name.toLowerCase().contains(query) ||
               institute.shortName.toLowerCase().contains(query) ||
-              institute.roomPrefix.toLowerCase().contains(query),
+              institute.roomPrefix.toLowerCase().contains(query) ||
+              institute.floorHint.toLowerCase().contains(query),
         )
         .toList(growable: false);
   }

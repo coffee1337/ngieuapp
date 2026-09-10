@@ -25,7 +25,8 @@ CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
   child: child,
   transitionDuration: AppDurations.normal,
   reverseTransitionDuration: AppDurations.normal,
-  transitionsBuilder: (_, anim, __, child) {
+  transitionsBuilder: (context, anim, __, child) {
+    if (MediaQuery.disableAnimationsOf(context)) return child;
     final curved = CurvedAnimation(
       parent: anim,
       curve: Curves.easeOutQuart,
@@ -170,13 +171,6 @@ class _RootShell extends ConsumerWidget {
       icon: Icons.calendar_today_outlined,
       activeIcon: Icons.calendar_today_rounded,
       label: 'Расписание',
-    ),
-    (
-      id: AppTab.campus,
-      path: '/campus',
-      icon: Icons.map_outlined,
-      activeIcon: Icons.map_rounded,
-      label: 'Карта',
     ),
     (
       id: AppTab.profile,

@@ -95,7 +95,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
                 : _InstituteResults(key: ValueKey(_query), items: institutes),
           ),
           const SizedBox(height: AppSpacing.section),
-          Text('Планы этажей', style: theme.textTheme.titleLarge),
+          Text('Как найти аудиторию', style: theme.textTheme.titleLarge),
           const SizedBox(height: AppSpacing.lg),
           Container(
             padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -107,21 +107,21 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.layers_outlined, color: scheme.onSurfaceVariant),
+                Icon(Icons.signpost_outlined, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Раздел подготовлен для схем',
+                        'Навигация работает офлайн',
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Когда появятся планы корпусов, здесь можно будет '
-                        'показывать кабинет на этаже и строить маршрут '
-                        'внутри здания.',
+                        'Первая цифра номера определяет институт, остальные '
+                        'цифры — этаж и аудиторию. Точный этаж и подразделение '
+                        'появятся сразу после ввода номера кабинета.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -170,6 +170,15 @@ class _CampusHeader extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const _LocationLine(
+            icon: Icons.phone_outlined,
+            text: CampusCatalog.phone,
+          ),
+          const _LocationLine(
+            icon: Icons.alternate_email_rounded,
+            text: CampusCatalog.email,
           ),
           const SizedBox(height: AppSpacing.xl),
           FilledButton.tonalIcon(
@@ -241,6 +250,10 @@ class _RoomResultCard extends StatelessWidget {
               text: FloorUtils.formatFloor(result.floor!),
             ),
           const _LocationLine(
+            icon: Icons.location_on_outlined,
+            text: CampusCatalog.mainCampusAddress,
+          ),
+          const _LocationLine(
             icon: Icons.offline_bolt_outlined,
             text: 'Информация доступна без интернета',
           ),
@@ -280,8 +293,10 @@ class _InstituteResults extends StatelessWidget {
                 leading: const Icon(Icons.apartment_rounded),
                 title: Text(institute.name),
                 subtitle: Text(
-                  '${institute.shortName} · аудитории ${institute.roomPrefix}',
+                  '${institute.shortName} · аудитории ${institute.roomPrefix}\n'
+                  '${institute.floorHint}\n${CampusCatalog.mainCampusAddress}',
                 ),
+                isThreeLine: true,
               ),
             ),
           ),

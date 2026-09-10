@@ -1,7 +1,6 @@
 enum AppTab {
   news('/news', 'Новости'),
   schedule('/schedule', 'Расписание'),
-  campus('/campus', 'Карта'),
   profile('/profile', 'Профиль'),
   learning('/learning', 'Обучение');
 
@@ -14,7 +13,6 @@ enum AppTab {
 const defaultVisibleAppTabs = <AppTab>[
   AppTab.news,
   AppTab.schedule,
-  AppTab.campus,
   AppTab.profile,
 ];
 
