@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 import 'package:ngieuapp/app/features/campus/domain/campus_catalog.dart';
+import 'package:ngieuapp/app/features/campus/presentation/widgets/campus_3d_map.dart';
 import 'package:ngieuapp/app/features/schedule/domain/utils/floor_utils.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
@@ -37,8 +38,6 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final isOnline = ref.watch(connectivityProvider);
     final room = CampusCatalog.resolveRoom(_query);
     final institutes = CampusCatalog.searchInstitutes(_query);
@@ -60,6 +59,8 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
                 ? () => context.push('/campus/directions')
                 : null,
           ),
+          const SizedBox(height: AppSpacing.xxl),
+          const Campus3DMap(),
           const SizedBox(height: AppSpacing.xxl),
           TextField(
             controller: _searchController,
