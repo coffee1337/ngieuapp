@@ -26,6 +26,7 @@ class HomeWidgetService {
     'WideNextLessonWidget',
     'UpcomingLessonsWidget',
     'TodayScheduleWidget',
+    'LockScreenScheduleWidget',
   ];
   static final _getNextLesson = GetNextLesson();
 
@@ -159,7 +160,6 @@ class HomeWidgetService {
 
   String _roomText(Lesson lesson) {
     if (lesson.classroom.isNotEmpty) return 'Ауд. ${lesson.classroom}';
-    if (lesson.teacherNames.isNotEmpty) return lesson.teacherNames.first;
     return '';
   }
 

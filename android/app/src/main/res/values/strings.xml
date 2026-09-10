@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description">Следующая пара в расписании</string>
-    <string name="widget_next_lesson_description">Следующая пара — компактно</string>
-    <string name="widget_square_description">Следующая пара — виджет 1 на 1</string>
-    <string name="widget_tall_description">Следующая пара — виджет 1 на 2</string>
-    <string name="widget_upcoming_description">Три ближайшие пары</string>
-    <string name="widget_today_description">Полное расписание на сегодня</string>
+    <string name="widget_next_lesson_description">Следующая пара крупно; экран блокировки — на совместимых устройствах</string>
+    <string name="widget_square_description">Время, предмет и аудитория в компактном формате 1×1</string>
+    <string name="widget_tall_description">Следующая пара в читаемом вертикальном формате 1×2</string>
+    <string name="widget_upcoming_description">Три ближайшие пары отдельными строками</string>
+    <string name="widget_today_description">Расписание дня с отдельными колонками времени и аудитории</string>
     <string name="widget_next_lesson_name">НГИЭУ: следующая пара 2×1</string>
     <string name="widget_square_name">НГИЭУ: следующая пара 1×1</string>
     <string name="widget_tall_name">НГИЭУ: следующая пара 1×2</string>

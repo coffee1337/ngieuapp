@@ -6,7 +6,7 @@
     android:background="@drawable/widget_background"
     android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="7dp">
 
     <TextView
         android:id="@+id/widget_header"
@@ -15,10 +15,10 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="ПАРА"
-        android:textColor="#CCFFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#D9FFFFFF"
         android:includeFontPadding="false"
-        android:textSize="8sp"
-        android:textStyle="bold"
+        android:textSize="9sp"
         android:visibility="gone" />
 
     <TextView
@@ -27,11 +27,11 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="--:--"
+        android:fontFamily="sans-serif-medium"
+        android:text="10:40"
         android:textColor="#FFFFFF"
         android:includeFontPadding="false"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textSize="19sp" />
 
     <TextView
         android:id="@+id/widget_subject"
@@ -40,12 +40,12 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:gravity="center_vertical"
-        android:maxLines="2"
-        android:text="Откройте приложение"
-        android:textColor="#F2FFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="Программирование"
+        android:textColor="#FFFFFFFF"
         android:includeFontPadding="false"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/widget_room"
@@ -53,10 +53,10 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text=""
-        android:textColor="#CCFFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:text="ауд. 205"
+        android:textColor="#D9FFFFFF"
         android:includeFontPadding="false"
-        android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textSize="11sp" />
 
 </LinearLayout>
