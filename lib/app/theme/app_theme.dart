@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ngieuapp/app/theme/app_colors.dart';
-import 'package:ngieuapp/app/theme/app_gradients.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_visual_style.dart';
 
 /// Semantic color roles that go beyond Material's ColorScheme.
 class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
@@ -149,7 +149,8 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() {
+  static ThemeData light({AppVisualStyle style = AppVisualStyle.material}) {
+    if (style == AppVisualStyle.amoled) return dark(style: style);
     final base = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       secondary: AppColors.purple,
@@ -179,10 +180,14 @@ class AppTheme {
       surfaceContainerLow: const Color(0xFFF7F8FB),
       surfaceContainerLowest: const Color(0xFFFFFFFF),
     );
-    return _build(scheme, AppSemanticColors.light);
+    return _build(
+      _applyLightStyle(scheme, style),
+      AppSemanticColors.light,
+      style,
+    );
   }
 
-  static ThemeData dark() {
+  static ThemeData dark({AppVisualStyle style = AppVisualStyle.material}) {
     const scheme = ColorScheme(
       brightness: Brightness.dark,
       primary: Color(0xFFFFB3C2),
@@ -216,12 +221,114 @@ class AppTheme {
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
     );
-    return _build(scheme, AppSemanticColors.dark);
+    return _build(
+      _applyDarkStyle(scheme, style),
+      AppSemanticColors.dark,
+      style,
+    );
   }
+
+  static ColorScheme _applyLightStyle(
+    ColorScheme scheme,
+    AppVisualStyle style,
+  ) => switch (style) {
+    AppVisualStyle.material || AppVisualStyle.amoled => scheme,
+    AppVisualStyle.glass => scheme.copyWith(
+      primary: const Color(0xFF6046C6),
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFE9E2FF),
+      onPrimaryContainer: const Color(0xFF24115F),
+      secondary: const Color(0xFF006A8E),
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFC5EFFF),
+      onSecondaryContainer: const Color(0xFF003548),
+      tertiary: const Color(0xFF9A3F73),
+      surface: const Color(0xFFF9F7FF),
+      surfaceContainer: const Color(0xFFFFFFFF),
+      surfaceContainerLow: const Color(0xFFF3EFFF),
+      surfaceContainerHigh: const Color(0xFFEDE8FA),
+      surfaceContainerHighest: const Color(0xFFE4DDF4),
+      outlineVariant: const Color(0xFFD7CFEB),
+    ),
+    AppVisualStyle.university => scheme.copyWith(
+      primary: const Color(0xFF173B67),
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFD6E4F7),
+      onPrimaryContainer: const Color(0xFF08213E),
+      secondary: const Color(0xFF8C1D40),
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFFFD9E2),
+      onSecondaryContainer: const Color(0xFF3E0016),
+      tertiary: const Color(0xFF735C00),
+      surface: const Color(0xFFF7F8FA),
+      surfaceContainer: Colors.white,
+      surfaceContainerLow: const Color(0xFFF1F3F6),
+      surfaceContainerHigh: const Color(0xFFE9EDF2),
+      surfaceContainerHighest: const Color(0xFFDDE3EA),
+      outlineVariant: const Color(0xFFD3D9E1),
+    ),
+  };
+
+  static ColorScheme _applyDarkStyle(
+    ColorScheme scheme,
+    AppVisualStyle style,
+  ) => switch (style) {
+    AppVisualStyle.material => scheme,
+    AppVisualStyle.glass => scheme.copyWith(
+      primary: const Color(0xFFC9B8FF),
+      onPrimary: const Color(0xFF32157E),
+      primaryContainer: const Color(0xFF49309A),
+      onPrimaryContainer: const Color(0xFFE9E2FF),
+      secondary: const Color(0xFF84D3F4),
+      onSecondary: const Color(0xFF003548),
+      secondaryContainer: const Color(0xFF064D66),
+      onSecondaryContainer: const Color(0xFFC5EFFF),
+      tertiary: const Color(0xFFFFAFD2),
+      surface: const Color(0xFF11101C),
+      surfaceContainer: const Color(0xFF1A1828),
+      surfaceContainerLow: const Color(0xFF151321),
+      surfaceContainerHigh: const Color(0xFF252235),
+      surfaceContainerHighest: const Color(0xFF302C42),
+      outlineVariant: const Color(0xFF514A67),
+    ),
+    AppVisualStyle.university => scheme.copyWith(
+      primary: const Color(0xFFA9C7EE),
+      onPrimary: const Color(0xFF0A325B),
+      primaryContainer: const Color(0xFF234A75),
+      onPrimaryContainer: const Color(0xFFD6E4F7),
+      secondary: const Color(0xFFFFB1C5),
+      onSecondary: const Color(0xFF570025),
+      secondaryContainer: const Color(0xFF731437),
+      onSecondaryContainer: const Color(0xFFFFD9E2),
+      surface: const Color(0xFF0F151D),
+      surfaceContainer: const Color(0xFF18212C),
+      surfaceContainerLow: const Color(0xFF131B24),
+      surfaceContainerHigh: const Color(0xFF222D39),
+      surfaceContainerHighest: const Color(0xFF2D3947),
+      outlineVariant: const Color(0xFF465464),
+    ),
+    AppVisualStyle.amoled => scheme.copyWith(
+      primary: const Color(0xFFFFB0C8),
+      onPrimary: const Color(0xFF65002C),
+      primaryContainer: const Color(0xFF8F003F),
+      onPrimaryContainer: const Color(0xFFFFD9E3),
+      secondary: const Color(0xFFBFC8DA),
+      onSecondary: const Color(0xFF293241),
+      secondaryContainer: const Color(0xFF222832),
+      onSecondaryContainer: const Color(0xFFE0E6F2),
+      surface: Colors.black,
+      surfaceContainer: const Color(0xFF0B0B0D),
+      surfaceContainerLow: const Color(0xFF050506),
+      surfaceContainerHigh: const Color(0xFF151518),
+      surfaceContainerHighest: const Color(0xFF202024),
+      outlineVariant: const Color(0xFF39393E),
+    ),
+  };
 
   static ThemeData _build(
     ColorScheme scheme,
     AppSemanticColors semanticColors,
+    AppVisualStyle style,
   ) {
     final textTheme = TextTheme(
       headlineLarge: TextStyle(
@@ -409,20 +516,50 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
-      extensions: [
-        const BrandColors(
-          primaryBrand: AppColors.primary,
-          deepBlue: AppColors.deepBlue,
-          purple: AppColors.purple,
-          orange: AppColors.orange,
-          brandGradient: AppColors.brandGradient,
-          buttonPrimaryGradient: AppGradients.buttonPrimary,
-          buttonSecondaryGradient: AppGradients.buttonSecondary,
-          buttonAccentGradient: AppGradients.buttonAccent,
-          tabIndicatorGradient: AppGradients.tabIndicator,
-        ),
-        semanticColors,
-      ],
+      extensions: [_brandColors(style, scheme), semanticColors],
+    );
+  }
+
+  static BrandColors _brandColors(AppVisualStyle style, ColorScheme scheme) {
+    final accent = switch (style) {
+      AppVisualStyle.material => AppColors.orange,
+      AppVisualStyle.glass => const Color(0xFFFF72B6),
+      AppVisualStyle.university => const Color(0xFFD5A62E),
+      AppVisualStyle.amoled => const Color(0xFFFFC857),
+    };
+    final deepBlue = switch (style) {
+      AppVisualStyle.material => AppColors.deepBlue,
+      AppVisualStyle.glass => const Color(0xFF2255C7),
+      AppVisualStyle.university => const Color(0xFF173B67),
+      AppVisualStyle.amoled => const Color(0xFF9CACCA),
+    };
+    final purple = switch (style) {
+      AppVisualStyle.material => AppColors.purple,
+      AppVisualStyle.glass => const Color(0xFF8157E8),
+      AppVisualStyle.university => const Color(0xFF8C1D40),
+      AppVisualStyle.amoled => const Color(0xFFFF6F9E),
+    };
+
+    LinearGradient gradient(Color first, Color second) => LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [first, second],
+    );
+
+    return BrandColors(
+      primaryBrand: scheme.primary,
+      deepBlue: deepBlue,
+      purple: purple,
+      orange: accent,
+      brandGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [deepBlue, scheme.primary, purple],
+      ),
+      buttonPrimaryGradient: gradient(scheme.primary, purple),
+      buttonSecondaryGradient: gradient(deepBlue, purple),
+      buttonAccentGradient: gradient(accent, scheme.tertiary),
+      tabIndicatorGradient: gradient(scheme.primary, purple),
     );
   }
 }
