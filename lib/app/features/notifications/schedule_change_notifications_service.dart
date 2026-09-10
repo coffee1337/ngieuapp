@@ -42,6 +42,7 @@ class ScheduleChangeNotificationsService {
         lesson: change.lesson,
         fingerprint: change.fingerprint,
         preferences: _preferences,
+        schedule: freshLessons,
       );
       await _sentNotifications.markSent(
         fingerprint: change.fingerprint,

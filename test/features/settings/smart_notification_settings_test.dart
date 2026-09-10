@@ -32,6 +32,7 @@ void main() {
     const settings = SmartNotificationSettings(
       scheduleChangesEnabled: false,
       quietHoursEnabled: false,
+      quietDuringLessons: false,
       soundEnabled: false,
       vibrationEnabled: false,
     );
@@ -40,6 +41,7 @@ void main() {
 
     expect(restored.scheduleChangesEnabled, isFalse);
     expect(restored.quietHoursEnabled, isFalse);
+    expect(restored.quietDuringLessons, isFalse);
     expect(restored.soundEnabled, isFalse);
     expect(restored.vibrationEnabled, isFalse);
   });

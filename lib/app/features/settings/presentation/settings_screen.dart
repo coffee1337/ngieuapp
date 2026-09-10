@@ -426,6 +426,20 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 SwitchListTile(
+                  secondary: const Icon(Icons.school_outlined),
+                  title: const Text('Без звука во время пары'),
+                  subtitle: const Text(
+                    'Только уведомления приложения; режим телефона не изменяется',
+                  ),
+                  value: smartNotifications.quietDuringLessons,
+                  onChanged: (value) async {
+                    await smartNotificationsNotifier.update(
+                      smartNotifications.copyWith(quietDuringLessons: value),
+                    );
+                    await rescheduleNotifications(ref);
+                  },
+                ),
+                SwitchListTile(
                   secondary: const Icon(Icons.volume_up_outlined),
                   title: const Text('Звук'),
                   value: smartNotifications.soundEnabled,
