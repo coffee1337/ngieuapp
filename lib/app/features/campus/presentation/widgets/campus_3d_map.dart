@@ -125,7 +125,7 @@ class _Campus3DMapState extends State<Campus3DMap> {
                     left: AppSpacing.md,
                     child: _MapBadge(
                       icon: Icons.view_in_ar_rounded,
-                      label: 'Схема 1.0',
+                      label: 'План кампуса',
                       color: scheme.tertiary,
                     ),
                   ),
@@ -255,19 +255,33 @@ class _CampusMapPainter extends CustomPainter {
 
     final grassPaint = Paint()
       ..color = Color.alphaBlend(
-        colorScheme.primary.withValues(alpha: 0.13),
+        const Color(0xFF8DBA67).withValues(
+          alpha: colorScheme.brightness == Brightness.dark ? 0.22 : 0.3,
+        ),
         colorScheme.surfaceContainerLow,
       );
     final grassOutline = Paint()
-      ..color = colorScheme.primary.withValues(alpha: 0.22)
+      ..color = const Color(0xFF72A950).withValues(alpha: 0.38)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 1.5;
     for (final points in CampusMapLayout.greenZones) {
       final path = Path()..addPolygon(points, true);
       canvas
         ..drawPath(path, grassPaint)
         ..drawPath(path, grassOutline);
     }
+
+    final stadium = RRect.fromRectAndRadius(
+      const Rect.fromLTRB(107, 313, 243, 590),
+      const Radius.circular(70),
+    );
+    canvas.drawRRect(
+      stadium,
+      Paint()
+        ..color = const Color(0xFF659E4C).withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
 
     for (final road in CampusMapLayout.roads) {
       final path = Path()..moveTo(road.points.first.dx, road.points.first.dy);
@@ -278,16 +292,21 @@ class _CampusMapPainter extends CustomPainter {
         ..drawPath(
           path,
           Paint()
-            ..color = colorScheme.outlineVariant.withValues(alpha: 0.5)
+            ..color = colorScheme.outlineVariant.withValues(alpha: 0.46)
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
-            ..strokeWidth = road.width + 7,
+            ..strokeWidth = road.width + 5,
         )
         ..drawPath(
           path,
           Paint()
-            ..color = colorScheme.surface
+            ..color = Color.alphaBlend(
+              Colors.white.withValues(
+                alpha: colorScheme.brightness == Brightness.dark ? 0.08 : 0.7,
+              ),
+              colorScheme.surface,
+            )
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
@@ -304,17 +323,24 @@ class _CampusMapPainter extends CustomPainter {
 
   void _paintBuilding(Canvas canvas, CampusMapBuilding building) {
     final selected = building.id == selectedBuildingId;
+    final baseRoofColor = switch (building.tone) {
+      CampusBuildingTone.academic => const Color(0xFFE7E1D5),
+      CampusBuildingTone.residence => const Color(0xFFEEE8D9),
+      CampusBuildingTone.utility => const Color(0xFFD4D6D7),
+    };
     final roofColor = selected
         ? colorScheme.primaryContainer
         : Color.alphaBlend(
-            colorScheme.secondary.withValues(alpha: 0.12),
-            colorScheme.surfaceContainerHighest,
+            baseRoofColor.withValues(
+              alpha: colorScheme.brightness == Brightness.dark ? 0.3 : 0.88,
+            ),
+            colorScheme.surfaceContainerHigh,
           );
     final sideColor = Color.alphaBlend(
-      Colors.black.withValues(alpha: 0.2),
+      Colors.black.withValues(alpha: 0.18),
       roofColor,
     );
-    final extrusion = Offset(0, building.height);
+    final extrusion = Offset(5, building.height);
     final points = building.footprint;
 
     canvas.drawShadow(
@@ -326,18 +352,37 @@ class _CampusMapPainter extends CustomPainter {
     for (var index = 0; index < points.length; index++) {
       final current = points[index];
       final next = points[(index + 1) % points.length];
-      if (next.dy < current.dy && next.dx > current.dx) continue;
       final side = Path()
         ..moveTo(current.dx, current.dy)
         ..lineTo(next.dx, next.dy)
         ..lineTo(next.dx + extrusion.dx, next.dy + extrusion.dy)
         ..lineTo(current.dx + extrusion.dx, current.dy + extrusion.dy)
         ..close();
-      canvas.drawPath(side, Paint()..color = sideColor);
+      final isRightFace = next.dy > current.dy;
+      canvas.drawPath(
+        side,
+        Paint()
+          ..color = isRightFace
+              ? Color.alphaBlend(
+                  Colors.black.withValues(alpha: 0.08),
+                  sideColor,
+                )
+              : sideColor,
+      );
     }
 
+    final roofBounds = building.path.getBounds();
+    final roofPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.alphaBlend(Colors.white.withValues(alpha: 0.22), roofColor),
+          roofColor,
+        ],
+      ).createShader(roofBounds);
     canvas
-      ..drawPath(building.path, Paint()..color = roofColor)
+      ..drawPath(building.path, roofPaint)
       ..drawPath(
         building.path,
         Paint()
@@ -345,17 +390,35 @@ class _CampusMapPainter extends CustomPainter {
               ? colorScheme.primary
               : colorScheme.outline.withValues(alpha: 0.42)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = selected ? 5 : 2,
+          ..strokeWidth = selected ? 4 : 1.5,
       );
 
+    final markerCenter = building.center;
+    canvas
+      ..drawCircle(
+        markerCenter,
+        22,
+        Paint()
+          ..color = selected
+              ? colorScheme.primary
+              : colorScheme.surface.withValues(alpha: 0.9),
+      )
+      ..drawCircle(
+        markerCenter,
+        22,
+        Paint()
+          ..color = selected
+              ? colorScheme.primary
+              : colorScheme.outline.withValues(alpha: 0.32)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
     final textPainter = TextPainter(
       text: TextSpan(
         text: '${building.number}',
         style: TextStyle(
-          color: selected
-              ? colorScheme.onPrimaryContainer
-              : colorScheme.onSurfaceVariant,
-          fontSize: 32,
+          color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
+          fontSize: 20,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -363,7 +426,7 @@ class _CampusMapPainter extends CustomPainter {
     )..layout();
     textPainter.paint(
       canvas,
-      building.center - Offset(textPainter.width / 2, textPainter.height / 2),
+      markerCenter - Offset(textPainter.width / 2, textPainter.height / 2),
     );
   }
 

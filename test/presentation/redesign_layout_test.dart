@@ -6,6 +6,7 @@ import 'package:ngieuapp/app/features/news/presentation/widgets/news_card.dart';
 import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/next_lesson_card.dart';
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_header.dart';
+import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/day_tabs.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/lesson_tile.dart';
@@ -55,6 +56,33 @@ void main() {
                           label: 'Сегодня пар',
                           value: '4',
                         ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: ProfileHeader(
+                        identity: StudentIdentity(
+                          actorId: 'teacher-1',
+                          actorType: ActorType.teacher,
+                          displayName: 'Александрова Александра Александровна',
+                          departmentName:
+                              'Кафедра информационных систем и технологий',
+                        ),
+                        courseStats: StatCard(
+                          label: 'Тип',
+                          value: 'Преподаватель',
+                        ),
+                        todayStats: StatCard(label: 'Сегодня пар', value: '4'),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: ProfileMenuTile(
+                        icon: Icons.map_outlined,
+                        title: 'Карта кампуса и учебных корпусов',
+                        subtitle:
+                            'Поиск аудитории и построение маршрута до входа',
+                        onTap: () {},
                       ),
                     ),
                     Padding(

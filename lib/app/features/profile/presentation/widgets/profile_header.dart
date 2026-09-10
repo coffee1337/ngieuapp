@@ -17,6 +17,7 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xxxl),
       decoration: BoxDecoration(
@@ -44,6 +45,8 @@ class ProfileHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   identity.isStudentGroup ? 'Моя группа' : 'Преподаватель',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white,
                   ),
@@ -54,12 +57,20 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxl),
           Text(
             identity.displayName,
-            style: theme.textTheme.headlineLarge?.copyWith(color: Colors.white),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (textScale > 1.15
+                        ? theme.textTheme.titleLarge
+                        : theme.textTheme.headlineLarge)
+                    ?.copyWith(color: Colors.white, height: 1.15),
           ),
           if (identity.departmentName.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
             Text(
               identity.departmentName,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: Colors.white.withValues(alpha: 0.9),
               ),
@@ -69,7 +80,8 @@ class ProfileHeader extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 260 ||
-                  MediaQuery.textScalerOf(context).scale(16) > 24) {
+                  textScale > 1.15 ||
+                  !identity.isStudentGroup) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -115,13 +127,19 @@ class StatCard extends StatelessWidget {
         children: [
           Text(
             value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-            ),
+            maxLines: value.length > 8 ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (value.length > 8
+                        ? theme.textTheme.titleLarge
+                        : theme.textTheme.headlineMedium)
+                    ?.copyWith(color: Colors.white, height: 1.15),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
           ),
         ],
