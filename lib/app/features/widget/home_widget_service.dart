@@ -127,6 +127,10 @@ class HomeWidgetService {
       data[HomeWidgetKeys.upcomingRoom(index)] = lesson == null || !showRoom
           ? ''
           : _roomText(lesson);
+      data[HomeWidgetKeys.upcomingStart(index)] =
+          lesson?.startTime.millisecondsSinceEpoch ?? 0;
+      data[HomeWidgetKeys.upcomingEnd(index)] =
+          lesson?.endTime.millisecondsSinceEpoch ?? 0;
     }
 
     for (final entry in data.entries) {
