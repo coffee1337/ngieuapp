@@ -17,12 +17,18 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final brandGradient = theme.extension<BrandColors>()!.brandGradient;
+    final headerForeground = _bestForegroundFor(brandGradient);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xxxl),
       decoration: BoxDecoration(
-        gradient: theme.extension<BrandColors>()!.brandGradient,
+        gradient: brandGradient,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: headerForeground.withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,15 +36,21 @@ class ProfileHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
-                  borderRadius: AppRadius.xlBr,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
                 ),
-                child: const Icon(
+                decoration: BoxDecoration(
+                  color: scheme.surface.withValues(alpha: 0.88),
+                  borderRadius: AppRadius.pillBr,
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.75),
+                  ),
+                ),
+                child: Icon(
                   Icons.school_outlined,
-                  color: Colors.white,
-                  size: 26,
+                  color: scheme.primary,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: AppSpacing.lg),
@@ -48,7 +60,8 @@ class ProfileHeader extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
-                    color: Colors.white,
+                    color: headerForeground,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -61,9 +74,9 @@ class ProfileHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style:
                 (textScale > 1.15
-                        ? theme.textTheme.titleLarge
-                        : theme.textTheme.headlineLarge)
-                    ?.copyWith(color: Colors.white, height: 1.15),
+                    ? theme.textTheme.titleLarge
+                    : theme.textTheme.headlineLarge)
+                    ?.copyWith(color: headerForeground, height: 1.15),
           ),
           if (identity.departmentName.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
@@ -72,7 +85,7 @@ class ProfileHeader extends StatelessWidget {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: headerForeground.withValues(alpha: 0.88),
               ),
             ),
           ],
@@ -115,12 +128,15 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: scheme.surface.withValues(alpha: 0.86),
         borderRadius: AppRadius.xlBr,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.72),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,17 +149,44 @@ class StatCard extends StatelessWidget {
                 (value.length > 8
                         ? theme.textTheme.titleLarge
                         : theme.textTheme.headlineMedium)
-                    ?.copyWith(color: Colors.white, height: 1.15),
+                    ?.copyWith(color: scheme.onSurface, height: 1.15),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+Color _bestForegroundFor(Gradient gradient) {
+  var whiteMinimum = double.infinity;
+  var darkMinimum = double.infinity;
+  const dark = Color(0xFF111318);
+
+  for (final background in gradient.colors) {
+    final whiteContrast = _contrastRatio(Colors.white, background);
+    final darkContrast = _contrastRatio(dark, background);
+    if (whiteContrast < whiteMinimum) whiteMinimum = whiteContrast;
+    if (darkContrast < darkMinimum) darkMinimum = darkContrast;
+  }
+
+  return whiteMinimum >= darkMinimum ? Colors.white : dark;
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final lighter = foreground.computeLuminance() > background.computeLuminance()
+      ? foreground.computeLuminance()
+      : background.computeLuminance();
+  final darker = foreground.computeLuminance() > background.computeLuminance()
+      ? background.computeLuminance()
+      : foreground.computeLuminance();
+  return (lighter + 0.05) / (darker + 0.05);
 }

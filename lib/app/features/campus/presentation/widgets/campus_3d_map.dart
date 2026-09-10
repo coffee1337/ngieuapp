@@ -358,28 +358,27 @@ class _CampusMapPainter extends CustomPainter {
     _paintFacilities(canvas);
 
     for (final road in CampusMapLayout.roads) {
-      final path = Path()..moveTo(road.points.first.dx, road.points.first.dy);
-      for (final point in road.points.skip(1)) {
-        path.lineTo(point.dx, point.dy);
-      }
+      final path = _buildSmoothPath(road.points);
       canvas
         ..drawPath(
           path,
           Paint()
-            ..color = colorScheme.outlineVariant.withValues(alpha: 0.46)
+            ..color = colorScheme.outlineVariant.withValues(
+              alpha: colorScheme.brightness == Brightness.dark ? 0.38 : 0.62,
+            )
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
-            ..strokeWidth = road.width + 5,
+            ..strokeWidth = road.width + 3,
         )
         ..drawPath(
           path,
           Paint()
             ..color = Color.alphaBlend(
               Colors.white.withValues(
-                alpha: colorScheme.brightness == Brightness.dark ? 0.08 : 0.7,
+                alpha: colorScheme.brightness == Brightness.dark ? 0.07 : 0.82,
               ),
-              colorScheme.surface,
+              colorScheme.surfaceContainerLow,
             )
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round
@@ -400,6 +399,31 @@ class _CampusMapPainter extends CustomPainter {
     }
     _paintCompass(canvas);
     canvas.restore();
+  }
+
+  Path _buildSmoothPath(List<Offset> points) {
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    if (points.length == 2) {
+      final last = points.last;
+      return path..lineTo(last.dx, last.dy);
+    }
+
+    for (var index = 1; index < points.length - 1; index++) {
+      final current = points[index];
+      final next = points[index + 1];
+      final midpoint = Offset(
+        (current.dx + next.dx) / 2,
+        (current.dy + next.dy) / 2,
+      );
+      path.quadraticBezierTo(
+        current.dx,
+        current.dy,
+        midpoint.dx,
+        midpoint.dy,
+      );
+    }
+    final last = points.last;
+    return path..lineTo(last.dx, last.dy);
   }
 
   void _paintFacilities(Canvas canvas) {

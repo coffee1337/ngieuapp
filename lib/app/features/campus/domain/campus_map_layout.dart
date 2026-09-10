@@ -27,7 +27,9 @@ class CampusMapBuilding {
 }
 
 class CampusMapRoad {
-  const CampusMapRoad({required this.points, this.width = 12});
+  const CampusMapRoad({required this.points, this.width = 12})
+    : assert(points.length >= 2),
+      assert(width > 0);
 
   final List<Offset> points;
   final double width;
@@ -111,69 +113,67 @@ abstract final class CampusMapLayout {
   static const roads = <CampusMapRoad>[
     CampusMapRoad(
       points: [
-        Offset(0, 47),
-        Offset(245, 42),
-        Offset(526, 39),
-        Offset(864, 42),
+        Offset(252, -12),
+        Offset(252, 142),
+        Offset(251, 286),
+        Offset(252, 365),
+        Offset(255, 649),
       ],
-      width: 10,
+      width: 8,
     ),
     CampusMapRoad(
       points: [
-        Offset(253, 0),
-        Offset(253, 150),
-        Offset(250, 300),
-        Offset(256, 637),
-      ],
-      width: 12,
-    ),
-    CampusMapRoad(
-      points: [
-        Offset(250, 300),
-        Offset(413, 298),
+        Offset(252, 300),
+        Offset(360, 299),
+        Offset(420, 298),
         Offset(585, 292),
-        Offset(721, 285),
+        Offset(720, 285),
+        Offset(780, 283),
+        Offset(801, 267),
+        Offset(803, 210),
+        Offset(803, 44),
       ],
-      width: 11,
+      width: 8,
     ),
     CampusMapRoad(
       points: [
-        Offset(413, 298),
-        Offset(379, 319),
-        Offset(380, 430),
-        Offset(397, 454),
-        Offset(432, 457),
+        Offset(408, 299),
+        Offset(376, 314),
+        Offset(365, 336),
+        Offset(365, 408),
+        Offset(376, 445),
+        Offset(401, 457),
+        Offset(433, 458),
+      ],
+      width: 7,
+    ),
+    CampusMapRoad(
+      points: [Offset(252, 352), Offset(365, 352)],
+      width: 5,
+    ),
+    CampusMapRoad(
+      points: [Offset(253, 452), Offset(369, 452)],
+      width: 5,
+    ),
+    CampusMapRoad(
+      points: [
+        Offset(-12, 617),
+        Offset(175, 615),
+        Offset(288, 612),
+        Offset(575, 607),
+        Offset(876, 604),
       ],
       width: 9,
     ),
-    CampusMapRoad(points: [Offset(249, 350), Offset(366, 350)], width: 7),
-    CampusMapRoad(points: [Offset(248, 454), Offset(367, 454)], width: 7),
     CampusMapRoad(
       points: [
-        Offset(721, 285),
-        Offset(788, 283),
-        Offset(803, 269),
-        Offset(803, 44),
-      ],
-      width: 10,
-    ),
-    CampusMapRoad(
-      points: [
-        Offset(0, 615),
-        Offset(288, 612),
-        Offset(575, 607),
-        Offset(864, 604),
-      ],
-      width: 14,
-    ),
-    CampusMapRoad(
-      points: [
-        Offset(319, 506),
-        Offset(343, 565),
+        Offset(318, 506),
+        Offset(329, 545),
+        Offset(347, 571),
         Offset(389, 597),
         Offset(494, 604),
       ],
-      width: 6,
+      width: 4,
     ),
   ];
 

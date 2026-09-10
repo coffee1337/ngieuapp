@@ -36,4 +36,20 @@ void main() {
   test('does not select roads or empty campus areas', () {
     expect(CampusMapLayout.hitTest(const Offset(600, 350)), isNull);
   });
+
+  test('keeps only the compact campus road network', () {
+    expect(CampusMapLayout.roads, hasLength(7));
+    expect(
+      CampusMapLayout.roads.every(
+        (road) => road.points.length >= 2 && road.width >= 4 && road.width <= 9,
+      ),
+      isTrue,
+    );
+    expect(
+      CampusMapLayout.roads.any(
+        (road) => road.points.every((point) => point.dy < 60),
+      ),
+      isFalse,
+    );
+  });
 }
