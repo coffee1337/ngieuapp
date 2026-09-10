@@ -26,5 +26,12 @@ void main() {
 
     expect(result, hasLength(1));
     expect(result.single.roomPrefix, '2xx');
+    expect(result.single.floorHint, contains('этаж'));
+  });
+
+  test('keeps verified university contact details available offline', () {
+    expect(CampusCatalog.mainCampusAddress, contains('Октябрьская'));
+    expect(CampusCatalog.phone, startsWith('+7'));
+    expect(CampusCatalog.email, contains('@'));
   });
 }

@@ -87,7 +87,7 @@ class WeekScheduleScreen extends ConsumerWidget {
       body: DefaultTabController(
         length: 6,
         initialIndex: _todayIndex(weekStart),
-        animationDuration: const Duration(milliseconds: 180),
+        animationDuration: AppDurations.normal,
         child: Builder(
           builder: (context) => NestedScrollView(
             headerSliverBuilder: (context, innerScrolled) => [

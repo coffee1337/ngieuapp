@@ -520,7 +520,6 @@ class SettingsScreen extends ConsumerWidget {
   IconData _tabIcon(AppTab tab) => switch (tab) {
     AppTab.news => Icons.article_outlined,
     AppTab.schedule => Icons.calendar_today_outlined,
-    AppTab.campus => Icons.map_outlined,
     AppTab.profile => Icons.person_outline,
     AppTab.learning => Icons.school_outlined,
   };

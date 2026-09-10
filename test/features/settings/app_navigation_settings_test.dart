@@ -32,11 +32,28 @@ void main() {
     expect(restored.visibleTabs, [AppTab.schedule, AppTab.learning]);
   });
 
-  test('shows the campus map by default without overcrowding navigation', () {
+  test('keeps the campus map out of bottom navigation', () {
     const settings = AppNavigationSettings();
 
-    expect(settings.visibleTabs, contains(AppTab.campus));
     expect(settings.visibleTabs, isNot(contains(AppTab.learning)));
-    expect(settings.visibleTabs, hasLength(4));
+    expect(settings.visibleTabs, [
+      AppTab.news,
+      AppTab.schedule,
+      AppTab.profile,
+    ]);
+  });
+
+  test('ignores the removed campus tab in old persisted settings', () {
+    final settings = AppNavigationSettings.fromJson({
+      'defaultTab': 'campus',
+      'visibleTabs': ['news', 'schedule', 'campus', 'profile'],
+    });
+
+    expect(settings.defaultTab, AppTab.news);
+    expect(settings.visibleTabs, [
+      AppTab.news,
+      AppTab.schedule,
+      AppTab.profile,
+    ]);
   });
 }
