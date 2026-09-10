@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/core/network/providers.dart';
@@ -113,12 +115,50 @@ final currentWeekTypeProvider = FutureProvider.autoDispose<WeekType>((ref) {
 });
 
 class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
-  CurrentWeekStartNotifier() : super(DateTime.now().startOfWeek);
+  CurrentWeekStartNotifier({
+    DateTime? initialDate,
+    Duration navigationDebounce = const Duration(milliseconds: 140),
+  }) : this._((initialDate ?? DateTime.now()).startOfWeek, navigationDebounce);
 
-  void nextWeek() => state = state.add(const Duration(days: 7));
-  void prevWeek() => state = state.subtract(const Duration(days: 7));
-  void thisWeek() => state = DateTime.now().startOfWeek;
-  void setDate(DateTime date) => state = date.startOfWeek;
+  CurrentWeekStartNotifier._(DateTime initialWeek, this._navigationDebounce)
+    : _targetWeek = initialWeek,
+      super(initialWeek);
+
+  final Duration _navigationDebounce;
+  DateTime _targetWeek;
+  Timer? _navigationTimer;
+
+  void nextWeek() => _moveBy(const Duration(days: 7));
+  void prevWeek() => _moveBy(const Duration(days: -7));
+
+  void _moveBy(Duration offset) {
+    _targetWeek = _targetWeek.add(offset);
+
+    // The first tap stays instant. Further taps during the short window are
+    // coalesced, so obsolete weeks do not start their own API/DB pipelines.
+    if (_navigationTimer == null) state = _targetWeek;
+    _navigationTimer?.cancel();
+    _navigationTimer = Timer(_navigationDebounce, () {
+      _navigationTimer = null;
+      if (state != _targetWeek) state = _targetWeek;
+    });
+  }
+
+  void thisWeek() => _setImmediately(DateTime.now().startOfWeek);
+  void setDate(DateTime date) => _setImmediately(date.startOfWeek);
+
+  void _setImmediately(DateTime week) {
+    _navigationTimer?.cancel();
+    _navigationTimer = null;
+    _targetWeek = week;
+    state = week;
+  }
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
+  }
 }
 
 final currentWeekStartProvider =

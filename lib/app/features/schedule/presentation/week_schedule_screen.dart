@@ -86,6 +86,7 @@ class WeekScheduleScreen extends ConsumerWidget {
       body: DefaultTabController(
         length: 6,
         initialIndex: _todayIndex(weekStart),
+        animationDuration: const Duration(milliseconds: 180),
         child: Builder(
           builder: (context) => NestedScrollView(
             headerSliverBuilder: (context, innerScrolled) => [
@@ -111,42 +112,59 @@ class WeekScheduleScreen extends ConsumerWidget {
                 error: error,
                 onRetry: () => ref.invalidate(rawWeekScheduleProvider(key)),
               ),
-              data: (lessons) => TabBarView(
-                children: List.generate(6, (index) {
-                  final day = weekStart.add(Duration(days: index));
-                  final dayLessons =
-                      lessons
-                          .where(
-                            (lesson) => DateUtils.isSameDay(lesson.date, day),
-                          )
-                          .toList()
-                        ..sort((a, b) => a.pairNumber.compareTo(b.pairNumber));
-                  return RefreshIndicator(
-                    color: theme.colorScheme.primary,
-                    backgroundColor: theme.colorScheme.surfaceContainer,
-                    onRefresh: () => _refresh(context, ref, key),
-                    child: ListView.builder(
-                      key: PageStorageKey(
-                        '${actorId}_${day.toIso8601String()}',
+              data: (lessons) {
+                final lessonsByDay = _groupLessonsByDay(lessons, weekStart);
+                return TabBarView(
+                  physics: const PageScrollPhysics(),
+                  children: List.generate(6, (index) {
+                    final day = weekStart.add(Duration(days: index));
+                    final dayLessons = lessonsByDay[index];
+                    return RefreshIndicator(
+                      color: theme.colorScheme.primary,
+                      backgroundColor: theme.colorScheme.surfaceContainer,
+                      onRefresh: () => _refresh(context, ref, key),
+                      child: ListView.builder(
+                        key: PageStorageKey(
+                          '${actorId}_${day.toIso8601String()}',
+                        ),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 8, bottom: 24),
+                        itemCount: dayLessons.isEmpty ? 1 : dayLessons.length,
+                        itemBuilder: (_, itemIndex) => dayLessons.isEmpty
+                            ? const EmptyView(
+                                text: 'В этот день занятий нет',
+                                icon: Icons.self_improvement,
+                              )
+                            : LessonTile(lesson: dayLessons[itemIndex]),
                       ),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(top: 8, bottom: 24),
-                      itemCount: dayLessons.isEmpty ? 1 : dayLessons.length,
-                      itemBuilder: (_, itemIndex) => dayLessons.isEmpty
-                          ? const EmptyView(
-                              text: 'В этот день занятий нет',
-                              icon: Icons.self_improvement,
-                            )
-                          : LessonTile(lesson: dayLessons[itemIndex]),
-                    ),
-                  );
-                }),
-              ),
+                    );
+                  }),
+                );
+              },
             ),
           ),
         ),
       ),
     );
+  }
+
+  List<List<Lesson>> _groupLessonsByDay(
+    List<Lesson> lessons,
+    DateTime weekStart,
+  ) {
+    final days = List.generate(6, (_) => <Lesson>[]);
+    for (final lesson in lessons) {
+      final index = DateTime(
+        lesson.date.year,
+        lesson.date.month,
+        lesson.date.day,
+      ).difference(weekStart).inDays;
+      if (index >= 0 && index < days.length) days[index].add(lesson);
+    }
+    for (final lessons in days) {
+      lessons.sort((a, b) => a.pairNumber.compareTo(b.pairNumber));
+    }
+    return days;
   }
 
   Future<void> _refresh(

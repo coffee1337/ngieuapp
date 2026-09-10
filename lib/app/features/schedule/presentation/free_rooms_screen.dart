@@ -266,8 +266,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
               itemCount: rooms.length,
               separatorBuilder: (_, __) =>
                   const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (_, index) =>
-                  RoomCard(room: rooms[index], animationIndex: index),
+              itemBuilder: (_, index) => RoomCard(room: rooms[index]),
             ),
           ),
         ];

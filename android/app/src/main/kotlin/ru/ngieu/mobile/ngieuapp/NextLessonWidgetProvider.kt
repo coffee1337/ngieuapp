@@ -52,15 +52,72 @@ abstract class ScheduleWidgetProvider(
         }
         return hasLessons
     }
+
+    protected fun bindNextLesson(
+        context: Context,
+        views: RemoteViews,
+        shortHeader: Boolean = false,
+        startTimeOnly: Boolean = false,
+    ) {
+        val storedHeader = text(context, "widget_header")
+        val storedSubject = text(context, "widget_subject")
+        val storedTime = text(context, "widget_time")
+        val storedRoom = text(context, "widget_room")
+        val header = if (shortHeader) "ПАРА" else storedHeader.ifBlank { "РАСПИСАНИЕ" }
+        val time = if (startTimeOnly) {
+            storedTime.substringBefore('—').substringBefore('–').trim()
+        } else {
+            storedTime
+        }
+
+        views.setTextViewText(R.id.widget_header, header)
+        views.setTextViewText(
+            R.id.widget_subject,
+            storedSubject.ifBlank { "Откройте приложение" },
+        )
+        views.setTextViewText(R.id.widget_time, time)
+        views.setTextViewText(R.id.widget_room, storedRoom.replace("Ауд. ", ""))
+        views.setViewVisibility(
+            R.id.widget_room,
+            if (storedRoom.isBlank()) View.GONE else View.VISIBLE,
+        )
+    }
 }
 
-open class NextLessonSmallWidgetProvider : ScheduleWidgetProvider(
-    R.layout.next_lesson_widget_small,
+/** Широкий компактный виджет 2x1. */
+open class NextLessonWidgetProvider : ScheduleWidgetProvider(
+    R.layout.next_lesson_widget_wide,
 ) {
     override fun bind(context: Context, views: RemoteViews) {
-        views.setTextViewText(R.id.widget_header, text(context, "widget_header"))
-        views.setTextViewText(R.id.widget_subject, text(context, "widget_subject"))
-        views.setTextViewText(R.id.widget_time, text(context, "widget_time"))
+        bindNextLesson(context, views)
+    }
+}
+
+/** Минимальный виджет 1x1: время, предмет и аудитория. */
+class NextLessonSquareWidgetProvider : ScheduleWidgetProvider(
+    R.layout.next_lesson_widget_square,
+) {
+    override fun bind(context: Context, views: RemoteViews) {
+        bindNextLesson(
+            context,
+            views,
+            shortHeader = true,
+            startTimeOnly = true,
+        )
+    }
+}
+
+/** Вертикальный компактный виджет 1x2. */
+class NextLessonTallWidgetProvider : ScheduleWidgetProvider(
+    R.layout.next_lesson_widget_tall,
+) {
+    override fun bind(context: Context, views: RemoteViews) {
+        bindNextLesson(
+            context,
+            views,
+            shortHeader = true,
+            startTimeOnly = true,
+        )
     }
 }
 
@@ -99,6 +156,3 @@ class TodayScheduleWidgetProvider : ScheduleWidgetProvider(
         views.setViewVisibility(R.id.widget_empty, if (hasLessons) View.GONE else View.VISIBLE)
     }
 }
-
-/** Оставлен для уже добавленных виджетов предыдущей версии. */
-class NextLessonWidgetProvider : NextLessonSmallWidgetProvider()
