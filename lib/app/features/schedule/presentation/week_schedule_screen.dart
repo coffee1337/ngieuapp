@@ -8,6 +8,7 @@ import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.da
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/day_tabs.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/lesson_tile.dart';
