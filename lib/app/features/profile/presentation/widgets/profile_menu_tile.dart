@@ -38,9 +38,13 @@ class ProfileMenuTile extends StatelessWidget {
           ),
           title: Text(
             title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleSmall?.copyWith(color: textColor),
           ),
-          subtitle: subtitle == null ? null : Text(subtitle!),
+          subtitle: subtitle == null
+              ? null
+              : Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Icon(
             Icons.chevron_right_rounded,
             size: 20,

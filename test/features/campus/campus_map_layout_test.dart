@@ -7,13 +7,13 @@ void main() {
   test('keeps stable building identifiers for future campus labels', () {
     final ids = CampusMapLayout.buildings.map((building) => building.id);
 
-    expect(CampusMapLayout.buildings, hasLength(11));
-    expect(ids.toSet(), hasLength(11));
+    expect(CampusMapLayout.buildings, hasLength(16));
+    expect(ids.toSet(), hasLength(16));
     expect(ids.first, 'building-01');
   });
 
   test('finds a building by a point inside its footprint', () {
-    final building = CampusMapLayout.hitTest(const Offset(150, 100));
+    final building = CampusMapLayout.hitTest(const Offset(90, 120));
 
     expect(building?.id, 'building-01');
   });
