@@ -6,9 +6,11 @@ import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
 import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/visual_style_providers.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
+import 'package:ngieuapp/app/theme/app_visual_style.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -17,6 +19,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(appSettingsProvider);
     final notifier = ref.read(appSettingsProvider.notifier);
+    final visualStyle = ref.watch(visualStyleProvider);
+    final visualStyleNotifier = ref.read(visualStyleProvider.notifier);
     final navigation = ref.watch(navigationSettingsProvider);
     final navigationNotifier = ref.read(navigationSettingsProvider.notifier);
     final smartNotifications = ref.watch(smartNotificationSettingsProvider);
@@ -34,7 +38,34 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.palette_outlined,
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Стиль оформления',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+              for (final style in AppVisualStyle.values)
+                _VisualStyleTile(
+                  style: style,
+                  selected: visualStyle == style,
+                  onTap: () => visualStyleNotifier.setStyle(style),
+                ),
+              const Divider(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Режим яркости',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -60,11 +91,20 @@ class SettingsScreen extends ConsumerWidget {
                         avatar: Icon(option.icon, size: 18),
                         label: Text(option.label),
                         selected: s.themeMode == option.mode,
-                        onSelected: (_) => notifier.setThemeMode(option.mode),
+                        onSelected: visualStyle == AppVisualStyle.amoled
+                            ? null
+                            : (_) => notifier.setThemeMode(option.mode),
                       ),
                   ],
                 ),
               ),
+              if (visualStyle == AppVisualStyle.amoled)
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Text(
+                    'AMOLED использует полностью тёмный режим независимо от системной темы.',
+                  ),
+                ),
             ],
           ),
           _SettingsSection(
@@ -470,6 +510,89 @@ class SettingsScreen extends ConsumerWidget {
 
   static void _openNotificationSettings() {
     NotificationsService.instance.openSystemSettings();
+  }
+}
+
+class _VisualStyleTile extends StatelessWidget {
+  const _VisualStyleTile({
+    required this.style,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppVisualStyle style;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = switch (style) {
+      AppVisualStyle.material => const [
+        Color(0xFF9F003D),
+        Color(0xFF4A5E89),
+        Color(0xFFFFA300),
+      ],
+      AppVisualStyle.glass => const [
+        Color(0xFF6046C6),
+        Color(0xFF006A8E),
+        Color(0xFFFF72B6),
+      ],
+      AppVisualStyle.university => const [
+        Color(0xFF173B67),
+        Color(0xFF8C1D40),
+        Color(0xFFD5A62E),
+      ],
+      AppVisualStyle.amoled => const [
+        Colors.black,
+        Color(0xFFFF6F9E),
+        Color(0xFF9CACCA),
+      ],
+    };
+
+    return AnimatedContainer(
+      duration: AppDurations.fast,
+      color: selected
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.55)
+          : Colors.transparent,
+      child: ListTile(
+        onTap: onTap,
+        leading: SizedBox(
+          width: 54,
+          child: Stack(
+            children: [
+              for (var index = 0; index < colors.length; index++)
+                Positioned(
+                  left: index * 15,
+                  top: 5,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: colors[index],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.colorScheme.surface,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        title: Text(style.label),
+        subtitle: Text(style.description),
+        trailing: Icon(
+          selected
+              ? Icons.check_circle_rounded
+              : Icons.radio_button_unchecked_rounded,
+          color: selected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
   }
 }
 
