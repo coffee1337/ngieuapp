@@ -11,6 +11,7 @@ import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/day_tabs.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/widgets/lesson_tile.dart';
 import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_visual_style.dart';
 
 import '../helpers/test_helpers.dart';
 
@@ -103,6 +104,55 @@ void main() {
       final subject = tester.widget<Text>(find.text(lesson.subject).first);
       expect(subject.maxLines, isNull);
     });
+  }
+
+  for (final style in AppVisualStyle.values) {
+    for (final dark in [false, true]) {
+      testWidgets('Profile header fits and stays themed: $style, dark=$dark', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(280, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final theme = dark
+            ? AppTheme.dark(style: style)
+            : AppTheme.light(style: style);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: const MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(1.5)),
+              child: Scaffold(
+                body: SingleChildScrollView(
+                  padding: EdgeInsets.all(12),
+                  child: ProfileHeader(
+                    identity: StudentIdentity(
+                      actorId: 'teacher-1',
+                      actorType: ActorType.teacher,
+                      displayName: 'Александрова Александра Александровна',
+                      departmentName:
+                          'Кафедра информационных систем и технологий',
+                    ),
+                    courseStats: StatCard(
+                      label: 'Тип',
+                      value: 'Преподаватель',
+                    ),
+                    todayStats: StatCard(label: 'Сегодня пар', value: '4'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final value = tester.widget<Text>(find.text('Преподаватель').last);
+        expect(value.style?.color, theme.colorScheme.onSurface);
+      });
+    }
   }
 
   testWidgets('News without images stays readable and opens on tap', (
