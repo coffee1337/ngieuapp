@@ -27,9 +27,7 @@ class CampusMapBuilding {
 }
 
 class CampusMapRoad {
-  const CampusMapRoad({required this.points, this.width = 12})
-    : assert(points.length >= 2),
-      assert(width > 0);
+  const CampusMapRoad({required this.points, this.width = 12});
 
   final List<Offset> points;
   final double width;
