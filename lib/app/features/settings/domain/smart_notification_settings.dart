@@ -4,6 +4,7 @@ class SmartNotificationSettings {
     this.quietHoursEnabled = true,
     this.quietHoursStart = 22,
     this.quietHoursEnd = 7,
+    this.quietDuringLessons = true,
     this.soundEnabled = true,
     this.vibrationEnabled = true,
   });
@@ -12,6 +13,7 @@ class SmartNotificationSettings {
   final bool quietHoursEnabled;
   final int quietHoursStart;
   final int quietHoursEnd;
+  final bool quietDuringLessons;
   final bool soundEnabled;
   final bool vibrationEnabled;
 
@@ -29,6 +31,7 @@ class SmartNotificationSettings {
     bool? quietHoursEnabled,
     int? quietHoursStart,
     int? quietHoursEnd,
+    bool? quietDuringLessons,
     bool? soundEnabled,
     bool? vibrationEnabled,
   }) => SmartNotificationSettings(
@@ -37,6 +40,7 @@ class SmartNotificationSettings {
     quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
     quietHoursStart: quietHoursStart ?? this.quietHoursStart,
     quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
+    quietDuringLessons: quietDuringLessons ?? this.quietDuringLessons,
     soundEnabled: soundEnabled ?? this.soundEnabled,
     vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
   );
@@ -46,6 +50,7 @@ class SmartNotificationSettings {
     'quietHoursEnabled': quietHoursEnabled,
     'quietHoursStart': quietHoursStart,
     'quietHoursEnd': quietHoursEnd,
+    'quietDuringLessons': quietDuringLessons,
     'soundEnabled': soundEnabled,
     'vibrationEnabled': vibrationEnabled,
   };
@@ -56,6 +61,7 @@ class SmartNotificationSettings {
         quietHoursEnabled: json['quietHoursEnabled'] as bool? ?? true,
         quietHoursStart: (json['quietHoursStart'] as num?)?.toInt() ?? 22,
         quietHoursEnd: (json['quietHoursEnd'] as num?)?.toInt() ?? 7,
+        quietDuringLessons: json['quietDuringLessons'] as bool? ?? true,
         soundEnabled: json['soundEnabled'] as bool? ?? true,
         vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
       );

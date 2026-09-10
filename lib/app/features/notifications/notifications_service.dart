@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart' show Color, ValueNotifier;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ngieuapp/app/features/notifications/notification_quiet_policy.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/settings/domain/smart_notification_settings.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,6 +17,7 @@ class NotificationsService {
   bool _initialized = false;
   Future<void>? _initializing;
   bool _canScheduleExact = true;
+  static const _quietPolicy = NotificationQuietPolicy();
   final selectedRoute = ValueNotifier<String?>(null);
 
   static const _brandColor = Color(0xFF9F003D);
@@ -108,11 +110,17 @@ class NotificationsService {
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
-      final canSchedule = await android?.canScheduleExactNotifications();
-      if (canSchedule == false) {
-        await android?.requestExactAlarmsPermission();
-        _canScheduleExact =
-            await android?.canScheduleExactNotifications() ?? false;
+      try {
+        final canSchedule = await android?.canScheduleExactNotifications();
+        if (canSchedule == false) {
+          await android?.requestExactAlarmsPermission();
+          _canScheduleExact =
+              await android?.canScheduleExactNotifications() ?? false;
+        }
+      } catch (_) {
+        // Some Samsung firmware variants do not expose the exact-alarm
+        // settings screen. Reminders still work with an inexact schedule.
+        _canScheduleExact = false;
       }
       return true;
     }
@@ -133,13 +141,18 @@ class NotificationsService {
     Lesson lesson, {
     int minutesBefore = 15,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
+    List<Lesson> schedule = const [],
   }) async {
     await init();
     final notifyTime = lesson.startTime.subtract(
       Duration(minutes: minutesBefore),
     );
     if (notifyTime.isBefore(DateTime.now())) return;
-    if (preferences.isQuietTime(notifyTime)) return;
+    final silent = _quietPolicy.shouldSilence(
+      at: notifyTime,
+      preferences: preferences,
+      lessons: schedule,
+    );
     final id = _idFromString(lesson.id);
     final tzTime = tz.TZDateTime.from(notifyTime, tz.local);
     await _plugin.zonedSchedule(
@@ -149,15 +162,15 @@ class NotificationsService {
       tzTime,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'lesson_reminders',
-          'Напоминания о парах',
+          silent ? 'lesson_reminders_silent' : 'lesson_reminders',
+          silent ? 'Напоминания о парах без звука' : 'Напоминания о парах',
           channelDescription: 'Уведомления о начале занятий',
           importance: Importance.high,
           priority: Priority.high,
           icon: 'ic_stat_ngieu',
           color: _brandColor,
-          playSound: preferences.soundEnabled,
-          enableVibration: preferences.vibrationEnabled,
+          playSound: preferences.soundEnabled && !silent,
+          enableVibration: preferences.vibrationEnabled && !silent,
           groupKey: 'lesson_reminders',
           styleInformation: BigTextStyleInformation(_buildBody(lesson)),
         ),
@@ -166,10 +179,12 @@ class NotificationsService {
           presentBanner: true,
           presentList: true,
           presentBadge: true,
-          presentSound: preferences.soundEnabled,
+          presentSound: preferences.soundEnabled && !silent,
           categoryIdentifier: 'lesson_reminder',
           threadIdentifier: 'lesson_reminders',
-          interruptionLevel: InterruptionLevel.active,
+          interruptionLevel: silent
+              ? InterruptionLevel.passive
+              : InterruptionLevel.active,
         ),
       ),
       androidScheduleMode: _canScheduleExact
@@ -185,10 +200,15 @@ class NotificationsService {
     required Lesson lesson,
     required String fingerprint,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
+    List<Lesson> schedule = const [],
   }) async {
     await init();
     if (!preferences.scheduleChangesEnabled) return;
-    final quiet = preferences.isQuietTime(DateTime.now());
+    final quiet = _quietPolicy.shouldSilence(
+      at: DateTime.now(),
+      preferences: preferences,
+      lessons: schedule,
+    );
     await _plugin.show(
       _idFromString('schedule-change:$fingerprint'),
       _changeTitle(lesson),
@@ -292,6 +312,7 @@ class NotificationsService {
           l,
           minutesBefore: minutesBefore,
           preferences: preferences,
+          schedule: lessons,
         );
       } catch (_) {}
     }
