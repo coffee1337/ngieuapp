@@ -5,7 +5,7 @@ import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart'
 import 'package:ngieuapp/app/features/schedule/data/schedule_repository_impl.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
-import '../../../../helpers/test_helpers.dart';
+import '../../../helpers/test_helpers.dart';
 
 class MockScheduleApiDataSource extends Mock implements ScheduleApiDataSource {}
 
