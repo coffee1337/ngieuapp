@@ -267,8 +267,7 @@ class SettingsScreen extends ConsumerWidget {
               SwitchListTile(
                 title: const Text('Обновлять виджеты расписания'),
                 subtitle: const Text(
-                  'Android: 1×1, 2×1, 1×2 и большие · '
-                  'iPhone: малый, средние и большой',
+                  'Рабочий стол и экран блокировки на совместимых версиях ОС',
                 ),
                 value: s.homeWidgetEnabled,
                 onChanged: (value) async {
@@ -279,8 +278,8 @@ class SettingsScreen extends ConsumerWidget {
                 leading: Icon(Icons.view_quilt_outlined),
                 title: Text('Доступные варианты'),
                 subtitle: Text(
-                  'Компактные варианты · Три ближайшие пары · '
-                  'Расписание на сегодня',
+                  'Android: 1×1, 2×1, 1×2, ближайшие пары и день · '
+                  'iPhone: 4 домашних и 3 формата экрана блокировки',
                 ),
               ),
               SwitchListTile(

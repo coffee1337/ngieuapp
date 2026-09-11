@@ -5,33 +5,66 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="14dp">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:letterSpacing="0.1"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="false"
+        android:letterSpacing="0.06"
+        android:maxLines="1"
         android:text="РАСПИСАНИЕ НА СЕГОДНЯ"
-        android:textColor="#FFFFFF"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:textColor="#D9FFFFFF"
+        android:textSize="11sp" />
 
-    <TextView android:id="@+id/widget_item_0" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_1" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_2" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_3" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_4" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_5" style="@style/ScheduleWidgetRow.Large" />
-    <TextView android:id="@+id/widget_item_6" style="@style/ScheduleWidgetRow.Large" />
+    <LinearLayout android:id="@+id/widget_row_0" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_0_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_0_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_0_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_1" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_1_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_1_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_1_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_2" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_2_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_2_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_2_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_3" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_3_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_3_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_3_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_4" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_4_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_4_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_4_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_5" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_5_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_5_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_5_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_6" style="@style/ScheduleWidgetRowContainer.Large">
+        <TextView android:id="@+id/widget_item_6_time" style="@style/ScheduleWidgetTime.Large" />
+        <TextView android:id="@+id/widget_item_6_subject" style="@style/ScheduleWidgetSubject.Large" />
+        <TextView android:id="@+id/widget_item_6_room" style="@style/ScheduleWidgetRoom.Large" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center_vertical"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="2"
         android:text="Сегодня пар нет"
-        android:textColor="#FFFFFF"
-        android:textSize="17sp"
-        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        android:textSize="18sp"
         android:visibility="gone" />
 </LinearLayout>
