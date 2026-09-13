@@ -198,6 +198,7 @@ class _Campus3DMapState extends State<Campus3DMap>
                         clipBehavior: Clip.hardEdge,
                         onInteractionStart: (_) => _resetController.stop(),
                         child: SizedBox.fromSize(
+                          key: const Key('campus-map-canvas'),
                           size: mapSize,
                           child: Semantics(
                             label: 'Интерактивный план кампуса НГИЭУ',
