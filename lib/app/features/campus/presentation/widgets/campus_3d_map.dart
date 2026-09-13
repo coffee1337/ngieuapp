@@ -68,10 +68,15 @@ class _Campus3DMapState extends State<Campus3DMap> {
     final selectionDetails = _buildSelectionDetails(theme, scheme);
 
     if (widget.fullscreen) {
-      return Column(
+      return Stack(
         children: [
-          Expanded(child: mapSurface),
-          selectionDetails,
+          Positioned.fill(child: mapSurface),
+          Positioned(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            bottom: 88,
+            child: selectionDetails,
+          ),
         ],
       );
     }
@@ -256,18 +261,14 @@ class CampusMapFullscreenScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('План кампуса')),
-      body: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Campus3DMap(fullscreen: true),
-        ),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.surface.withValues(alpha: 0.9),
+        title: const Text('План кампуса'),
       ),
+      body: const Campus3DMap(fullscreen: true),
     );
   }
 }
@@ -415,12 +416,7 @@ class _CampusMapPainter extends CustomPainter {
         (current.dx + next.dx) / 2,
         (current.dy + next.dy) / 2,
       );
-      path.quadraticBezierTo(
-        current.dx,
-        current.dy,
-        midpoint.dx,
-        midpoint.dy,
-      );
+      path.quadraticBezierTo(current.dx, current.dy, midpoint.dx, midpoint.dy);
     }
     final last = points.last;
     return path..lineTo(last.dx, last.dy);

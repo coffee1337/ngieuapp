@@ -16,37 +16,58 @@ import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
 import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_motion_style.dart';
 import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
 import 'package:ngieuapp/app/shared/widgets/offline_banner.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
-CustomTransitionPage<T> _page<T>(Widget child) => CustomTransitionPage<T>(
-  child: child,
-  transitionDuration: AppDurations.normal,
-  reverseTransitionDuration: AppDurations.normal,
-  transitionsBuilder: (context, anim, __, child) {
-    if (MediaQuery.disableAnimationsOf(context)) return child;
-    final curved = CurvedAnimation(
-      parent: anim,
-      curve: Curves.easeOutQuart,
-      reverseCurve: Curves.easeInToLinear,
-    );
-    return FadeTransition(
-      opacity: CurvedAnimation(
+CustomTransitionPage<T> _page<T>(Widget child) {
+  final motion = AppMotionSettings.currentStyle;
+  return CustomTransitionPage<T>(
+    child: child,
+    transitionDuration: motion.pageDuration,
+    reverseTransitionDuration: motion == AppMotionStyle.expressive
+        ? AppDurations.normal
+        : motion.pageDuration,
+    transitionsBuilder: (context, anim, __, child) {
+      if (MediaQuery.disableAnimationsOf(context) ||
+          motion == AppMotionStyle.reduced) {
+        return child;
+      }
+      final curved = CurvedAnimation(
         parent: anim,
-        curve: const Interval(0, 0.6, curve: Curves.easeOut),
-      ),
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.03),
-          end: Offset.zero,
-        ).animate(curved),
-        child: child,
-      ),
-    );
-  },
-);
+        curve: motion == AppMotionStyle.expressive
+            ? Curves.easeOutBack
+            : Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: anim,
+          curve: const Interval(0, 0.6, curve: Curves.easeOut),
+        ),
+        child: ScaleTransition(
+          scale: Tween<double>(
+            begin: motion == AppMotionStyle.expressive ? 0.975 : 0.99,
+            end: 1,
+          ).animate(curved),
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset(
+                0,
+                motion == AppMotionStyle.expressive ? 0.055 : 0.025,
+              ),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        ),
+      );
+    },
+  );
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -132,20 +153,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
-            path: '/campus',
-            pageBuilder: (_, state) => _page(
-              CampusMapScreen(initialRoom: state.uri.queryParameters['room']),
-            ),
-            routes: [
-              GoRoute(
-                path: 'directions',
-                pageBuilder: (_, __) => _page(const CampusDirectionsScreen()),
-              ),
-            ],
-          ),
-          GoRoute(
             path: '/learning',
             pageBuilder: (_, __) => _page(const LearningWebViewScreen()),
+          ),
+        ],
+      ),
+      // The campus plan is intentionally outside the navigation shell: the
+      // map gets the whole viewport instead of being constrained by the
+      // bottom bar and the regular content width.
+      GoRoute(
+        path: '/campus',
+        pageBuilder: (_, state) => _page(
+          CampusMapScreen(initialRoom: state.uri.queryParameters['room']),
+        ),
+        routes: [
+          GoRoute(
+            path: 'directions',
+            pageBuilder: (_, __) => _page(const CampusDirectionsScreen()),
           ),
         ],
       ),

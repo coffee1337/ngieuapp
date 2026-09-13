@@ -26,6 +26,11 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
     super.initState();
     _query = widget.initialRoom?.trim() ?? '';
     _searchController = TextEditingController(text: _query);
+    if (_query.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openSearch();
+      });
+    }
   }
 
   @override
@@ -36,72 +41,142 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
 
   void _setQuery(String value) => setState(() => _query = value.trim());
 
+  Future<void> _openSearch() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final room = CampusCatalog.resolveRoom(_query);
+          final institutes = CampusCatalog.searchInstitutes(_query);
+          final hasRoomQuery = RegExp(r'^\s*\d').hasMatch(_query);
+          return FractionallySizedBox(
+            heightFactor: 0.78,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.xxl,
+                0,
+                AppSpacing.xxl,
+                MediaQuery.viewInsetsOf(sheetContext).bottom +
+                    AppSpacing.section,
+              ),
+              children: [
+                Text(
+                  'Найти аудиторию',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: (value) {
+                    _setQuery(value);
+                    setSheetState(() {});
+                  },
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    labelText: 'Кабинет или институт',
+                    hintText: 'Например, 220 или ИИТиСС',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Очистить',
+                            onPressed: () {
+                              _searchController.clear();
+                              _setQuery('');
+                              setSheetState(() {});
+                            },
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                AnimatedSwitcher(
+                  duration: AppDurations.normal,
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: hasRoomQuery
+                      ? _RoomResultCard(
+                          key: ValueKey(_query),
+                          result: room,
+                          onDirections: ref.read(connectivityProvider)
+                              ? () => context.push('/campus/directions')
+                              : null,
+                        )
+                      : _InstituteResults(
+                          key: ValueKey(_query),
+                          items: institutes,
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _openCampusInfo(bool isOnline) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    useSafeArea: true,
+    builder: (context) => SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxl,
+        0,
+        AppSpacing.xxl,
+        AppSpacing.section,
+      ),
+      child: _CampusHeader(
+        isOnline: isOnline,
+        onDirections: isOnline
+            ? () {
+                Navigator.of(context).pop();
+                this.context.push('/campus/directions');
+              }
+            : null,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final isOnline = ref.watch(connectivityProvider);
-    final room = CampusCatalog.resolveRoom(_query);
-    final institutes = CampusCatalog.searchInstitutes(_query);
-    final hasRoomQuery = RegExp(r'^\s*\d').hasMatch(_query);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Карта кампуса')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xxl,
-          AppSpacing.md,
-          AppSpacing.xxl,
-          AppSpacing.section,
-        ),
-        children: [
-          _CampusHeader(
-            isOnline: isOnline,
-            onDirections: isOnline
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.surface.withValues(alpha: 0.9),
+        title: const Text('Карта кампуса'),
+        actions: [
+          IconButton(
+            tooltip: 'О кампусе',
+            onPressed: () => _openCampusInfo(isOnline),
+            icon: const Icon(Icons.info_outline_rounded),
+          ),
+          IconButton(
+            tooltip: 'Найти аудиторию',
+            onPressed: _openSearch,
+            icon: const Icon(Icons.search_rounded),
+          ),
+          IconButton(
+            tooltip: isOnline ? 'Маршрут до вуза' : 'Нет подключения',
+            onPressed: isOnline
                 ? () => context.push('/campus/directions')
                 : null,
-          ),
-          const SizedBox(height: AppSpacing.xxl),
-          const Campus3DMap(),
-          const SizedBox(height: AppSpacing.xxl),
-          TextField(
-            controller: _searchController,
-            onChanged: _setQuery,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              labelText: 'Найти кабинет или институт',
-              hintText: 'Например, 220 или ИИТиСС',
-              prefixIcon: const Icon(Icons.search_rounded),
-              suffixIcon: _query.isEmpty
-                  ? null
-                  : IconButton(
-                      tooltip: 'Очистить',
-                      onPressed: () {
-                        _searchController.clear();
-                        _setQuery('');
-                      },
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxl),
-          AnimatedSwitcher(
-            duration: AppDurations.normal,
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SizeTransition(sizeFactor: animation, child: child),
-            ),
-            child: hasRoomQuery
-                ? _RoomResultCard(
-                    key: ValueKey(_query),
-                    result: room,
-                    onDirections: isOnline
-                        ? () => context.push('/campus/directions')
-                        : null,
-                  )
-                : _InstituteResults(key: ValueKey(_query), items: institutes),
+            icon: const Icon(Icons.directions_outlined),
           ),
         ],
+      ),
+      body: const Campus3DMap(fullscreen: true),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openSearch,
+        icon: const Icon(Icons.search_rounded),
+        label: const Text('Найти кабинет'),
       ),
     );
   }

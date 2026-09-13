@@ -8,6 +8,7 @@ import 'package:ngieuapp/app/theme/app_tokens.dart';
 import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
+import 'package:ngieuapp/app/shared/widgets/motion_reveal.dart';
 
 class NewsListScreen extends ConsumerWidget {
   const NewsListScreen({super.key});
@@ -39,32 +40,38 @@ class NewsListScreen extends ConsumerWidget {
               itemBuilder: (_, i) {
                 if (i == 0) {
                   final theme = Theme.of(context);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Жизнь университета',
-                          style: theme.textTheme.headlineLarge,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Новости и события кампуса',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                  return MotionReveal(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Жизнь университета',
+                            style: theme.textTheme.headlineLarge,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Новости и события кампуса',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
                 final a = articles[i - 1];
-                return NewsCard(
-                  article: a,
-                  featured: i == 1,
-                  showImage: showImages,
-                  onTap: () => context.push('/news/detail/${a.id}'),
+                return MotionReveal(
+                  key: ValueKey(a.id),
+                  order: i,
+                  child: NewsCard(
+                    article: a,
+                    featured: i == 1,
+                    showImage: showImages,
+                    onTap: () => context.push('/news/detail/${a.id}'),
+                  ),
                 );
               },
             ),

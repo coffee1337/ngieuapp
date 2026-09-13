@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
 import 'package:ngieuapp/app/features/notifications/reschedule_notifications.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
 import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/layout_density_provider.dart';
+import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/visual_style_providers.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_layout_density.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_motion_style.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
+import 'package:ngieuapp/app/features/widget/home_widget_provider.dart';
+import 'package:ngieuapp/app/features/widget/lock_screen_card_settings.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 import 'package:ngieuapp/app/theme/app_visual_style.dart';
 
@@ -21,12 +29,15 @@ class SettingsScreen extends ConsumerWidget {
     final notifier = ref.read(appSettingsProvider.notifier);
     final visualStyle = ref.watch(visualStyleProvider);
     final visualStyleNotifier = ref.read(visualStyleProvider.notifier);
+    final motionStyle = ref.watch(motionSettingsProvider);
+    final layoutDensity = ref.watch(layoutDensityProvider);
     final navigation = ref.watch(navigationSettingsProvider);
     final navigationNotifier = ref.read(navigationSettingsProvider.notifier);
     final smartNotifications = ref.watch(smartNotificationSettingsProvider);
     final smartNotificationsNotifier = ref.read(
       smartNotificationSettingsProvider.notifier,
     );
+    final lockScreenCard = ref.watch(lockScreenCardSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Настройки')),
@@ -53,6 +64,56 @@ class SettingsScreen extends ConsumerWidget {
                   selected: visualStyle == style,
                   onTap: () => visualStyleNotifier.setStyle(style),
                 ),
+              const Divider(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Плотность элементов',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: SegmentedButton<AppLayoutDensity>(
+                  showSelectedIcon: false,
+                  segments: [
+                    for (final density in AppLayoutDensity.values)
+                      ButtonSegment(value: density, label: Text(density.label)),
+                  ],
+                  selected: {layoutDensity},
+                  onSelectionChanged: (selection) => ref
+                      .read(layoutDensityProvider.notifier)
+                      .setDensity(selection.first),
+                ),
+              ),
+              const Divider(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Движение интерфейса',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: SegmentedButton<AppMotionStyle>(
+                  showSelectedIcon: false,
+                  segments: [
+                    for (final style in AppMotionStyle.values)
+                      ButtonSegment(value: style, label: Text(style.label)),
+                  ],
+                  selected: {motionStyle},
+                  onSelectionChanged: (selection) => ref
+                      .read(motionSettingsProvider.notifier)
+                      .setStyle(selection.first),
+                ),
+              ),
               const Divider(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -278,10 +339,53 @@ class SettingsScreen extends ConsumerWidget {
                 leading: Icon(Icons.view_quilt_outlined),
                 title: Text('Доступные варианты'),
                 subtitle: Text(
-                  'Android: 1×1, 2×1, 1×2, ближайшие пары и день · '
-                  'iPhone: 4 домашних и 3 формата экрана блокировки',
+                  'Android: 1×1, 2×1, 1×2, ближайшие пары, сегодня и завтра · '
+                  'iPhone: 5 домашних и 3 формата экрана блокировки',
                 ),
               ),
+              if (Platform.isAndroid)
+                SwitchListTile(
+                  secondary: const Icon(Icons.lock_clock_outlined),
+                  title: const Text('Карточка на экране блокировки'),
+                  subtitle: const Text(
+                    'Для Android 6–15: закреплённая текущая или следующая пара. '
+                    'На Android 16+ дополнительно доступен системный виджет.',
+                  ),
+                  value: lockScreenCard.enabled,
+                  onChanged: !lockScreenCard.loaded || !s.homeWidgetEnabled
+                      ? null
+                      : (value) async {
+                          if (value) {
+                            final granted = await ref
+                                .read(notificationsServiceProvider)
+                                .requestPermissions();
+                            if (!granted) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Разрешите уведомления, чтобы карточка отображалась на заблокированном экране.',
+                                    ),
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                          }
+                          await ref
+                              .read(lockScreenCardSettingsProvider.notifier)
+                              .setEnabled(value);
+                        },
+                ),
+              if (Platform.isIOS)
+                const ListTile(
+                  leading: Icon(Icons.lock_outline_rounded),
+                  title: Text('Виджет блокировки iPhone'),
+                  subtitle: Text(
+                    'iOS 16+: удерживайте экран блокировки → «Настроить» → '
+                    'область виджетов → «НГИЭУ».',
+                  ),
+                ),
               SwitchListTile(
                 title: const Text('В виджете показывать аудиторию'),
                 subtitle: const Text('Отключите, чтобы скрыть аудиторию'),
@@ -289,6 +393,26 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: s.homeWidgetEnabled
                     ? (value) async {
                         await notifier.setHomeWidgetShowRoom(value);
+                      }
+                    : null,
+              ),
+              ListTile(
+                leading: const Icon(Icons.refresh_rounded),
+                title: const Text('Обновить все виджеты'),
+                subtitle: const Text(
+                  'Перезагрузить данные и оформление установленных виджетов',
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: s.homeWidgetEnabled
+                    ? () async {
+                        await ref
+                            .read(homeWidgetServiceProvider)
+                            .reloadWidgets();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Виджеты обновлены')),
+                          );
+                        }
                       }
                     : null,
               ),

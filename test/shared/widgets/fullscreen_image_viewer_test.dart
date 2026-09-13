@@ -28,7 +28,7 @@ void main() {
     expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(find.byTooltip('Закрыть'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Закрыть'));
+    await tester.tap(find.byKey(const Key('fullscreen-image-close')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
@@ -53,5 +53,39 @@ void main() {
     await tester.pump();
 
     expect(find.byType(FullscreenImageViewer), findsNothing);
+  });
+
+  testWidgets('double tap zooms and reset button restores the image', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FullscreenImageViewer(imageUrl: 'https://example.com/image.jpg'),
+      ),
+    );
+
+    final imageCenter = tester.getCenter(
+      find.byKey(const Key('fullscreen-image-gesture')),
+    );
+    await tester.tapAt(imageCenter);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(imageCenter);
+    await tester.pump(const Duration(milliseconds: 260));
+
+    var viewer = tester.widget<InteractiveViewer>(
+      find.byType(InteractiveViewer),
+    );
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      greaterThan(1),
+    );
+
+    await tester.tap(find.byKey(const Key('fullscreen-image-reset')));
+    await tester.pump(const Duration(milliseconds: 260));
+    viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      closeTo(1, 0.01),
+    );
   });
 }

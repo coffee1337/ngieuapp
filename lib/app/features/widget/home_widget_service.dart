@@ -18,6 +18,7 @@ class HomeWidgetService {
     'NextLessonSquareWidgetProvider',
     'NextLessonTallWidgetProvider',
     'UpcomingLessonsWidgetProvider',
+    'TomorrowScheduleWidgetProvider',
     'TodayScheduleWidgetProvider',
     'NextLessonWidgetProvider',
   ];
@@ -26,6 +27,7 @@ class HomeWidgetService {
     'WideNextLessonWidget',
     'UpcomingLessonsWidget',
     'TodayScheduleWidget',
+    'TomorrowScheduleWidget',
     'LockScreenScheduleWidget',
   ];
   static final _getNextLesson = GetNextLesson();
@@ -92,6 +94,14 @@ class HomeWidgetService {
             .where((lesson) => lesson.endTime.isAfter(now) && !lesson.isEvent)
             .toList()
           ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final tomorrowLessons =
+        lessons
+            .where(
+              (lesson) => _isSameDay(lesson.date, tomorrow) && !lesson.isEvent,
+            )
+            .toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
     final todayPayload = HomeWidgetPayload(
       type: HomeWidgetType.todaySchedule,
       size: HomeWidgetSize.large,
@@ -133,6 +143,18 @@ class HomeWidgetService {
       data[HomeWidgetKeys.upcomingEnd(index)] =
           lesson?.endTime.millisecondsSinceEpoch ?? 0;
     }
+    data['widget_tomorrow_date'] = DateFormat('yyyy-MM-dd').format(tomorrow);
+    data['widget_tomorrow_count'] = tomorrowLessons.take(4).length;
+    for (var index = 0; index < 4; index++) {
+      final lesson = tomorrowLessons.elementAtOrNull(index);
+      data['widget_tomorrow_${index}_time'] = lesson == null
+          ? ''
+          : _timeRange(lesson);
+      data['widget_tomorrow_${index}_subject'] = lesson?.subject ?? '';
+      data['widget_tomorrow_${index}_room'] = lesson == null || !showRoom
+          ? ''
+          : _roomText(lesson);
+    }
 
     for (final entry in data.entries) {
       await HomeWidget.saveWidgetData(entry.key, entry.value);
@@ -154,6 +176,20 @@ class HomeWidgetService {
     bool enabled = true,
     bool showRoom = true,
   }) => updateSchedule(lessons, enabled: enabled, showRoom: showRoom);
+
+  Future<void> reloadWidgets() async {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (Platform.isIOS) await HomeWidget.setAppGroupId(_appGroupId);
+    if (Platform.isAndroid) {
+      for (final provider in _androidProviders) {
+        await HomeWidget.updateWidget(androidName: provider);
+      }
+      return;
+    }
+    for (final widget in _iosWidgets) {
+      await HomeWidget.updateWidget(iOSName: widget);
+    }
+  }
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;

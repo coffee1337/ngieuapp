@@ -54,11 +54,17 @@ class NewsDetailScreen extends ConsumerWidget {
                               context,
                               preview.imageUrl,
                             ),
-                            child: CachedNetworkImage(
-                              imageUrl: preview.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
-                                color: theme.colorScheme.surfaceContainerHigh,
+                            child: Hero(
+                              tag: 'news-image-${preview.imageUrl}',
+                              child: CachedNetworkImage(
+                                imageUrl: preview.imageUrl!,
+                                fit: BoxFit.cover,
+                                fadeInDuration: const Duration(
+                                  milliseconds: 160,
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  color: theme.colorScheme.surfaceContainerHigh,
+                                ),
                               ),
                             ),
                           ),

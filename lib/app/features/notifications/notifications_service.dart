@@ -21,6 +21,7 @@ class NotificationsService {
   final selectedRoute = ValueNotifier<String?>(null);
 
   static const _brandColor = Color(0xFF9F003D);
+  static const _lockScreenCardId = 0x4E474945;
 
   Future<void> init() async {
     final inProgress = _initializing;
@@ -275,6 +276,64 @@ class NotificationsService {
           presentSound: preferences.soundEnabled,
           categoryIdentifier: 'lesson_reminder',
           threadIdentifier: 'lesson_reminders',
+        ),
+      ),
+      payload: '/schedule',
+    );
+  }
+
+  /// Keeps the current or next lesson readable on Android lock screens that
+  /// do not provide a third-party AppWidget host.
+  Future<void> updateAndroidLockScreenCard(
+    List<Lesson> lessons, {
+    required bool enabled,
+  }) async {
+    if (!Platform.isAndroid) return;
+    await init();
+    if (!enabled) {
+      await _plugin.cancel(_lockScreenCardId);
+      return;
+    }
+
+    final now = DateTime.now();
+    final candidates =
+        lessons
+            .where((lesson) => !lesson.isEvent && lesson.endTime.isAfter(now))
+            .toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final lesson = candidates.firstOrNull;
+    final isNow =
+        lesson != null &&
+        !now.isBefore(lesson.startTime) &&
+        now.isBefore(lesson.endTime);
+    final title = lesson == null
+        ? 'НГИЭУ · Расписание'
+        : isNow
+        ? 'Сейчас · ${lesson.subject}'
+        : 'Следующая пара · ${lesson.subject}';
+    final body = lesson == null ? 'Ближайших занятий нет' : _buildBody(lesson);
+
+    await _plugin.show(
+      _lockScreenCardId,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'lock_screen_schedule',
+          'Расписание на экране блокировки',
+          channelDescription: 'Закреплённая карточка текущей и следующей пары',
+          importance: Importance.low,
+          priority: Priority.low,
+          icon: 'ic_stat_ngieu',
+          color: _brandColor,
+          ongoing: true,
+          autoCancel: false,
+          onlyAlertOnce: true,
+          playSound: false,
+          enableVibration: false,
+          visibility: NotificationVisibility.public,
+          category: AndroidNotificationCategory.status,
+          styleInformation: BigTextStyleInformation(body),
         ),
       ),
       payload: '/schedule',

@@ -194,6 +194,7 @@ class UpcomingLessonsWidgetProvider : ScheduleWidgetProvider(
     R.layout.next_lesson_widget_medium,
 ) {
     override fun bind(context: Context, views: RemoteViews) {
+        views.setTextViewText(R.id.widget_title, "БЛИЖАЙШИЕ ПАРЫ")
         val hasLessons = bindRows(
             context,
             views,
@@ -219,6 +220,41 @@ class UpcomingLessonsWidgetProvider : ScheduleWidgetProvider(
                 ),
             ),
         )
+        views.setViewVisibility(R.id.widget_empty, if (hasLessons) View.GONE else View.VISIBLE)
+    }
+}
+
+class TomorrowScheduleWidgetProvider : ScheduleWidgetProvider(
+    R.layout.next_lesson_widget_medium,
+) {
+    override fun bind(context: Context, views: RemoteViews) {
+        views.setTextViewText(R.id.widget_title, "ЗАВТРА")
+        val hasLessons = bindRows(
+            context,
+            views,
+            "widget_tomorrow",
+            listOf(
+                WidgetRowIds(
+                    R.id.widget_row_0,
+                    R.id.widget_item_0_time,
+                    R.id.widget_item_0_subject,
+                    R.id.widget_item_0_room,
+                ),
+                WidgetRowIds(
+                    R.id.widget_row_1,
+                    R.id.widget_item_1_time,
+                    R.id.widget_item_1_subject,
+                    R.id.widget_item_1_room,
+                ),
+                WidgetRowIds(
+                    R.id.widget_row_2,
+                    R.id.widget_item_2_time,
+                    R.id.widget_item_2_subject,
+                    R.id.widget_item_2_room,
+                ),
+            ),
+        )
+        views.setTextViewText(R.id.widget_empty, "Завтра пар нет")
         views.setViewVisibility(R.id.widget_empty, if (hasLessons) View.GONE else View.VISIBLE)
     }
 }

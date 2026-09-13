@@ -19,8 +19,10 @@ struct ScheduleSnapshot {
     let fallbackTime: String
     let fallbackRoom: String
     let updatedDay: String
+    let tomorrowDay: String
     let upcoming: [LessonRow]
     let today: [LessonRow]
+    let tomorrow: [LessonRow]
 
     static let placeholder = ScheduleSnapshot(
         header: "СЛЕДУЮЩАЯ ПАРА",
@@ -28,6 +30,7 @@ struct ScheduleSnapshot {
         fallbackTime: "10:40–12:10",
         fallbackRoom: "Ауд. 205",
         updatedDay: "",
+        tomorrowDay: "",
         upcoming: [
             LessonRow(
                 id: 0,
@@ -38,7 +41,8 @@ struct ScheduleSnapshot {
                 end: nil
             )
         ],
-        today: []
+        today: [],
+        tomorrow: []
     )
 
     func nextLesson(at date: Date) -> LessonRow? {
@@ -59,12 +63,21 @@ struct ScheduleSnapshot {
         isCurrentDay(at: date) ? today : []
     }
 
+    func tomorrowLessons(at date: Date) -> [LessonRow] {
+        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: date) ?? date
+        return dayKey(nextDay) == tomorrowDay ? tomorrow : []
+    }
+
     func isCurrentDay(at date: Date) -> Bool {
+        dayKey(date) == updatedDay
+    }
+
+    private func dayKey(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar.current
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date) == updatedDay
+        return formatter.string(from: date)
     }
 }
 
@@ -117,8 +130,10 @@ private func loadSnapshot() -> ScheduleSnapshot {
         fallbackTime: value("widget_time"),
         fallbackRoom: value("widget_room"),
         updatedDay: String(value("widget_updated_at").prefix(10)),
+        tomorrowDay: value("widget_tomorrow_date"),
         upcoming: rows(prefix: "widget_upcoming", limit: 3, includeDates: true),
-        today: rows(prefix: "widget_item", limit: 7)
+        today: rows(prefix: "widget_item", limit: 7),
+        tomorrow: rows(prefix: "widget_tomorrow", limit: 4)
     )
 }
 
@@ -432,7 +447,7 @@ private struct LockScreenScheduleView: View {
                     Image(systemName: "graduationcap.fill")
                         .widgetAccentable()
                     Text(scheduleStatus(entry.snapshot, at: entry.date))
-                    .font(.caption.weight(.bold))
+                        .font(.caption.weight(.bold))
                     Spacer(minLength: 2)
                     Text(time.isEmpty ? "—" : time)
                         .font(.headline.weight(.bold))
@@ -442,7 +457,6 @@ private struct LockScreenScheduleView: View {
                     .font(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .privacySensitive()
                 if !room.isEmpty {
                     Text("Аудитория \(room)")
                         .font(.caption)
@@ -519,6 +533,24 @@ struct TodayScheduleWidget: Widget {
     }
 }
 
+struct TomorrowScheduleWidget: Widget {
+    let kind = "TomorrowScheduleWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: ScheduleProvider()) { entry in
+            RowsView(
+                title: "РАСПИСАНИЕ НА ЗАВТРА",
+                lessons: entry.snapshot.tomorrowLessons(at: entry.date),
+                large: false,
+                emptyTitle: "Завтра пар нет",
+                emptySubtitle: "Данные обновятся вместе с расписанием"
+            )
+        }
+        .configurationDisplayName("Расписание на завтра")
+        .description("До четырёх завтрашних занятий в компактной карточке")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
 @available(iOSApplicationExtension 16.0, *)
 struct LockScreenScheduleWidget: Widget {
     let kind = "LockScreenScheduleWidget"
@@ -541,6 +573,7 @@ struct NgieuWidgetBundle: WidgetBundle {
         WideNextLessonWidget()
         UpcomingLessonsWidget()
         TodayScheduleWidget()
+        TomorrowScheduleWidget()
         if #available(iOSApplicationExtension 16.0, *) {
             LockScreenScheduleWidget()
         }

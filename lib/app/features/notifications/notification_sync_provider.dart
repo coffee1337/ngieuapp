@@ -14,7 +14,14 @@ final notificationSyncProvider = FutureProvider<void>((ref) async {
   final notifications = ref.watch(notificationsServiceProvider);
 
   if (!settings.notificationsEnabled) {
-    await notifications.cancelAll();
+    // Keep the independently enabled lock-screen schedule card. Only lesson
+    // reminders belong to this setting.
+    await notifications.rescheduleFor(
+      const [],
+      minutesBefore: settings.notificationMinutesBefore,
+      enabled: false,
+      preferences: smartSettings,
+    );
     return;
   }
 
