@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -39,10 +41,12 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
   );
   Animation<Matrix4>? _matrixAnimation;
   TapDownDetails? _doubleTapDetails;
+  Timer? _singleTapTimer;
   bool _controlsVisible = true;
 
   @override
   void dispose() {
+    _singleTapTimer?.cancel();
     _animationController.dispose();
     _transformationController.dispose();
     super.dispose();
@@ -80,6 +84,19 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
     );
   }
 
+  void _handleImageTap(TapUpDetails details) {
+    final pendingTap = _singleTapTimer;
+    if (pendingTap?.isActive ?? false) {
+      pendingTap!.cancel();
+      _doubleTapDetails = TapDownDetails(localPosition: details.localPosition);
+      _handleDoubleTap();
+      return;
+    }
+    _singleTapTimer = Timer(const Duration(milliseconds: 240), () {
+      if (mounted) setState(() => _controlsVisible = !_controlsVisible);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,10 +114,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
               child: GestureDetector(
                 key: const Key('fullscreen-image-gesture'),
                 behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    setState(() => _controlsVisible = !_controlsVisible),
-                onDoubleTapDown: (details) => _doubleTapDetails = details,
-                onDoubleTap: _handleDoubleTap,
+                onTapUp: _handleImageTap,
                 child: SizedBox.expand(
                   child: Hero(
                     tag: 'news-image-${widget.imageUrl}',
@@ -131,32 +145,43 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
               ),
             ),
           ),
-          SafeArea(
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOutCubic,
-              offset: _controlsVisible ? Offset.zero : const Offset(0, -1.4),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 120),
-                opacity: _controlsVisible ? 1 : 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton.filled(
-                        key: const Key('fullscreen-image-close'),
-                        tooltip: 'Закрыть',
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: IgnorePointer(
+                ignoring: !_controlsVisible,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
+                  offset: _controlsVisible
+                      ? Offset.zero
+                      : const Offset(0, -1.4),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 120),
+                    opacity: _controlsVisible ? 1 : 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton.filled(
+                            key: const Key('fullscreen-image-close'),
+                            tooltip: 'Закрыть',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                          IconButton.filledTonal(
+                            key: const Key('fullscreen-image-reset'),
+                            tooltip: 'Сбросить масштаб',
+                            onPressed: () => _animateTo(Matrix4.identity()),
+                            icon: const Icon(Icons.center_focus_strong_rounded),
+                          ),
+                        ],
                       ),
-                      IconButton.filledTonal(
-                        key: const Key('fullscreen-image-reset'),
-                        tooltip: 'Сбросить масштаб',
-                        onPressed: () => _animateTo(Matrix4.identity()),
-                        icon: const Icon(Icons.center_focus_strong_rounded),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -167,11 +192,13 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
               left: 24,
               right: 24,
               bottom: 24,
-              child: SafeArea(
-                child: Text(
-                  'Двойное касание — приблизить · жест двумя пальцами — масштаб',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+              child: IgnorePointer(
+                child: SafeArea(
+                  child: Text(
+                    'Двойное касание — приблизить · жест двумя пальцами — масштаб',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
                 ),
               ),
             ),
