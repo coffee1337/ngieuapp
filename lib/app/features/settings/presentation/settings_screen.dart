@@ -379,7 +379,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               if (Platform.isIOS)
                 const ListTile(
-                  secondary: Icon(Icons.lock_outline_rounded),
+                  leading: Icon(Icons.lock_outline_rounded),
                   title: Text('Виджет блокировки iPhone'),
                   subtitle: Text(
                     'iOS 16+: удерживайте экран блокировки → «Настроить» → '
