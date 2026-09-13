@@ -64,7 +64,10 @@ void main() {
       ),
     );
 
-    await tester.doubleTapAt(tester.getCenter(find.byType(InteractiveViewer)));
+    final imageCenter = tester.getCenter(find.byType(InteractiveViewer));
+    await tester.tapAt(imageCenter);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(imageCenter);
     await tester.pump(const Duration(milliseconds: 260));
 
     var viewer = tester.widget<InteractiveViewer>(
