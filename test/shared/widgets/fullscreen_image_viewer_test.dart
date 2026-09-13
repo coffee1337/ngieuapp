@@ -28,7 +28,7 @@ void main() {
     expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(find.byTooltip('Закрыть'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Закрыть'));
+    await tester.tap(find.byKey(const Key('fullscreen-image-close')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
@@ -64,7 +64,9 @@ void main() {
       ),
     );
 
-    final imageCenter = tester.getCenter(find.byType(InteractiveViewer));
+    final imageCenter = tester.getCenter(
+      find.byKey(const Key('fullscreen-image-gesture')),
+    );
     await tester.tapAt(imageCenter);
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tapAt(imageCenter);
@@ -78,7 +80,7 @@ void main() {
       greaterThan(1),
     );
 
-    await tester.tap(find.byTooltip('Сбросить масштаб'));
+    await tester.tap(find.byKey(const Key('fullscreen-image-reset')));
     await tester.pump(const Duration(milliseconds: 260));
     viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
     expect(
