@@ -87,18 +87,20 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
       body: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _controlsVisible = !_controlsVisible),
-              onDoubleTapDown: (details) => _doubleTapDetails = details,
-              onDoubleTap: _handleDoubleTap,
-              child: InteractiveViewer(
-                transformationController: _transformationController,
-                minScale: 0.8,
-                maxScale: 5,
-                boundaryMargin: const EdgeInsets.all(48),
-                clipBehavior: Clip.none,
-                onInteractionStart: (_) => _animationController.stop(),
+            child: InteractiveViewer(
+              transformationController: _transformationController,
+              minScale: 0.8,
+              maxScale: 5,
+              boundaryMargin: const EdgeInsets.all(48),
+              clipBehavior: Clip.none,
+              onInteractionStart: (_) => _animationController.stop(),
+              child: GestureDetector(
+                key: const Key('fullscreen-image-gesture'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    setState(() => _controlsVisible = !_controlsVisible),
+                onDoubleTapDown: (details) => _doubleTapDetails = details,
+                onDoubleTap: _handleDoubleTap,
                 child: SizedBox.expand(
                   child: Hero(
                     tag: 'news-image-${widget.imageUrl}',
@@ -143,11 +145,13 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton.filled(
+                        key: const Key('fullscreen-image-close'),
                         tooltip: 'Закрыть',
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.close_rounded),
                       ),
                       IconButton.filledTonal(
+                        key: const Key('fullscreen-image-reset'),
                         tooltip: 'Сбросить масштаб',
                         onPressed: () => _animateTo(Matrix4.identity()),
                         icon: const Icon(Icons.center_focus_strong_rounded),
