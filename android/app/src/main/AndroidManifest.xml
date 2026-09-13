@@ -81,6 +81,15 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/today_schedule_widget_info"/>
         </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.TomorrowScheduleWidgetProvider"
+            android:label="@string/widget_tomorrow_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/tomorrow_schedule_widget_info"/>
+        </receiver>
 
         <!-- Notifications -->
         <receiver android:exported="false"

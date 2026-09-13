@@ -6,9 +6,11 @@
     <string name="widget_tall_description">Следующая пара в читаемом вертикальном формате 1×2</string>
     <string name="widget_upcoming_description">Три ближайшие пары отдельными строками</string>
     <string name="widget_today_description">Расписание дня с отдельными колонками времени и аудитории</string>
+    <string name="widget_tomorrow_description">Компактное расписание на завтра</string>
     <string name="widget_next_lesson_name">НГИЭУ: следующая пара 2×1</string>
     <string name="widget_square_name">НГИЭУ: следующая пара 1×1</string>
     <string name="widget_tall_name">НГИЭУ: следующая пара 1×2</string>
     <string name="widget_upcoming_name">НГИЭУ: ближайшие пары</string>
     <string name="widget_today_name">НГИЭУ: расписание дня</string>
+    <string name="widget_tomorrow_name">НГИЭУ: завтра</string>
 </resources>

@@ -54,4 +54,33 @@ void main() {
 
     expect(find.byType(FullscreenImageViewer), findsNothing);
   });
+
+  testWidgets('double tap zooms and reset button restores the image', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FullscreenImageViewer(imageUrl: 'https://example.com/image.jpg'),
+      ),
+    );
+
+    await tester.doubleTapAt(tester.getCenter(find.byType(InteractiveViewer)));
+    await tester.pump(const Duration(milliseconds: 260));
+
+    var viewer = tester.widget<InteractiveViewer>(
+      find.byType(InteractiveViewer),
+    );
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      greaterThan(1),
+    );
+
+    await tester.tap(find.byTooltip('Сбросить масштаб'));
+    await tester.pump(const Duration(milliseconds: 260));
+    viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      closeTo(1, 0.01),
+    );
+  });
 }

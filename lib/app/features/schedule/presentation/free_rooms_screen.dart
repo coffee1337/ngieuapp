@@ -10,6 +10,7 @@ import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/empty_view.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
+import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 import 'package:ngieuapp/app/theme/app_theme.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
@@ -168,7 +169,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       return [
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 300,
+            height: 430,
             child: FreeRoomsLoadingView(loader: loader),
           ),
         ),
@@ -191,7 +192,7 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
     return asyncValue.when<List<Widget>>(
       loading: () => const [
         SliverToBoxAdapter(
-          child: SizedBox(height: 280, child: FreeRoomsLoadingView()),
+          child: SizedBox(height: 430, child: FreeRoomsLoadingView()),
         ),
       ],
       error: (e, _) => [
@@ -320,29 +321,69 @@ class _FreeRoomsLoadingViewState extends State<FreeRoomsLoadingView>
           children: [
             AnimatedBuilder(
               animation: _controller,
-              builder: (context, child) => Transform.scale(
-                scale: 0.92 + _controller.value * 0.12,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: theme.colorScheme.primaryContainer.withValues(
-                      alpha: 0.55 + _controller.value * 0.35,
-                    ),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(
-                        alpha: 0.25 + _controller.value * 0.35,
+              builder: (context, child) {
+                final reduceMotion = MediaQuery.disableAnimationsOf(context);
+                final value = reduceMotion ? 0.5 : _controller.value;
+                return SizedBox(
+                  width: 86,
+                  height: 86,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Transform.rotate(
+                        angle: value * 6.283,
+                        child: Container(
+                          width: 82,
+                          height: 82,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.18,
+                              ),
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.topCenter,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.tertiary.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      Transform.scale(
+                        scale: 0.92 + value * 0.1,
+                        child: Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.82),
+                          ),
+                          child: Icon(
+                            Icons.meeting_room_rounded,
+                            size: 30,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.meeting_room_rounded,
-                    size: 32,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.xxl),
             Text(
@@ -376,6 +417,39 @@ class _FreeRoomsLoadingViewState extends State<FreeRoomsLoadingView>
                 style: theme.textTheme.labelSmall?.copyWith(color: color),
               ),
             ],
+            const SizedBox(height: AppSpacing.xl),
+            Shimmer(
+              child: Column(
+                children: [
+                  for (var index = 0; index < 2; index++) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainer,
+                        borderRadius: AppRadius.lgBr,
+                      ),
+                      child: const Row(
+                        children: [
+                          SkeletonBox(width: 52, height: 52),
+                          SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SkeletonBox(height: 14),
+                                SizedBox(height: AppSpacing.sm),
+                                SkeletonBox(width: 150, height: 11),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (index == 0) const SizedBox(height: AppSpacing.sm),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),

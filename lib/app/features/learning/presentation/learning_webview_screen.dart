@@ -13,6 +13,9 @@ class LearningWebViewScreen extends StatefulWidget {
 }
 
 class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
+  // Reusing the native web view preserves sessionStorage and in-memory login
+  // state when the user switches between the application tabs.
+  static final _keepAlive = InAppWebViewKeepAlive();
   InAppWebViewController? _controller;
   late final PullToRefreshController _pullToRefresh = PullToRefreshController(
     settings: PullToRefreshSettings(color: const Color(0xFF9F003D)),
@@ -24,11 +27,6 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
   bool _hasError = false;
   String? _errorText;
   bool _canGoBack = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Future<bool> _handleBack() async {
     if (_controller != null && await _controller!.canGoBack()) {
@@ -74,16 +72,19 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 },
               )
             : InAppWebView(
+                keepAlive: _keepAlive,
                 pullToRefreshController: _pullToRefresh,
                 initialUrlRequest: URLRequest(
                   url: WebUri(LearningWebViewScreen._initialUrl),
                 ),
                 initialSettings: InAppWebViewSettings(
+                  cacheEnabled: true,
+                  clearCache: false,
+                  incognito: false,
+                  sharedCookiesEnabled: true,
                   transparentBackground: true,
                   useOnDownloadStart: true,
                   useShouldOverrideUrlLoading: true,
-                  userAgent:
-                      'Mozilla/5.0 (Linux; Android 13) NGIEU-Mobile/1.0 Mobile Safari/537.36',
                 ),
                 onWebViewCreated: (c) => _controller = c,
                 onLoadStart: (_, __) {
@@ -119,9 +120,11 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   }
                 },
                 shouldOverrideUrlLoading: (c, action) async {
-                  final host = action.request.url?.host ?? '';
-                  if (host.contains('ngiei.mcdir.ru') ||
-                      host.contains('ngieu.ru')) {
+                  final scheme = action.request.url?.scheme.toLowerCase();
+                  // Authentication can legitimately redirect through another
+                  // HTTPS host. Blocking that redirect looked like a logout,
+                  // especially on iOS where WKWebView uses the real Safari UA.
+                  if (scheme == 'https' || scheme == 'http') {
                     return NavigationActionPolicy.ALLOW;
                   }
                   return NavigationActionPolicy.CANCEL;
