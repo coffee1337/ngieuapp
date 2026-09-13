@@ -42,6 +42,9 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
   Animation<Matrix4>? _matrixAnimation;
   TapDownDetails? _doubleTapDetails;
   Timer? _singleTapTimer;
+  final Set<int> _activePointers = <int>{};
+  Offset? _pointerDownPosition;
+  bool _pointerMoved = false;
   bool _controlsVisible = true;
 
   @override
@@ -84,17 +87,45 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
     );
   }
 
-  void _handleImageTap(TapUpDetails details) {
+  void _handleImageTap(Offset position) {
     final pendingTap = _singleTapTimer;
     if (pendingTap?.isActive ?? false) {
       pendingTap!.cancel();
-      _doubleTapDetails = TapDownDetails(localPosition: details.localPosition);
+      _doubleTapDetails = TapDownDetails(localPosition: position);
       _handleDoubleTap();
       return;
     }
     _singleTapTimer = Timer(const Duration(milliseconds: 240), () {
       if (mounted) setState(() => _controlsVisible = !_controlsVisible);
     });
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_activePointers.isEmpty) {
+      _pointerDownPosition = event.localPosition;
+      _pointerMoved = false;
+    }
+    _activePointers.add(event.pointer);
+    if (_activePointers.length > 1) _pointerMoved = true;
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    final origin = _pointerDownPosition;
+    if (origin != null && (event.localPosition - origin).distance > 12) {
+      _pointerMoved = true;
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    _activePointers.remove(event.pointer);
+    if (_activePointers.isEmpty && !_pointerMoved) {
+      _handleImageTap(event.localPosition);
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    _activePointers.remove(event.pointer);
+    if (_activePointers.isEmpty) _pointerMoved = false;
   }
 
   @override
@@ -104,17 +135,20 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
       body: Stack(
         children: [
           Positioned.fill(
-            child: InteractiveViewer(
-              transformationController: _transformationController,
-              minScale: 0.8,
-              maxScale: 5,
-              boundaryMargin: const EdgeInsets.all(48),
-              clipBehavior: Clip.none,
-              onInteractionStart: (_) => _animationController.stop(),
-              child: GestureDetector(
-                key: const Key('fullscreen-image-gesture'),
-                behavior: HitTestBehavior.opaque,
-                onTapUp: _handleImageTap,
+            child: Listener(
+              key: const Key('fullscreen-image-gesture'),
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: _handlePointerDown,
+              onPointerMove: _handlePointerMove,
+              onPointerUp: _handlePointerUp,
+              onPointerCancel: _handlePointerCancel,
+              child: InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: 0.8,
+                maxScale: 5,
+                boundaryMargin: const EdgeInsets.all(48),
+                clipBehavior: Clip.none,
+                onInteractionStart: (_) => _animationController.stop(),
                 child: SizedBox.expand(
                   child: Hero(
                     tag: 'news-image-${widget.imageUrl}',
