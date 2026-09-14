@@ -5,9 +5,11 @@ import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type_repository.dart';
 
 class WeekTypeRepositoryImpl implements WeekTypeRepository {
-  WeekTypeRepositoryImpl(this._api, this._cache);
+  WeekTypeRepositoryImpl(this._api, this._cache, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
   final WeekTypeApiDataSource _api;
   final WeekTypeCacheDataSource _cache;
+  final DateTime Function() _now;
 
   @override
   Future<WeekType> getWeekType(DateTime date) async {

@@ -9,4 +9,7 @@ abstract interface class ScheduleRepository {
 
   /// Все занятия всех акторов в указанный день (для поиска свободных кабинетов).
   Future<List<Lesson>> getAllLessonsForDate(DateTime date);
+
+  /// Все занятия всех акторов в диапазоне дат, верхняя граница не включается.
+  Future<List<Lesson>> getAllLessonsInRange(DateTime from, DateTime to);
 }

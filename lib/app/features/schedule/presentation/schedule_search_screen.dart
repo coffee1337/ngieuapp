@@ -32,6 +32,8 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
 
   void _onChanged(String v) {
     _debounce?.cancel();
+    // The clear action follows the controller text, not the debounced query.
+    setState(() {});
     _debounce = Timer(const Duration(milliseconds: 350), () {
       if (mounted) setState(() => _query = v.trim());
     });
@@ -59,8 +61,9 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
             IconButton(
               icon: const Icon(Icons.clear),
               onPressed: () {
+                _debounce?.cancel();
                 _ctrl.clear();
-                _onChanged('');
+                setState(() => _query = '');
               },
             ),
         ],

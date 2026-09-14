@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ngieuapp/app/core/utils/schedule_clock_provider.dart';
 
 import 'package:ngieuapp/app/features/notifications/notification_sync_provider.dart';
 import 'package:ngieuapp/app/features/settings/data/layout_density_provider.dart';
@@ -20,6 +21,7 @@ class NgieuApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(scheduleClockProvider);
     final router = ref.watch(routerProvider);
     final settings = ref.watch(appSettingsProvider);
     final density = ref.watch(layoutDensityProvider);

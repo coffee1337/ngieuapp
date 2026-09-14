@@ -138,11 +138,18 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: ':actorId',
+                redirect: (context, state) {
+                  final raw = state.pathParameters['actorId'];
+                  if (raw == null || raw.trim().isEmpty) {
+                    return '/schedule/pick';
+                  }
+                  return null;
+                },
                 pageBuilder: (ctx, state) {
                   final extra = state.extra;
                   return _page(
                     WeekScheduleScreen(
-                      actorId: state.pathParameters['actorId']!,
+                      actorId: state.pathParameters['actorId'] ?? '',
                       initialActor: extra is FavoriteActor ? extra : null,
                     ),
                   );

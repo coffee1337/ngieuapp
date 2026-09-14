@@ -30,7 +30,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
 
   Future<bool> _handleBack() async {
     if (_controller != null && await _controller!.canGoBack()) {
-      _controller!.goBack();
+      await _controller!.goBack();
       return false;
     }
     return true;
@@ -88,12 +88,14 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 ),
                 onWebViewCreated: (c) => _controller = c,
                 onLoadStart: (_, __) {
+                  if (!mounted) return;
                   setState(() {
                     _hasError = false;
                     _progress = 0;
                   });
                 },
                 onProgressChanged: (_, p) {
+                  if (!mounted) return;
                   if (p == 100) _pullToRefresh.endRefreshing();
                   setState(() => _progress = p / 100);
                 },
@@ -102,6 +104,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   if (mounted) setState(() {});
                 },
                 onReceivedError: (_, request, error) {
+                  if (!mounted) return;
                   if (request.isForMainFrame ?? false) {
                     setState(() {
                       _hasError = true;
@@ -111,6 +114,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   _pullToRefresh.endRefreshing();
                 },
                 onReceivedHttpError: (_, request, response) {
+                  if (!mounted) return;
                   if ((request.isForMainFrame ?? false) &&
                       (response.statusCode ?? 0) >= 500) {
                     setState(() {
@@ -130,7 +134,23 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   return NavigationActionPolicy.CANCEL;
                 },
                 onDownloadStartRequest: (c, req) async {
-                  // Отдаём ОС — пусть сохраняет файл через Download Manager
+                  // The external browser owns the actual download. It may
+                  // require login again because WebView cookies are private.
+                  final messenger = ScaffoldMessenger.of(context);
+                  final scheme = req.url.scheme.toLowerCase();
+                  try {
+                    if (scheme != 'https' && scheme != 'http') {
+                      throw const FormatException('Unsupported download URL');
+                    }
+                    await InAppBrowser.openWithSystemBrowser(url: req.url);
+                  } on Object {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Не удалось открыть загрузку в браузере'),
+                      ),
+                    );
+                  }
                 },
               ),
       ),

@@ -9,6 +9,22 @@ void main() {
     sut = NewsParser();
   });
 
+  test('resolves preview and detail images against configured origins', () {
+    final parser = NewsParser(baseUrl: 'https://example.org/');
+    final preview = parser.parseList('''
+      <article><h2><a href="/ngieu-news/42/">Title</a></h2>
+      <img src="/images/cover.png"></article>
+    ''').single;
+    expect(preview.url, 'https://example.org/ngieu-news/42/');
+    expect(preview.imageUrl, 'https://example.org/images/cover.png');
+    final detail = parser.parseDetail(
+      preview,
+      '<div class="entry-content"><img src="image.png"></div>',
+    );
+    expect(detail.gallery, ['https://example.org/ngieu-news/42/image.png']);
+    expect(detail.contentHtml, contains(detail.gallery.single));
+  });
+
   group('NewsParser.parseList', () {
     test('parses article card with all fields', () {
       const html = '''

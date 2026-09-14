@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:ngieuapp/app/core/cache/hive_boxes.dart';
+import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 
 class WeekTypeCacheDataSource {
@@ -18,12 +19,17 @@ class WeekTypeCacheDataSource {
       'cachedAt': DateTime.now().toIso8601String(),
     };
     await box.put(_cacheKey, jsonEncode(cacheData));
+    await box.put(_keyFor(weekType.date), jsonEncode(cacheData));
   }
 
   /// Загружает тип недели из кэша
   Future<WeekType?> loadWeekType({bool allowExpired = false}) async {
     final box = await Hive.openBox<String>(HiveBoxes.scheduleCache);
-    final raw = box.get(_cacheKey);
+    // Fall back to the old single entry when upgrading an existing install.
+    final key = date != null && box.containsKey(_keyFor(date))
+        ? _keyFor(date)
+        : _cacheKey;
+    final raw = box.get(key);
     if (raw == null) return null;
 
     try {
@@ -52,6 +58,11 @@ class WeekTypeCacheDataSource {
   /// Очищает кэш типа недели
   Future<void> clearCache() async {
     final box = await Hive.openBox<String>(HiveBoxes.scheduleCache);
-    await box.delete(_cacheKey);
+    await box.deleteAll(
+      box.keys.where((key) => key.toString().startsWith(_cacheKey)).toList(),
+    );
   }
+
+  String _keyFor(DateTime date) =>
+      '${_cacheKey}_${date.startOfWeek.toIso8601String()}';
 }

@@ -55,6 +55,7 @@ flutter:
   assets:
     - assets/json/
     - assets/branding/
+    - web/sqlite3/
 
 flutter_launcher_icons:
   android: true

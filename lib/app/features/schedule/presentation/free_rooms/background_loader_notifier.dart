@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 
@@ -48,18 +50,23 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
   Completer<void>? _completer;
 
   Future<void> run() async {
-    if (state.isLoading) return _completer?.future;
-    _completer = Completer<void>();
-
-    final groups = await _ref.read(studentGroupsProvider.future);
+    final existing = _completer;
+    if (existing != null) return existing.future;
+    final completer = Completer<void>();
+    _completer = completer;
+    // Set loading before the first await so concurrent callers share one run.
     state = BackgroundLoaderState(
       isLoading: true,
       loaded: 0,
-      total: groups.length,
+      total: 0,
       lastRunTime: state.lastRunTime,
       shouldAutoLoad: state.shouldAutoLoad,
     );
+    unawaited(_runBatch(completer));
+    return completer.future;
+  }
 
+  Future<void> _runBatch(Completer<void> completer) async {
     final apiDs = _ref.read(scheduleApiDataSourceProvider);
     final dbDs = _ref.read(scheduleDbDataSourceProvider);
     final anchorDate = (await _ref.read(currentWeekTypeProvider.future)).date;
@@ -67,45 +74,56 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
 
     const batchSize = 3;
     var loadedCount = 0;
-
-    await Future.doWhile(() async {
-      if (loadedCount >= groups.length) return false;
-      final batch = groups.skip(loadedCount).take(batchSize).toList();
-      try {
+    var total = 0;
+    try {
+      final groups = await _ref.read(studentGroupsProvider.future);
+      if (!mounted) return;
+      total = groups.length;
+      final anchorDate = (await _ref.read(currentWeekTypeProvider.future)).date;
+      if (!mounted) return;
+      for (var offset = 0; offset < groups.length; offset += batchSize) {
+        if (!mounted) return;
+        final batch = groups.skip(offset).take(batchSize);
         await Future.wait(
           batch.map((g) async {
+            final cancellation = CancelToken();
             try {
               final lessons = await apiDs
                   .fetchSchedule(g.id, anchorDate: anchorDate)
                   .timeout(const Duration(seconds: 10));
               await dbDs.replaceForActor(g.id, lessons);
-            } catch (_) {}
-            loadedCount++;
+              loadedCount++;
+            } on Object catch (error) {
+              if (kDebugMode) debugPrint('Schedule ${g.id} failed: $error');
+            }
+            if (!mounted) return;
             state = BackgroundLoaderState(
               isLoading: true,
               loaded: loadedCount,
-              total: groups.length,
+              total: total,
               lastRunTime: state.lastRunTime,
               shouldAutoLoad: state.shouldAutoLoad,
             );
           }),
         );
-      } catch (_) {
-        loadedCount += batch.length;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
       }
-      await Future.delayed(const Duration(milliseconds: 50));
-      return true;
-    });
-
-    state = BackgroundLoaderState(
-      isLoading: false,
-      loaded: loadedCount,
-      total: groups.length,
-      lastRunTime: DateTime.now(),
-      shouldAutoLoad: state.shouldAutoLoad,
-    );
-    _ref.invalidate(freeRoomsProvider);
-    _completer?.complete();
+    } on Object catch (error) {
+      if (kDebugMode) debugPrint('Background schedule load failed: $error');
+    } finally {
+      if (mounted) {
+        state = BackgroundLoaderState(
+          isLoading: false,
+          loaded: loadedCount,
+          total: total,
+          lastRunTime: DateTime.now(),
+          shouldAutoLoad: state.shouldAutoLoad,
+        );
+        _ref.invalidate(freeRoomsProvider);
+      }
+      _completer = null;
+      completer.complete();
+    }
   }
 
   Future<void> runIfNeeded() async {

@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:ngieuapp/app/core/network/api_exception.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({required this.error, super.key, this.onRetry});
 
   final Object error;
   final VoidCallback? onRetry;
+
+  String _userMessage(Object error) {
+    if (error is ApiException) return error.message;
+    final text = error.toString();
+    // Никогда не показываем технические toString() пользователю.
+    if (text.startsWith('DioException') ||
+        text.startsWith('FormatException') ||
+        text.startsWith('TypeError') ||
+        text.startsWith('Exception')) {
+      return 'Нет соединения с сервером. Проверьте интернет и попробуйте снова.';
+    }
+    return text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +41,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              error.toString(),
+              _userMessage(error),
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
               maxLines: 3,

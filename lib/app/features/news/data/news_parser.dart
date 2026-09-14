@@ -1,9 +1,14 @@
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
+import 'package:ngieuapp/app/core/network/api_endpoints.dart';
 import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 /// Чистый парсер, не знает про сеть — легко тестировать.
 class NewsParser {
+  NewsParser({String baseUrl = ApiEndpoints.newsBase})
+    : _base = Uri.parse(baseUrl);
+
+  final Uri _base;
   static final _idPattern = RegExp(r'/ngieu-news/(\d+)/');
 
   static const _monthMap = {
@@ -48,14 +53,15 @@ class NewsParser {
     final href = titleLink.attributes['href'] ?? '';
     final idMatch = _idPattern.firstMatch(href);
     if (idMatch == null) return null;
-    final id = int.parse(idMatch.group(1)!);
+    final id = int.tryParse(idMatch.group(1)!);
+    if (id == null) return null;
 
     final title = titleLink.text.trim();
     if (title.isEmpty) return null;
 
     // 2. Картинка
     final img = el.querySelector('img');
-    final imageUrl = img?.attributes['src'];
+    final imageUrl = _resolveUrl(img?.attributes['src'], _base);
 
     // 3. Excerpt — первый <p> в карточке
     final excerpt = el.querySelector('p')?.text.trim() ?? '';
@@ -69,7 +75,7 @@ class NewsParser {
     return NewsArticle(
       id: id,
       title: title,
-      url: href.startsWith('http') ? href : 'https://ngieu.ru$href',
+      url: _base.resolve(href).toString(),
       excerpt: excerpt,
       imageUrl: imageUrl,
       publishedAt: date,
@@ -118,6 +124,7 @@ class NewsParser {
   /// Детальная страница
   NewsArticleFull parseDetail(NewsArticle preview, String html) {
     final doc = parse(html);
+    final pageUrl = _base.resolve(preview.url);
     // На WP обычно контент в div.entry-content или article .post-content
     final contentEl =
         doc.querySelector('.entry-content') ??
@@ -127,8 +134,11 @@ class NewsParser {
     final gallery = <String>[];
     if (contentEl != null) {
       for (final img in contentEl.querySelectorAll('img')) {
-        final src = img.attributes['src'];
-        if (src != null && src.isNotEmpty) gallery.add(src);
+        final src = _resolveUrl(img.attributes['src'], pageUrl);
+        if (src != null) {
+          img.attributes['src'] = src;
+          gallery.add(src);
+        }
       }
     }
 
@@ -142,5 +152,10 @@ class NewsParser {
       contentHtml: contentEl?.innerHtml ?? '<p>Не удалось загрузить текст</p>',
       gallery: gallery,
     );
+  }
+
+  String? _resolveUrl(String? value, Uri base) {
+    if (value == null || value.trim().isEmpty) return null;
+    return base.resolve(value.trim()).toString();
   }
 }

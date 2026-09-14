@@ -16,7 +16,10 @@ class ScheduleDbDataSource {
   ) async {
     final query = _db.select(_db.scheduleEntries)
       ..where(
-        (t) => t.actorId.equals(actorId) & t.date.isBetweenValues(from, to),
+        (t) =>
+            t.actorId.equals(actorId) &
+            t.date.isBiggerOrEqualValue(from) &
+            t.date.isSmallerThanValue(to),
       );
     final rows = await query.get();
     return rows.map(_toLesson).toList();
@@ -25,8 +28,19 @@ class ScheduleDbDataSource {
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) async {
     final dayStart = DateTime(date.year, date.month, date.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
+    return getAllLessonsInRange(dayStart, dayEnd);
+  }
+
+  Future<List<Lesson>> getAllLessonsInRange(DateTime from, DateTime to) async {
+    final rangeStart = DateTime(from.year, from.month, from.day);
+    final rangeEnd = DateTime(to.year, to.month, to.day);
+    if (!rangeEnd.isAfter(rangeStart)) return const [];
     final query = _db.select(_db.scheduleEntries)
-      ..where((t) => t.date.isBetweenValues(dayStart, dayEnd));
+      ..where(
+        (t) =>
+            t.date.isBiggerOrEqualValue(rangeStart) &
+            t.date.isSmallerThanValue(rangeEnd),
+      );
     final rows = await query.get();
     return rows.map(_toLesson).toList();
   }
@@ -67,7 +81,9 @@ class ScheduleDbDataSource {
 
   Lesson _toLesson(ScheduleEntry row) {
     return Lesson(
-      id: row.id,
+      id: row.id.startsWith('${row.actorId}:')
+          ? row.id.substring(row.actorId.length + 1)
+          : row.id,
       date: row.date,
       pairNumber: row.pairNumber,
       startTime: row.startTime,

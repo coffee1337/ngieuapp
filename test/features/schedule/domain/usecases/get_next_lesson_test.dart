@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/get_next_lesson.dart';
 
 import '../../../../helpers/test_helpers.dart';

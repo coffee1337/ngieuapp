@@ -22,8 +22,11 @@ class SearchSchedule {
     final q = query.trim().toLowerCase();
     if (q.length < 2) return const [];
 
-    final from = DateTime.now().subtract(const Duration(days: 14));
-    final to = DateTime.now().add(const Duration(days: 14));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final from = today.subtract(const Duration(days: 14));
+    final to = today.add(const Duration(days: 14));
+    final allLessons = await _repo.getAllLessonsInRange(from, to);
 
     final results = <SearchScheduleResult>[];
     final seen = <String>{};

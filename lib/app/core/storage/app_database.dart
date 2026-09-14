@@ -11,7 +11,18 @@ part 'app_database.g.dart';
   tables: [ScheduleEntries, Classrooms, SentScheduleChangeNotifications],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'ngieu_app'));
+  AppDatabase()
+    : super(
+        driftDatabase(
+          name: 'ngieu_app',
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3/sqlite3.wasm'),
+            driftWorker: Uri.parse('sqlite3/drift_worker.js'),
+          ),
+        ),
+      );
+
+  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
   int get schemaVersion => 5;

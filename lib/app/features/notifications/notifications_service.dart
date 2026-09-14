@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:ngieuapp/app/core/utils/app_platform.dart';
 
 import 'package:flutter/material.dart' show Color, ValueNotifier;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -125,7 +125,7 @@ class NotificationsService {
       }
       return true;
     }
-    if (Platform.isIOS) {
+    if (AppPlatform.isIOS) {
       final granted = await _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -362,11 +362,10 @@ class NotificationsService {
     await _cancelLessonReminders();
     if (!enabled) return;
     final now = DateTime.now();
-    final upcoming = lessons
-        .where((l) => l.startTime.isAfter(now) && !l.isEvent)
-        .take(50)
-        .toList();
-    for (final l in upcoming) {
+    final upcoming =
+        lessons.where((l) => l.startTime.isAfter(now) && !l.isEvent).toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    for (final l in upcoming.take(50)) {
       try {
         await scheduleLessonReminder(
           l,
