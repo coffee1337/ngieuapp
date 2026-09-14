@@ -52,4 +52,15 @@ void main() {
       isFalse,
     );
   });
+
+  test('defines one entrance for every displayed building', () {
+    expect(
+      CampusMapLayout.entrances,
+      hasLength(CampusMapLayout.buildings.length),
+    );
+    expect(
+      CampusMapLayout.entrances.map((entrance) => entrance.buildingId).toSet(),
+      CampusMapLayout.buildings.map((building) => building.id).toSet(),
+    );
+  });
 }

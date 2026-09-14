@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/schedule/domain/smart_gap.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/background_loader_notifier.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/filter_panel.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms/loading_banner.dart';
@@ -17,23 +18,34 @@ import 'package:ngieuapp/app/theme/app_tokens.dart';
 export 'package:ngieuapp/app/features/schedule/presentation/free_rooms/background_loader_notifier.dart';
 
 class FreeRoomsScreen extends ConsumerStatefulWidget {
-  const FreeRoomsScreen({super.key});
+  const FreeRoomsScreen({super.key, this.initialGap});
+
+  final SmartGap? initialGap;
 
   @override
   ConsumerState<FreeRoomsScreen> createState() => _FreeRoomsScreenState();
 }
 
 class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
-  DateTime _date = DateTime.now();
-  TimeOfDay _from = const TimeOfDay(hour: 10, minute: 0);
-  TimeOfDay _to = const TimeOfDay(hour: 12, minute: 0);
-  bool _searched = false;
+  late DateTime _date;
+  late TimeOfDay _from;
+  late TimeOfDay _to;
+  late bool _searched;
   int? _minDurationMinutes;
   String? _instituteFilter;
 
   @override
   void initState() {
     super.initState();
+    final gap = widget.initialGap;
+    _date = gap?.date ?? DateTime.now();
+    _from = gap == null
+        ? const TimeOfDay(hour: 10, minute: 0)
+        : TimeOfDay.fromDateTime(gap.start);
+    _to = gap == null
+        ? const TimeOfDay(hour: 12, minute: 0)
+        : TimeOfDay.fromDateTime(gap.end);
+    _searched = gap != null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(backgroundLoaderProvider.notifier).runIfNeeded();
     });

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_calendar_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
@@ -27,8 +28,8 @@ class WeekScheduleScreen extends ConsumerWidget {
   final String actorId;
   final FavoriteActor? initialActor;
 
-  int _todayIndex(DateTime weekStart) {
-    final today = DateTime.now();
+  int _todayIndex(DateTime weekStart, DateTime currentDate) {
+    final today = currentDate;
     final diff = DateTime(
       today.year,
       today.month,
@@ -73,23 +74,74 @@ class WeekScheduleScreen extends ConsumerWidget {
             tooltip: 'Выбрать расписание',
             onPressed: () => context.push('/schedule/pick'),
           ),
-          IconButton(
-            icon: Icon(
-              showChanges
-                  ? Icons.visibility_rounded
-                  : Icons.visibility_off_rounded,
-              size: AppSizes.iconLg,
-            ),
-            tooltip: showChanges ? 'Скрыть изменения' : 'Показать изменения',
-            onPressed: () => ref
-                .read(appSettingsProvider.notifier)
-                .setShowChanges(!showChanges),
+          PopupMenuButton<_ScheduleAction>(
+            tooltip: 'Действия с расписанием',
+            onSelected: (action) {
+              switch (action) {
+                case _ScheduleAction.smartGaps:
+                  context.push(
+                    '/schedule/${Uri.encodeComponent(actorId)}/gaps',
+                    extra: displayActor,
+                  );
+                  break;
+                case _ScheduleAction.exportCalendar:
+                  final lessons = lessonsAsync.valueOrNull;
+                  if (lessons != null) {
+                    _exportToCalendar(
+                      context,
+                      ref,
+                      lessons: lessons,
+                      weekStart: weekStart,
+                      actorName: displayActor?.name ?? 'Расписание',
+                    );
+                  }
+                  break;
+                case _ScheduleAction.toggleChanges:
+                  ref
+                      .read(appSettingsProvider.notifier)
+                      .setShowChanges(!showChanges);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _ScheduleAction.smartGaps,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.auto_awesome_rounded),
+                  title: Text('Умные окна'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _ScheduleAction.exportCalendar,
+                enabled: lessonsAsync.hasValue,
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.event_available_outlined),
+                  title: Text('Добавить в календарь'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _ScheduleAction.toggleChanges,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    showChanges
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                  ),
+                  title: Text(
+                    showChanges ? 'Скрыть изменения' : 'Показать изменения',
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: DefaultTabController(
         length: 6,
-        initialIndex: _todayIndex(weekStart),
+        initialIndex: _todayIndex(weekStart, currentDate),
         animationDuration: AppDurations.normal,
         child: Builder(
           builder: (context) => NestedScrollView(
@@ -191,6 +243,68 @@ class WeekScheduleScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _exportToCalendar(
+    BuildContext context,
+    WidgetRef ref, {
+    required List<Lesson> lessons,
+    required DateTime weekStart,
+    required String actorName,
+  }) async {
+    if (lessons.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('На этой неделе нет занятий для экспорта.'),
+        ),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        Future<void>(() async {
+          try {
+            final result = await ref
+                .read(scheduleCalendarServiceProvider)
+                .syncWeek(
+                  lessons: lessons,
+                  weekStart: weekStart,
+                  actorName: actorName,
+                );
+            if (!dialogContext.mounted) return;
+            Navigator.of(dialogContext).pop();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Календарь обновлён: ${result.total} занятий'
+                  '${result.removed == 0 ? '' : ', удалено ${result.removed}'}.',
+                ),
+              ),
+            );
+          } catch (error) {
+            if (!dialogContext.mounted) return;
+            Navigator.of(dialogContext).pop();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(error.toString())));
+          }
+        });
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: AppSpacing.xl),
+              Expanded(child: Text('Синхронизация с календарём…')),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   FavoriteActor? _favoriteById(List<FavoriteActor> favorites, String actorId) {
     for (final favorite in favorites) {
       if (favorite.id == actorId) return favorite;
@@ -220,6 +334,8 @@ class WeekScheduleScreen extends ConsumerWidget {
       ..invalidate(activeFavoriteActorIdProvider);
   }
 }
+
+enum _ScheduleAction { smartGaps, exportCalendar, toggleChanges }
 
 class _WeekHeader extends ConsumerWidget {
   const _WeekHeader({

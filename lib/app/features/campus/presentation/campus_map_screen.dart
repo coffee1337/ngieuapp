@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
 import 'package:ngieuapp/app/features/campus/domain/campus_catalog.dart';
+import 'package:ngieuapp/app/features/campus/domain/campus_map_layout.dart';
+import 'package:ngieuapp/app/features/campus/domain/campus_route_planner.dart';
 import 'package:ngieuapp/app/features/campus/presentation/widgets/campus_3d_map.dart';
 import 'package:ngieuapp/app/features/schedule/domain/utils/floor_utils.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
@@ -20,6 +22,9 @@ class CampusMapScreen extends ConsumerStatefulWidget {
 class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
   late final TextEditingController _searchController;
   late String _query;
+  List<Offset> _routePoints = const [];
+  String _routeFromId = 'building-09';
+  String _routeToId = 'building-03';
 
   @override
   void initState() {
@@ -142,6 +147,130 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
     ),
   );
 
+  Future<void> _openRoutePlanner() async {
+    var fromId = _routeFromId;
+    var toId = _routeToId;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final buildings = CampusMapLayout.buildings;
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.xxl,
+              0,
+              AppSpacing.xxl,
+              MediaQuery.viewInsetsOf(sheetContext).bottom + AppSpacing.section,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Маршрут по кампусу',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Работает без интернета и ведёт по дорожкам к входу.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                DropdownButtonFormField<String>(
+                  value: fromId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Откуда',
+                    prefixIcon: Icon(Icons.trip_origin_rounded),
+                  ),
+                  items: [
+                    for (final building in buildings)
+                      DropdownMenuItem(
+                        value: building.id,
+                        child: Text(
+                          building.name ?? 'Здание ${building.number}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setSheetState(() => fromId = value);
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                DropdownButtonFormField<String>(
+                  value: toId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Куда',
+                    prefixIcon: Icon(Icons.location_on_outlined),
+                  ),
+                  items: [
+                    for (final building in buildings)
+                      DropdownMenuItem(
+                        value: building.id,
+                        child: Text(
+                          building.name ?? 'Здание ${building.number}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setSheetState(() => toId = value);
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: fromId == toId
+                        ? null
+                        : () {
+                            final points = const CampusRoutePlanner().route(
+                              fromBuildingId: fromId,
+                              toBuildingId: toId,
+                            );
+                            setState(() {
+                              _routeFromId = fromId;
+                              _routeToId = toId;
+                              _routePoints = points;
+                            });
+                            Navigator.of(sheetContext).pop();
+                          },
+                    icon: const Icon(Icons.route_rounded),
+                    label: const Text('Построить маршрут'),
+                  ),
+                ),
+                if (_routePoints.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() => _routePoints = const []);
+                        Navigator.of(sheetContext).pop();
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                      label: const Text('Убрать маршрут'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOnline = ref.watch(connectivityProvider);
@@ -172,7 +301,86 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
           ),
         ],
       ),
-      body: const Campus3DMap(fullscreen: true),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Campus3DMap(fullscreen: true, routePoints: _routePoints),
+          ),
+          if (_routePoints.isNotEmpty)
+            Positioned(
+              top: kToolbarHeight + AppSpacing.xl,
+              left: AppSpacing.xl,
+              right: AppSpacing.xl,
+              child: SafeArea(
+                bottom: false,
+                child: _RouteSummary(
+                  from: _buildingName(_routeFromId),
+                  to: _buildingName(_routeToId),
+                  onClose: () => setState(() => _routePoints = const []),
+                ),
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openRoutePlanner,
+        icon: const Icon(Icons.route_rounded),
+        label: const Text('Маршрут'),
+      ),
+    );
+  }
+
+  String _buildingName(String id) {
+    final building = CampusMapLayout.buildingById(id);
+    return building?.name ?? 'Здание ${building?.number ?? ''}';
+  }
+}
+
+class _RouteSummary extends StatelessWidget {
+  const _RouteSummary({
+    required this.from,
+    required this.to,
+    required this.onClose,
+  });
+
+  final String from;
+  final String to;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface.withValues(alpha: 0.95),
+      elevation: 4,
+      borderRadius: AppRadius.xlBr,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.route_rounded, color: theme.colorScheme.primary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                '$from → $to',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Убрать маршрут',
+              onPressed: onClose,
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

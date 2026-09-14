@@ -33,6 +33,34 @@ class CampusMapRoad {
   final double width;
 }
 
+class CampusMapEntrance {
+  const CampusMapEntrance({
+    required this.id,
+    required this.buildingId,
+    required this.position,
+    required this.routeNodeId,
+  });
+
+  final String id;
+  final String buildingId;
+  final Offset position;
+  final String routeNodeId;
+}
+
+class CampusRouteNode {
+  const CampusRouteNode({required this.id, required this.position});
+
+  final String id;
+  final Offset position;
+}
+
+class CampusRouteEdge {
+  const CampusRouteEdge(this.from, this.to);
+
+  final String from;
+  final String to;
+}
+
 /// Vector tracing of the campus reference plan supplied by the user.
 ///
 /// Coordinates intentionally match the 864 × 637 reference image. Keeping
@@ -145,14 +173,8 @@ abstract final class CampusMapLayout {
       ],
       width: 7,
     ),
-    CampusMapRoad(
-      points: [Offset(252, 352), Offset(365, 352)],
-      width: 5,
-    ),
-    CampusMapRoad(
-      points: [Offset(253, 452), Offset(369, 452)],
-      width: 5,
-    ),
+    CampusMapRoad(points: [Offset(252, 352), Offset(365, 352)], width: 5),
+    CampusMapRoad(points: [Offset(253, 452), Offset(369, 452)], width: 5),
     CampusMapRoad(
       points: [
         Offset(-12, 617),
@@ -291,6 +313,136 @@ abstract final class CampusMapLayout {
       ],
     ),
   ];
+
+  /// Approximate public entrances. Their positions are isolated from building
+  /// geometry so confirmed entrance data can be corrected independently.
+  static const entrances = <CampusMapEntrance>[
+    CampusMapEntrance(
+      id: 'entrance-03',
+      buildingId: 'building-03',
+      position: Offset(329, 269),
+      routeNodeId: 'entry-03',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-04',
+      buildingId: 'building-04',
+      position: Offset(468, 237),
+      routeNodeId: 'entry-04',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-05',
+      buildingId: 'building-05',
+      position: Offset(636, 255),
+      routeNodeId: 'entry-05',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-07',
+      buildingId: 'building-07',
+      position: Offset(405, 395),
+      routeNodeId: 'entry-07',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-08',
+      buildingId: 'building-08',
+      position: Offset(317, 505),
+      routeNodeId: 'entry-08',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-09',
+      buildingId: 'building-09',
+      position: Offset(433, 469),
+      routeNodeId: 'entry-09',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-10',
+      buildingId: 'building-10',
+      position: Offset(594, 573),
+      routeNodeId: 'entry-10',
+    ),
+    CampusMapEntrance(
+      id: 'entrance-12',
+      buildingId: 'building-12',
+      position: Offset(294, 136),
+      routeNodeId: 'entry-12',
+    ),
+  ];
+
+  /// Pedestrian graph following the paths drawn on the supplied campus plan.
+  static const routeNodes = <CampusRouteNode>[
+    CampusRouteNode(id: 'north', position: Offset(252, 142)),
+    CampusRouteNode(id: 'center-west', position: Offset(252, 299)),
+    CampusRouteNode(id: 'center', position: Offset(408, 299)),
+    CampusRouteNode(id: 'center-east', position: Offset(585, 292)),
+    CampusRouteNode(id: 'east', position: Offset(780, 283)),
+    CampusRouteNode(id: 'east-north', position: Offset(803, 210)),
+    CampusRouteNode(id: 'inner-upper', position: Offset(376, 314)),
+    CampusRouteNode(id: 'inner-mid', position: Offset(365, 408)),
+    CampusRouteNode(id: 'inner-lower', position: Offset(376, 445)),
+    CampusRouteNode(id: 'inner-gate', position: Offset(433, 458)),
+    CampusRouteNode(id: 'west-mid', position: Offset(252, 352)),
+    CampusRouteNode(id: 'west-lower', position: Offset(252, 452)),
+    CampusRouteNode(id: 'dorm-walk', position: Offset(318, 506)),
+    CampusRouteNode(id: 'lower-one', position: Offset(329, 545)),
+    CampusRouteNode(id: 'lower-two', position: Offset(347, 571)),
+    CampusRouteNode(id: 'lower-three', position: Offset(389, 597)),
+    CampusRouteNode(id: 'lower-four', position: Offset(494, 604)),
+    CampusRouteNode(id: 'bottom-east', position: Offset(575, 607)),
+    CampusRouteNode(id: 'entry-03', position: Offset(329, 286)),
+    CampusRouteNode(id: 'entry-04', position: Offset(468, 292)),
+    CampusRouteNode(id: 'entry-05', position: Offset(636, 289)),
+    CampusRouteNode(id: 'entry-07', position: Offset(405, 421)),
+    CampusRouteNode(id: 'entry-08', position: Offset(318, 506)),
+    CampusRouteNode(id: 'entry-09', position: Offset(433, 458)),
+    CampusRouteNode(id: 'entry-10', position: Offset(575, 607)),
+    CampusRouteNode(id: 'entry-12', position: Offset(252, 142)),
+  ];
+
+  static const routeEdges = <CampusRouteEdge>[
+    CampusRouteEdge('north', 'center-west'),
+    CampusRouteEdge('center-west', 'center'),
+    CampusRouteEdge('center', 'center-east'),
+    CampusRouteEdge('center-east', 'east'),
+    CampusRouteEdge('east', 'east-north'),
+    CampusRouteEdge('center', 'inner-upper'),
+    CampusRouteEdge('inner-upper', 'inner-mid'),
+    CampusRouteEdge('inner-mid', 'inner-lower'),
+    CampusRouteEdge('inner-lower', 'inner-gate'),
+    CampusRouteEdge('center-west', 'west-mid'),
+    CampusRouteEdge('west-mid', 'west-lower'),
+    CampusRouteEdge('west-lower', 'inner-lower'),
+    CampusRouteEdge('west-lower', 'dorm-walk'),
+    CampusRouteEdge('dorm-walk', 'lower-one'),
+    CampusRouteEdge('lower-one', 'lower-two'),
+    CampusRouteEdge('lower-two', 'lower-three'),
+    CampusRouteEdge('lower-three', 'lower-four'),
+    CampusRouteEdge('lower-four', 'bottom-east'),
+    CampusRouteEdge('entry-03', 'center-west'),
+    CampusRouteEdge('entry-03', 'center'),
+    CampusRouteEdge('entry-04', 'center'),
+    CampusRouteEdge('entry-04', 'center-east'),
+    CampusRouteEdge('entry-05', 'center-east'),
+    CampusRouteEdge('entry-05', 'east'),
+    CampusRouteEdge('entry-07', 'inner-mid'),
+    CampusRouteEdge('entry-07', 'inner-gate'),
+    CampusRouteEdge('entry-08', 'dorm-walk'),
+    CampusRouteEdge('entry-09', 'inner-gate'),
+    CampusRouteEdge('entry-10', 'bottom-east'),
+    CampusRouteEdge('entry-12', 'north'),
+  ];
+
+  static CampusMapBuilding? buildingById(String id) {
+    for (final building in buildings) {
+      if (building.id == id) return building;
+    }
+    return null;
+  }
+
+  static CampusMapEntrance? entranceForBuilding(String buildingId) {
+    for (final entrance in entrances) {
+      if (entrance.buildingId == buildingId) return entrance;
+    }
+    return null;
+  }
 
   static CampusMapBuilding? hitTest(Offset point) {
     for (final building in buildings.reversed) {

@@ -41,6 +41,9 @@
 # Flutter Local Notifications
 -keep class com.dexterous.** { *; }
 
+# Device Calendar
+-keep class com.builttoroam.devicecalendar.** { *; }
+
 # Cached Network Image
 -keep class com.baseflow.** { *; }
 

@@ -10,10 +10,12 @@ import 'package:ngieuapp/app/features/news/presentation/news_list_screen.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
 import 'package:ngieuapp/app/features/profile/presentation/profile_screen.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/smart_gap.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/free_rooms_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
+import 'package:ngieuapp/app/features/schedule/presentation/smart_gaps_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
 import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
@@ -122,7 +124,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'free-rooms',
-                pageBuilder: (_, __) => _page(const FreeRoomsScreen()),
+                pageBuilder: (_, state) => _page(
+                  FreeRoomsScreen(
+                    initialGap: state.extra is SmartGap
+                        ? state.extra! as SmartGap
+                        : null,
+                  ),
+                ),
               ),
               GoRoute(
                 path: 'search',
@@ -139,6 +147,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   );
                 },
+                routes: [
+                  GoRoute(
+                    path: 'gaps',
+                    pageBuilder: (ctx, state) {
+                      final actor = state.extra;
+                      return _page(
+                        SmartGapsScreen(
+                          actorId: state.pathParameters['actorId']!,
+                          actorName: actor is FavoriteActor ? actor.name : null,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

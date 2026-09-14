@@ -7,9 +7,14 @@ import 'package:ngieuapp/app/features/campus/domain/campus_map_layout.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class Campus3DMap extends StatefulWidget {
-  const Campus3DMap({super.key, this.fullscreen = false});
+  const Campus3DMap({
+    super.key,
+    this.fullscreen = false,
+    this.routePoints = const [],
+  });
 
   final bool fullscreen;
+  final List<Offset> routePoints;
 
   @override
   State<Campus3DMap> createState() => _Campus3DMapState();
@@ -213,6 +218,7 @@ class _Campus3DMapState extends State<Campus3DMap>
                                 painter: _CampusMapPainter(
                                   colorScheme: scheme,
                                   selectedBuildingId: _selectedBuilding?.id,
+                                  routePoints: widget.routePoints,
                                 ),
                               ),
                             ),
@@ -323,10 +329,12 @@ class _CampusMapPainter extends CustomPainter {
   const _CampusMapPainter({
     required this.colorScheme,
     required this.selectedBuildingId,
+    required this.routePoints,
   });
 
   final ColorScheme colorScheme;
   final String? selectedBuildingId;
+  final List<Offset> routePoints;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -393,6 +401,8 @@ class _CampusMapPainter extends CustomPainter {
         );
     }
 
+    _paintRoute(canvas);
+
     _paintFacilities(canvas);
 
     for (final building in CampusMapLayout.buildings) {
@@ -405,6 +415,7 @@ class _CampusMapPainter extends CustomPainter {
         _paintMapLabel(canvas, name, anchor, maxWidth: 190);
       }
     }
+    _paintEntrances(canvas);
     canvas.restore();
   }
 
@@ -414,6 +425,56 @@ class _CampusMapPainter extends CustomPainter {
       path.lineTo(point.dx, point.dy);
     }
     return path;
+  }
+
+  void _paintRoute(Canvas canvas) {
+    if (routePoints.length < 2) return;
+    final path = _buildRoadPath(routePoints);
+    canvas
+      ..drawPath(
+        path,
+        Paint()
+          ..color = colorScheme.surface.withValues(alpha: 0.9)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 11
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      )
+      ..drawPath(
+        path,
+        Paint()
+          ..color = colorScheme.primary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+    for (final point in [routePoints.first, routePoints.last]) {
+      canvas
+        ..drawCircle(point, 9, Paint()..color = colorScheme.surface)
+        ..drawCircle(point, 6, Paint()..color = colorScheme.primary);
+    }
+  }
+
+  void _paintEntrances(Canvas canvas) {
+    for (final entrance in CampusMapLayout.entrances) {
+      final selected =
+          routePoints.isNotEmpty &&
+          (routePoints.first == entrance.position ||
+              routePoints.last == entrance.position);
+      canvas
+        ..drawCircle(
+          entrance.position,
+          selected ? 8 : 6,
+          Paint()..color = colorScheme.surface,
+        )
+        ..drawCircle(
+          entrance.position,
+          selected ? 5 : 3.5,
+          Paint()
+            ..color = selected ? colorScheme.primary : colorScheme.tertiary,
+        );
+    }
   }
 
   void _paintFacilities(Canvas canvas) {
@@ -701,6 +762,7 @@ class _CampusMapPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CampusMapPainter oldDelegate) {
     return oldDelegate.colorScheme != colorScheme ||
-        oldDelegate.selectedBuildingId != selectedBuildingId;
+        oldDelegate.selectedBuildingId != selectedBuildingId ||
+        oldDelegate.routePoints != routePoints;
   }
 }
