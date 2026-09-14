@@ -375,6 +375,21 @@ class SettingsScreen extends ConsumerWidget {
                           await ref
                               .read(lockScreenCardSettingsProvider.notifier)
                               .setEnabled(value);
+                          await ref
+                              .read(notificationsServiceProvider)
+                              .updateAndroidLockScreenCard(
+                                const [],
+                                enabled: value,
+                              );
+                          if (context.mounted && value) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Карточка включена. Разрешите показ уведомлений на экране блокировки в настройках телефона.',
+                                ),
+                              ),
+                            );
+                          }
                         },
                 ),
               if (Platform.isIOS)

@@ -29,6 +29,14 @@ final homeWidgetSyncProvider = FutureProvider<void>((ref) async {
         .updateAndroidLockScreenCard(const [], enabled: false);
   }
 
+  if (Platform.isAndroid && lockScreenCard.enabled) {
+    // Make the lock-screen card appear immediately, even when the profile or
+    // schedule request is still loading. It is replaced with lesson data below.
+    await ref
+        .read(notificationsServiceProvider)
+        .updateAndroidLockScreenCard(const [], enabled: true);
+  }
+
   final identity = await ref.watch(studentIdentityProvider.future);
   if (identity == null) return;
 

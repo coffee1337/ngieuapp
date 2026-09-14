@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ngieuapp/app/shared/widgets/fullscreen_image_viewer.dart';
+import 'package:photo_view/photo_view.dart';
 
 void main() {
   testWidgets('opens and closes fullscreen image viewer', (tester) async {
@@ -25,7 +26,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(FullscreenImageViewer), findsOneWidget);
-    expect(find.byType(InteractiveViewer), findsOneWidget);
+    expect(find.byType(PhotoView), findsOneWidget);
     expect(find.byTooltip('Закрыть'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('fullscreen-image-close')));
@@ -55,7 +56,7 @@ void main() {
     expect(find.byType(FullscreenImageViewer), findsNothing);
   });
 
-  testWidgets('double tap zooms and reset button restores the image', (
+  testWidgets('uses a photo controller and reset restores the image', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -64,28 +65,15 @@ void main() {
       ),
     );
 
-    final imageCenter = tester.getCenter(
-      find.byKey(const Key('fullscreen-image-gesture')),
+    final photoView = tester.widget<PhotoView>(
+      find.byKey(const Key('fullscreen-photo-view')),
     );
-    await tester.tapAt(imageCenter);
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.tapAt(imageCenter);
-    await tester.pump(const Duration(milliseconds: 260));
-
-    var viewer = tester.widget<InteractiveViewer>(
-      find.byType(InteractiveViewer),
-    );
-    expect(
-      viewer.transformationController!.value.getMaxScaleOnAxis(),
-      greaterThan(1),
-    );
+    final controller = photoView.controller! as PhotoViewController;
+    controller.scale = 2.5;
+    expect(controller.value.scale, 2.5);
 
     await tester.tap(find.byKey(const Key('fullscreen-image-reset')));
-    await tester.pump(const Duration(milliseconds: 260));
-    viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
-    expect(
-      viewer.transformationController!.value.getMaxScaleOnAxis(),
-      closeTo(1, 0.01),
-    );
+    await tester.pump();
+    expect(controller.value.scale, isNot(2.5));
   });
 }

@@ -25,4 +25,24 @@ void main() {
     expect(find.text('План кампуса'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('fullscreen map fills a portrait viewport', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SizedBox(
+          width: 390,
+          height: 780,
+          child: Campus3DMap(fullscreen: true),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final viewport = tester.getSize(find.byType(InteractiveViewer));
+    final canvas = tester.getSize(find.byKey(const Key('campus-map-canvas')));
+
+    expect(canvas.height, greaterThanOrEqualTo(viewport.height));
+    expect(canvas.width, greaterThan(viewport.width));
+    expect(tester.takeException(), isNull);
+  });
 }

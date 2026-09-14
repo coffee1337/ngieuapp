@@ -173,11 +173,6 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
         ],
       ),
       body: const Campus3DMap(fullscreen: true),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openSearch,
-        icon: const Icon(Icons.search_rounded),
-        label: const Text('Найти кабинет'),
-      ),
     );
   }
 }
