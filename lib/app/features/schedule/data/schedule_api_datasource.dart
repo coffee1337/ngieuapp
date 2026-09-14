@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:ngieuapp/app/core/network/api_endpoints.dart';
-import 'package:ngieuapp/app/core/network/api_exception.dart';
 import 'package:ngieuapp/app/features/schedule/data/lesson_mapper.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
@@ -13,34 +12,30 @@ class ScheduleApiDataSource {
     required DateTime anchorDate,
     CancelToken? ct,
   }) async {
-    try {
-      final resp = await _dio.get<dynamic>(
-        ApiEndpoints.scheduleGet,
-        queryParameters: {'actorId': actorId},
-        cancelToken: ct,
+    final resp = await _dio.get<dynamic>(
+      ApiEndpoints.scheduleGet,
+      queryParameters: {'actorId': actorId},
+      cancelToken: ct,
+    );
+    final data = resp.data;
+    final raw = switch (data) {
+      final List l => l,
+      final Map m when m['data'] is List => m['data'] as List,
+      final Map m when m['schedule'] is List => m['schedule'] as List,
+      _ => throw const FormatException(
+        'API расписания вернул неизвестный формат',
+      ),
+    };
+    final lessons = raw
+        .whereType<Map<String, dynamic>>()
+        .expand((item) => LessonMapper.fromApi(item, anchorDate: anchorDate))
+        .toList();
+    if (raw.isNotEmpty && lessons.isEmpty) {
+      throw const FormatException(
+        'API расписания вернул данные, которые не удалось распознать',
       );
-      final data = resp.data;
-      final raw = _extractRawList(data);
-      final lessons = raw
-          .whereType<Map<dynamic, dynamic>>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .expand((item) => LessonMapper.fromApi(item, anchorDate: anchorDate))
-          .toList();
-      if (raw.isNotEmpty && lessons.isEmpty) {
-        throw const FormatException(
-          'API расписания вернул данные, которые не удалось распознать',
-        );
-      }
-      return lessons;
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    } on FormatException {
-      rethrow;
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException('Некорректные данные расписания: $e');
     }
+    return lessons;
   }
 
   List<dynamic> _extractRawList(Object? data) => switch (data) {

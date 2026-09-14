@@ -4,7 +4,7 @@ import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class LessonMapper {
   static List<Lesson> fromApi(Map<String, dynamic> j, {DateTime? anchorDate}) {
-    final dayName = _str(j, const ['dayName', 'DayName', 'day', 'weekDay']);
+    final dayName = (j['dayName'] ?? '').toString();
     final dayIndex = _dayIndex(dayName);
     if (dayIndex < 0) return const [];
 
@@ -84,13 +84,8 @@ class LessonMapper {
         date,
         pairNum,
         office,
-        building,
         groups,
-        instructors,
         subject,
-        note,
-        startDt,
-        endDt,
         isUpperWeek,
         isChange,
       );
@@ -318,9 +313,6 @@ class LessonMapper {
     List<String> groups,
     List<String> teachers,
     String subject,
-    String note,
-    DateTime start,
-    DateTime end,
     bool? isUpperWeek,
     bool isChange,
   ) {
@@ -330,10 +322,7 @@ class LessonMapper {
       null => 'any',
     };
     final key =
-        '${d.year}-${d.month}-${d.day}|$pair|$room|$building|'
-        '${groups.join(",")}|${teachers.join(",")}|$subject|$note|'
-        '${start.hour}:${start.minute}-${end.hour}:${end.minute}|'
-        '$weekKind|${isChange ? 'c' : 'p'}';
+        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|$weekKind|${isChange ? 'c' : 'p'}';
     // FNV-1a 32-bit hash — short, stable, no import needed
     var hash = 0x811c9dc5;
     for (var i = 0; i < key.length; i++) {

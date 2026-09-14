@@ -161,7 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                       final actor = state.extra;
                       return _page(
                         SmartGapsScreen(
-                          actorId: state.pathParameters['actorId'] ?? '',
+                          actorId: state.pathParameters['actorId']!,
                           actorName: actor is FavoriteActor ? actor.name : null,
                         ),
                       );

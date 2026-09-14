@@ -23,10 +23,7 @@ class WeekTypeCacheDataSource {
   }
 
   /// Загружает тип недели из кэша
-  Future<WeekType?> loadWeekType({
-    DateTime? date,
-    bool allowExpired = false,
-  }) async {
+  Future<WeekType?> loadWeekType({bool allowExpired = false}) async {
     final box = await Hive.openBox<String>(HiveBoxes.scheduleCache);
     // Fall back to the old single entry when upgrading an existing install.
     final key = date != null && box.containsKey(_keyFor(date))
@@ -38,7 +35,7 @@ class WeekTypeCacheDataSource {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) {
-        await box.delete(key);
+        await box.delete(_cacheKey);
         return null;
       }
       final cachedAt = DateTime.parse(decoded['cachedAt'] as String);
@@ -47,17 +44,13 @@ class WeekTypeCacheDataSource {
         return null;
       }
 
-      final result = WeekType(
+      return WeekType(
         date: DateTime.parse(decoded['date'] as String),
         isUpperWeek: decoded['isUpperWeek'] as bool,
       );
-      if (date != null && result.date.startOfWeek != date.startOfWeek) {
-        return null;
-      }
-      return result;
     } catch (_) {
       // Повреждённый кэш не должен мешать запуску приложения.
-      await box.delete(key);
+      await box.delete(_cacheKey);
       return null;
     }
   }

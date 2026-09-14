@@ -69,6 +69,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
   Future<void> _runBatch(Completer<void> completer) async {
     final apiDs = _ref.read(scheduleApiDataSourceProvider);
     final dbDs = _ref.read(scheduleDbDataSourceProvider);
+    final anchorDate = (await _ref.read(currentWeekTypeProvider.future)).date;
+    _ref.invalidate(freeRoomsProvider);
+
     const batchSize = 3;
     var loadedCount = 0;
     var total = 0;
@@ -86,15 +89,8 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
             final cancellation = CancelToken();
             try {
               final lessons = await apiDs
-                  .fetchSchedule(g.id, anchorDate: anchorDate, ct: cancellation)
-                  .timeout(
-                    const Duration(seconds: 10),
-                    onTimeout: () {
-                      cancellation.cancel('Background schedule timeout');
-                      throw TimeoutException('Schedule ${g.id}');
-                    },
-                  );
-              if (!mounted) return;
+                  .fetchSchedule(g.id, anchorDate: anchorDate)
+                  .timeout(const Duration(seconds: 10));
               await dbDs.replaceForActor(g.id, lessons);
               loadedCount++;
             } on Object catch (error) {

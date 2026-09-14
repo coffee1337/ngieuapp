@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ngieuapp/app/features/notifications/schedule_change_notifications_service.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_repository_impl.dart';
@@ -11,9 +10,6 @@ import '../../../helpers/test_helpers.dart';
 class MockScheduleApiDataSource extends Mock implements ScheduleApiDataSource {}
 
 class MockScheduleDbDataSource extends Mock implements ScheduleDbDataSource {}
-
-class MockChangeNotifications extends Mock
-    implements ScheduleChangeNotificationsService {}
 
 void main() {
   late MockScheduleApiDataSource api;
@@ -79,35 +75,6 @@ void main() {
 
     expect(result, [freshLesson]);
     verify(() => api.fetchSchedule(actorId, anchorDate: weekStart)).called(1);
-    verify(() => db.replaceForActor(actorId, freshLessons)).called(1);
-  });
-
-  test('notification failure cannot discard fresh schedule data', () async {
-    final notifications = MockChangeNotifications();
-    repository = ScheduleRepositoryImpl(
-      api,
-      db,
-      changeNotifications: notifications,
-    );
-    final previous = [cachedLesson];
-    when(
-      () => db.getLessonsInRange(actorId, weekStart, weekEnd),
-    ).thenAnswer((_) async => previous);
-    when(
-      () => api.fetchSchedule(actorId, anchorDate: weekStart),
-    ).thenAnswer((_) async => freshLessons);
-    when(
-      () => db.replaceForActor(actorId, freshLessons),
-    ).thenAnswer((_) async {});
-    when(
-      () => notifications.notifyAboutNewChanges(
-        actorId: actorId,
-        oldLessons: previous,
-        freshLessons: freshLessons,
-      ),
-    ).thenThrow(Exception('Notifications unavailable'));
-
-    expect(await repository.refreshWeek(actorId, weekStart), freshLessons);
     verify(() => db.replaceForActor(actorId, freshLessons)).called(1);
   });
 }

@@ -31,20 +31,20 @@ class SearchSchedule {
     final results = <SearchScheduleResult>[];
     final seen = <String>{};
 
-    // Загружаем весь диапазон одним запросом, затем фильтруем в памяти.
-    for (final l in allLessons) {
-      if (l.date.isBefore(from) || !l.date.isBefore(to)) continue;
-      final isUpperWeek = await resolveIsUpperWeek(l.date);
-      if (!l.parity.matchesUpperWeek(isUpperWeek)) continue;
-      final match = _matchType(l, q);
-      if (match == null) continue;
-      // Дедупликация — одно и то же занятие может быть повторено (разные группы)
-      final key =
-          '${l.date.toIso8601String()}|${l.pairNumber}|'
-          '${l.subject}|${l.classroom}|${l.building}|'
-          '${l.teacherNames.join(",")}|${l.groupNames.join(",")}';
-      if (!seen.add(key)) continue;
-      results.add(SearchScheduleResult(lesson: l, matchType: match));
+    // Идём по дням и собираем всё, что совпадает
+    for (var d = from; d.isBefore(to); d = d.add(const Duration(days: 1))) {
+      final dayLessons = await _repo.getAllLessonsForDate(d);
+      final isUpperWeek = await resolveIsUpperWeek(d);
+      for (final l in dayLessons) {
+        if (!l.parity.matchesUpperWeek(isUpperWeek)) continue;
+        final match = _matchType(l, q);
+        if (match == null) continue;
+        // Дедупликация — одно и то же занятие может быть повторено (разные группы)
+        final key =
+            '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join()}';
+        if (!seen.add(key)) continue;
+        results.add(SearchScheduleResult(lesson: l, matchType: match));
+      }
     }
 
     // Сортировка: сначала по дате, потом по паре

@@ -597,6 +597,7 @@ class _MessageCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.text,
+    super.key,
   });
 
   final IconData icon;

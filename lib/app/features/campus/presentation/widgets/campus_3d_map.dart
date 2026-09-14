@@ -23,18 +23,12 @@ class Campus3DMap extends StatefulWidget {
 class _Campus3DMapState extends State<Campus3DMap>
     with SingleTickerProviderStateMixin {
   final _transformationController = TransformationController();
-  late final AnimationController _resetController;
+  late final AnimationController _resetController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  );
   Animation<Matrix4>? _resetAnimation;
   CampusMapBuilding? _selectedBuilding;
-
-  @override
-  void initState() {
-    super.initState();
-    _resetController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    );
-  }
 
   @override
   void dispose() {

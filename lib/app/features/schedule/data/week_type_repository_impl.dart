@@ -13,7 +13,7 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
 
   @override
   Future<WeekType> getWeekType(DateTime date) async {
-    final cached = await _cache.loadWeekType(date: date);
+    final cached = await _cache.loadWeekType();
     if (cached != null && _isSameWeek(cached.date, date)) {
       return cached;
     }
@@ -26,7 +26,7 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
     } catch (e) {
       // Даже просроченное значение API надёжнее локального предположения о
       // чередовании учебных недель.
-      final expired = await _cache.loadWeekType(date: date, allowExpired: true);
+      final expired = await _cache.loadWeekType(allowExpired: true);
       if (expired != null && _isSameWeek(expired.date, date)) {
         return expired;
       }
@@ -41,12 +41,9 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
       await _cache.saveWeekType(weekType);
       return weekType;
     } catch (_) {
-      final today = _now();
-      final cached = await _cache.loadWeekType(date: today, allowExpired: true);
-      if (cached != null && _isSameWeek(cached.date, today)) {
-        return cached.copyWith(date: today);
-      }
-      return _fallbackWeekType(today);
+      final cached = await _cache.loadWeekType(allowExpired: true);
+      if (cached != null) return cached;
+      return _fallbackWeekType(DateTime.now());
     }
   }
 

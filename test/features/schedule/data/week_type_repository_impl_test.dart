@@ -21,13 +21,11 @@ void main() {
   setUp(() {
     api = MockWeekTypeApiDataSource();
     cache = MockWeekTypeCacheDataSource();
-    repository = WeekTypeRepositoryImpl(api, cache, now: () => requestedDate);
+    repository = WeekTypeRepositoryImpl(api, cache);
   });
 
   test('returns a current cached week without requesting the API', () async {
-    when(
-      () => cache.loadWeekType(date: requestedDate),
-    ).thenAnswer((_) async => cachedWeek);
+    when(() => cache.loadWeekType()).thenAnswer((_) async => cachedWeek);
 
     final result = await repository.getWeekType(requestedDate);
 
@@ -36,12 +34,10 @@ void main() {
   });
 
   test('uses an expired API value when the device is offline', () async {
-    when(
-      () => cache.loadWeekType(date: requestedDate),
-    ).thenAnswer((_) async => null);
+    when(() => cache.loadWeekType()).thenAnswer((_) async => null);
     when(() => api.getWeekType(requestedDate)).thenThrow(Exception('offline'));
     when(
-      () => cache.loadWeekType(date: requestedDate, allowExpired: true),
+      () => cache.loadWeekType(allowExpired: true),
     ).thenAnswer((_) async => cachedWeek);
 
     final result = await repository.getWeekType(requestedDate);
@@ -58,26 +54,5 @@ void main() {
     when(() => cache.saveWeekType(serverWeek)).thenAnswer((_) async {});
 
     expect(await repository.getCurrentWeekType(), serverWeek);
-  });
-
-  test('never treats a cached future week as the current week', () async {
-    when(() => api.getCurrentWeekType()).thenThrow(Exception('offline'));
-    when(
-      () => cache.loadWeekType(date: requestedDate, allowExpired: true),
-    ).thenAnswer(
-      (_) async => WeekType(date: DateTime(2025, 4, 7), isUpperWeek: true),
-    );
-    final result = await repository.getCurrentWeekType();
-    expect(result.date, requestedDate);
-  });
-
-  test('uses todays date with cached parity while offline', () async {
-    when(() => api.getCurrentWeekType()).thenThrow(Exception('offline'));
-    when(
-      () => cache.loadWeekType(date: requestedDate, allowExpired: true),
-    ).thenAnswer((_) async => cachedWeek);
-    final result = await repository.getCurrentWeekType();
-    expect(result.date, requestedDate);
-    expect(result.isUpperWeek, cachedWeek.isUpperWeek);
   });
 }

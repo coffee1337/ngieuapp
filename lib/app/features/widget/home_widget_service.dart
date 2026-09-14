@@ -39,9 +39,9 @@ class HomeWidgetService {
     bool showRoom = true,
   }) async {
     if (!enabled) return;
-    if (!AppPlatform.isAndroid && !AppPlatform.isIOS) return;
+    if (!Platform.isAndroid && !Platform.isIOS) return;
 
-    if (AppPlatform.isIOS) {
+    if (Platform.isIOS) {
       await HomeWidget.setAppGroupId(_appGroupId);
     }
 
@@ -160,7 +160,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData(entry.key, entry.value);
     }
 
-    if (AppPlatform.isAndroid) {
+    if (Platform.isAndroid) {
       for (final provider in _androidProviders) {
         await HomeWidget.updateWidget(androidName: provider);
       }
@@ -178,9 +178,9 @@ class HomeWidgetService {
   }) => updateSchedule(lessons, enabled: enabled, showRoom: showRoom);
 
   Future<void> reloadWidgets() async {
-    if (!AppPlatform.isAndroid && !AppPlatform.isIOS) return;
-    if (AppPlatform.isIOS) await HomeWidget.setAppGroupId(_appGroupId);
-    if (AppPlatform.isAndroid) {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (Platform.isIOS) await HomeWidget.setAppGroupId(_appGroupId);
+    if (Platform.isAndroid) {
       for (final provider in _androidProviders) {
         await HomeWidget.updateWidget(androidName: provider);
       }

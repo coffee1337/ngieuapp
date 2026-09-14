@@ -33,7 +33,7 @@ class FilterWeekSchedule {
             .where(
               (l) =>
                   !(l.isEvent &&
-                      l.subject.toLowerCase().contains('мероприятие') &&
+                      l.subject.toLowerCase() == 'мероприятие' &&
                       l.classroom.isEmpty),
             )
             .toList();

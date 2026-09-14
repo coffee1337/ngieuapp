@@ -125,7 +125,9 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 },
                 shouldOverrideUrlLoading: (c, action) async {
                   final scheme = action.request.url?.scheme.toLowerCase();
-                  // Authentication can redirect through another HTTPS host.
+                  // Authentication can legitimately redirect through another
+                  // HTTPS host. Blocking that redirect looked like a logout,
+                  // especially on iOS where WKWebView uses the real Safari UA.
                   if (scheme == 'https' || scheme == 'http') {
                     return NavigationActionPolicy.ALLOW;
                   }

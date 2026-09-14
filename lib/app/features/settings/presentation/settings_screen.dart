@@ -1,4 +1,4 @@
-import 'package:ngieuapp/app/core/utils/app_platform.dart';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -343,7 +343,7 @@ class SettingsScreen extends ConsumerWidget {
                   'iPhone: 5 домашних и 3 формата экрана блокировки',
                 ),
               ),
-              if (AppPlatform.isAndroid)
+              if (Platform.isAndroid)
                 SwitchListTile(
                   secondary: const Icon(Icons.lock_clock_outlined),
                   title: const Text('Карточка на экране блокировки'),
@@ -392,7 +392,7 @@ class SettingsScreen extends ConsumerWidget {
                           }
                         },
                 ),
-              if (AppPlatform.isIOS)
+              if (Platform.isIOS)
                 const ListTile(
                   leading: Icon(Icons.lock_outline_rounded),
                   title: Text('Виджет блокировки iPhone'),
