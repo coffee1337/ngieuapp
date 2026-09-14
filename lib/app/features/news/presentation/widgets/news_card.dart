@@ -1,63 +1,47 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'package:ngieuapp/app/features/news/domain/news_article.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class NewsCard extends StatelessWidget {
   const NewsCard({
     required this.article,
     required this.onTap,
     this.showImage = true,
+    this.featured = false,
     super.key,
   });
 
   final NewsArticle article;
   final VoidCallback onTap;
   final bool showImage;
+  final bool featured;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+    final hasImage = showImage && (article.imageUrl?.isNotEmpty ?? false);
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xl),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: isDark
-            ? BorderSide(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                width: 0.5,
-              )
-            : BorderSide.none,
-      ),
       child: InkWell(
         onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showImage &&
-                article.imageUrl != null &&
-                article.imageUrl!.isNotEmpty)
+            if (hasImage)
               AspectRatio(
-                aspectRatio: 16 / 9,
+                aspectRatio: featured ? 16 / 9 : 2,
                 child: CachedNetworkImage(
                   imageUrl: article.imageUrl!,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => ColoredBox(
                     color: theme.colorScheme.surfaceContainerHigh,
-                    child: Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.4,
-                          ),
-                        ),
+                    child: const Center(
+                      child: SizedBox.square(
+                        dimension: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                   ),
@@ -71,44 +55,81 @@ class NewsCard extends StatelessWidget {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              padding: const EdgeInsets.all(AppSpacing.xxl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (article.publishedAt != null) ...[
-                    Text(
-                      DateFormat(
-                        'd MMMM y',
-                        'ru_RU',
-                      ).format(article.publishedAt!),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
+                  Wrap(
+                    spacing: AppSpacing.lg,
+                    runSpacing: AppSpacing.md,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (featured)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: AppRadius.smBr,
+                          ),
+                          child: Text(
+                            'Последняя новость',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      if (article.publishedAt != null)
+                        Text(
+                          DateFormat(
+                            'd MMMM y',
+                            'ru_RU',
+                          ).format(article.publishedAt!),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
                     article.title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
+                    style:
+                        (featured
+                                ? theme.textTheme.headlineMedium
+                                : theme.textTheme.titleLarge)
+                            ?.copyWith(height: 1.3),
                   ),
                   if (article.excerpt.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       article.excerpt,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
                       ),
                     ),
                   ],
+                  const SizedBox(height: AppSpacing.xl),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Читать новость',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

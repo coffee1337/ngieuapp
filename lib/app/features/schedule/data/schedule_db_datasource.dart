@@ -16,7 +16,10 @@ class ScheduleDbDataSource {
   ) async {
     final query = _db.select(_db.scheduleEntries)
       ..where(
-        (t) => t.actorId.equals(actorId) & t.date.isBetweenValues(from, to),
+        (t) =>
+            t.actorId.equals(actorId) &
+            t.date.isBiggerOrEqualValue(from) &
+            t.date.isSmallerThanValue(to),
       );
     final rows = await query.get();
     return rows.map(_toLesson).toList();
@@ -25,8 +28,19 @@ class ScheduleDbDataSource {
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) async {
     final dayStart = DateTime(date.year, date.month, date.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
+    return getAllLessonsInRange(dayStart, dayEnd);
+  }
+
+  Future<List<Lesson>> getAllLessonsInRange(DateTime from, DateTime to) async {
+    final rangeStart = DateTime(from.year, from.month, from.day);
+    final rangeEnd = DateTime(to.year, to.month, to.day);
+    if (!rangeEnd.isAfter(rangeStart)) return const [];
     final query = _db.select(_db.scheduleEntries)
-      ..where((t) => t.date.isBetweenValues(dayStart, dayEnd));
+      ..where(
+        (t) =>
+            t.date.isBiggerOrEqualValue(rangeStart) &
+            t.date.isSmallerThanValue(rangeEnd),
+      );
     final rows = await query.get();
     return rows.map(_toLesson).toList();
   }
@@ -49,20 +63,27 @@ class ScheduleDbDataSource {
   }
 
   Future<bool> isStale(String actorId, Duration ttl) async {
+    final lastUpdated = await getLastUpdated(actorId);
+    if (lastUpdated == null) return true;
+    return DateTime.now().difference(lastUpdated) > ttl;
+  }
+
+  Future<DateTime?> getLastUpdated(String actorId) async {
     final query = _db.select(_db.scheduleEntries)
       ..where((t) => t.actorId.equals(actorId))
       ..orderBy([(t) => OrderingTerm.desc(t.cachedAt)])
       ..limit(1);
     final row = await query.getSingleOrNull();
-    if (row == null) return true;
-    return DateTime.now().difference(row.cachedAt) > ttl;
+    return row?.cachedAt;
   }
 
   // ---- Mapping ----
 
   Lesson _toLesson(ScheduleEntry row) {
     return Lesson(
-      id: row.id,
+      id: row.id.startsWith('${row.actorId}:')
+          ? row.id.substring(row.actorId.length + 1)
+          : row.id,
       date: row.date,
       pairNumber: row.pairNumber,
       startTime: row.startTime,
@@ -95,7 +116,10 @@ class ScheduleDbDataSource {
     DateTime cachedAt,
   ) {
     return ScheduleEntriesCompanion.insert(
-      id: l.id,
+      // The table is shared by every actor while its legacy primary key only
+      // contains `id`. Prefixing prevents one group's lesson from replacing
+      // the same lesson loaded for another group.
+      id: '$actorId:${l.id}',
       actorId: actorId,
       date: l.date,
       startTime: l.startTime,

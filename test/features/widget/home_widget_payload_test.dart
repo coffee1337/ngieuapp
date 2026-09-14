@@ -122,5 +122,31 @@ void main() {
         expect(data[HomeWidgetKeys.updatedAt], updatedAt.toIso8601String());
       }
     });
+
+    test('serializes a full seven-lesson day for the large widget', () {
+      final payload = HomeWidgetPayload(
+        type: HomeWidgetType.todaySchedule,
+        size: HomeWidgetSize.large,
+        header: 'СЕГОДНЯ',
+        subject: '',
+        time: '',
+        room: '',
+        updatedAt: updatedAt,
+        items: List.generate(
+          7,
+          (index) => HomeWidgetItem(
+            time: '${index + 8}:00',
+            subject: 'Предмет ${index + 1}',
+            room: 'Ауд. ${100 + index}',
+          ),
+        ),
+      );
+
+      final data = payload.toWidgetData();
+
+      expect(data[HomeWidgetKeys.itemsCount], 7);
+      expect(data[HomeWidgetKeys.itemSubject(6)], 'Предмет 7');
+      expect(data[HomeWidgetKeys.itemRoom(6)], 'Ауд. 106');
+    });
   });
 }

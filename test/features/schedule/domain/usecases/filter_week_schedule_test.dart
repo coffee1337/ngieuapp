@@ -24,7 +24,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: false,
       );
 
@@ -42,7 +42,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: false,
       );
 
@@ -60,7 +60,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: false,
       );
 
@@ -75,7 +75,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: false,
+        isUpperWeek: false,
         showChanges: false,
       );
 
@@ -90,13 +90,13 @@ void main() {
       final resultEven = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: false,
       );
       final resultOdd = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: false,
+        isUpperWeek: false,
         showChanges: false,
       );
 
@@ -106,55 +106,68 @@ void main() {
   });
 
   group('FilterWeekSchedule — changes', () {
-    test('change replaces regular lesson in same cell when showChanges=true',
-        () {
+    test('hides an upper-week change on a lower week', () {
       final lessons = [
         makeLesson(
-          id: 'regular',
+          id: 'upper-change',
           date: monday,
           pairNumber: 1,
-          isChange: false,
-        ),
-        makeLesson(
-          id: 'change',
-          date: monday,
-          pairNumber: 1,
+          parity: WeekParity.even,
           isChange: true,
-          classroom: '205',
         ),
       ];
 
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: false,
         showChanges: true,
       );
 
-      expect(result.map((l) => l.id), contains('change'));
-      expect(result.map((l) => l.id), isNot(contains('regular')));
+      expect(result, isEmpty);
     });
+
+    test(
+      'change replaces regular lesson in same cell when showChanges=true',
+      () {
+        final lessons = [
+          makeLesson(
+            id: 'regular',
+            date: monday,
+            pairNumber: 1,
+            isChange: false,
+          ),
+          makeLesson(
+            id: 'change',
+            date: monday,
+            pairNumber: 1,
+            isChange: true,
+            classroom: '205',
+          ),
+        ];
+
+        final result = sut(
+          lessons: lessons,
+          weekStart: monday,
+          isUpperWeek: true,
+          showChanges: true,
+        );
+
+        expect(result.map((l) => l.id), contains('change'));
+        expect(result.map((l) => l.id), isNot(contains('regular')));
+      },
+    );
 
     test('shows regular lesson when showChanges=false', () {
       final lessons = [
-        makeLesson(
-          id: 'regular',
-          date: monday,
-          pairNumber: 1,
-          isChange: false,
-        ),
-        makeLesson(
-          id: 'change',
-          date: monday,
-          pairNumber: 1,
-          isChange: true,
-        ),
+        makeLesson(id: 'regular', date: monday, pairNumber: 1, isChange: false),
+        makeLesson(id: 'change', date: monday, pairNumber: 1, isChange: true),
       ];
 
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: false,
       );
 
@@ -178,7 +191,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: true,
       );
 
@@ -203,7 +216,7 @@ void main() {
       final result = sut(
         lessons: lessons,
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: true,
       );
 
@@ -217,7 +230,7 @@ void main() {
       final result = sut(
         lessons: [],
         weekStart: monday,
-        isEvenWeek: true,
+        isUpperWeek: true,
         showChanges: true,
       );
 

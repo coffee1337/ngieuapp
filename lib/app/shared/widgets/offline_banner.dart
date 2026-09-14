@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ngieuapp/app/core/network/connectivity_provider.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 /// Баннер "Нет подключения к интернету", появляется сверху,
 /// когда у устройства пропала сеть.
@@ -15,11 +16,11 @@ class OfflineBanner extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
+      duration: AppDurations.normal,
       curve: Curves.easeOut,
       alignment: Alignment.topCenter,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
+        duration: AppDurations.normal,
         child: isOnline
             ? const SizedBox.shrink(key: ValueKey('online'))
             : Container(

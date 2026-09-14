@@ -1,48 +1,64 @@
+import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/core/utils/date_ext.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 class LessonMapper {
-  static List<Lesson> fromApi(Map<String, dynamic> j) {
-    final dayName = (j['dayName'] ?? '').toString();
+  static List<Lesson> fromApi(Map<String, dynamic> j, {DateTime? anchorDate}) {
+    final dayName = _str(j, const ['dayName', 'DayName', 'day', 'weekDay']);
     final dayIndex = _dayIndex(dayName);
     if (dayIndex < 0) return const [];
 
-    final classTime = (j['classTime'] ?? '').toString();
+    final classTime = _str(j, const [
+      'classTime',
+      'ClassTime',
+      'time',
+      'Time',
+      'pairTime',
+    ]);
     final times = _parseClassTime(classTime);
     if (times == null) return const [];
 
-    final pairNum = _parsePairNumber(j['classNumberName']);
-    final subject =
-        (j['subjects'] is List && (j['subjects'] as List).isNotEmpty)
-        ? (j['subjects'] as List).first.toString()
-        : '';
-    final note = (j['notes'] is List && (j['notes'] as List).isNotEmpty)
-        ? (j['notes'] as List).first.toString()
-        : '';
-    final office = (j['offices'] is List && (j['offices'] as List).isNotEmpty)
-        ? (j['offices'] as List).first.toString()
-        : '';
+    final pairNum = _parsePairNumber(
+      j['classNumberName'] ?? j['classNumber'] ?? j['pairNumber'],
+    );
+    // Номер пары может отсутствовать в ответе API. Не теряем такую запись:
+    // UI сможет показать её как занятие с неизвестным номером.
 
-    final groups = _asStringList(j['groups']);
-    final instructors = _asStringList(j['instructors']);
+    final subject = _firstString(j['subjects'] ?? j['subject']);
+    final note = _firstString(j['notes'] ?? j['note']);
+    final office = _firstString(j['offices'] ?? j['office'] ?? j['classroom']);
+    final building = _firstString(
+      j['building'] ?? j['buildings'] ?? j['corpus'],
+    );
 
-    final isChange = j['isChange'] == true;
-    final isEvent = subject.toLowerCase().contains('мероприятие');
+    final groups = _asStringList(j['groups'] ?? j['group']);
+    final instructors = _asStringList(
+      j['instructors'] ?? j['teachers'] ?? j['teacher'],
+    );
 
-    final type = isEvent ? LessonType.event : _parseType(note);
+    final isChange = _parseBool(j['isChange']) ?? false;
+    final isEvent = subject.toLowerCase().contains('мероприят');
 
-    final explicitDate = j['date'] != null
-        ? DateTime.tryParse(j['date'].toString())
-        : null;
-    final isUpperWeek = j['isUpperWeek'] as bool?;
+    final type = isEvent ? LessonType.event : _parseType(note, subject);
+
+    final explicitDate = _parseApiDateValue(
+      j['date'] ?? j['Date'] ?? j['lessonDate'] ?? j['LessonDate'],
+    );
+    final isUpperWeek = _parseIsUpperWeek(j['isUpperWeek']);
 
     final List<DateTime> dates;
-    if (isChange && explicitDate != null) {
+    if (isChange) {
+      // В некоторых ответах API замена приходит без явной даты. Привязываем
+      // такую запись к неделе запроса, но не создаём пять фантомных замен.
+      dates = explicitDate == null
+          ? [_dateForWeekday(dayIndex, anchorDate ?? DateTime.now())]
+          : [DateTime(explicitDate.year, explicitDate.month, explicitDate.day)];
+    } else if (explicitDate != null) {
       dates = [
         DateTime(explicitDate.year, explicitDate.month, explicitDate.day),
       ];
     } else {
-      dates = _expandDates(dayIndex, isUpperWeek);
+      dates = _expandDates(dayIndex, anchorDate ?? DateTime.now());
     }
 
     final parity = _parityFromApi(isUpperWeek);
@@ -64,7 +80,20 @@ class LessonMapper {
         times.$2.minute,
       );
 
-      final id = _stableId(date, pairNum, office, groups, subject, isChange);
+      final id = _stableId(
+        date,
+        pairNum,
+        office,
+        building,
+        groups,
+        instructors,
+        subject,
+        note,
+        startDt,
+        endDt,
+        isUpperWeek,
+        isChange,
+      );
 
       result.add(
         Lesson(
@@ -76,7 +105,7 @@ class LessonMapper {
           subject: subject,
           type: type,
           classroom: office,
-          building: '',
+          building: building,
           teacherIds: const [],
           teacherNames: instructors,
           groupIds: const [],
@@ -93,6 +122,88 @@ class LessonMapper {
 
   // ---- Helpers ----
 
+  static String _str(Map<String, dynamic> j, List<String> keys) {
+    for (final k in keys) {
+      final v = j[k];
+      if (v != null && v.toString().trim().isNotEmpty) return v.toString();
+    }
+    return '';
+  }
+
+  static String _firstString(dynamic v) {
+    if (v == null) return '';
+    if (v is List) {
+      for (final e in v) {
+        final s = e?.toString().trim() ?? '';
+        if (s.isNotEmpty) return s;
+      }
+      return '';
+    }
+    return v.toString().trim();
+  }
+
+  static DateTime? _parseApiDate(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return null;
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+    for (final pattern in ['dd.MM.yyyy', 'dd.MM.yyyy HH:mm', 'dd-MM-yyyy']) {
+      try {
+        return DateFormat(pattern).parseStrict(s);
+      } on FormatException {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  static DateTime? _parseApiDateValue(Object? value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    return _parseApiDate(value.toString());
+  }
+
+  static bool? _parseBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is num) {
+      if (value == 1) return true;
+      if (value == 0) return false;
+      return null;
+    }
+    return switch (value.toString().trim().toLowerCase()) {
+      'true' || '1' || 'yes' || 'да' => true,
+      'false' || '0' || 'no' || 'нет' => false,
+      _ => null,
+    };
+  }
+
+  static bool? _parseIsUpperWeek(dynamic v) {
+    if (v == null) return null;
+    if (v is bool) return v;
+    if (v is num) {
+      if (v == 1) return true;
+      if (v == 0) return false;
+      return null;
+    }
+    final s = v.toString().trim().toLowerCase();
+    if (s == 'true' ||
+        s == '1' ||
+        s == 'верхняя' ||
+        s == 'upper' ||
+        s == 'even') {
+      return true;
+    }
+    if (s == 'false' ||
+        s == '0' ||
+        s == 'нижняя' ||
+        s == 'lower' ||
+        s == 'odd') {
+      return false;
+    }
+    return null;
+  }
+
   static const _daysMap = {
     'понедельник': 1,
     'вторник': 2,
@@ -108,17 +219,30 @@ class LessonMapper {
   static (({int hour, int minute}), ({int hour, int minute}))? _parseClassTime(
     String raw,
   ) {
-    final parts = raw.split('/').map((s) => s.trim()).toList();
-    if (parts.length != 2) return null;
-    final start = _parseHm(parts[0]);
-    final end = _parseHm(parts[1]);
+    final normalized = raw.trim();
+    if (normalized.isEmpty) return null;
+    if (normalized.contains('/')) {
+      final parts = normalized.split('/').map((s) => s.trim()).toList();
+      if (parts.length != 2) return null;
+      final start = _parseHm(parts[0]);
+      final end = _parseHm(parts[1]);
+      if (start == null || end == null) return null;
+      return (start, end);
+    }
+    // Fallback: "8:30-10:00", "8.30–10.00"
+    final m = RegExp(
+      r'(\d{1,2}[:\-.\s]\d{1,2})\s*[–—-]\s*(\d{1,2}[:\-.\s]\d{1,2})',
+    ).firstMatch(normalized);
+    if (m == null) return null;
+    final start = _parseHm(m.group(1)!);
+    final end = _parseHm(m.group(2)!);
     if (start == null || end == null) return null;
     return (start, end);
   }
 
   static ({int hour, int minute})? _parseHm(String s) {
     final clean = s.replaceAll(' ', '');
-    final m = RegExp(r'^(\d{1,2})[-:](\d{1,2})$').firstMatch(clean);
+    final m = RegExp(r'^(\d{1,2})[-:.](\d{1,2})$').firstMatch(clean);
     if (m == null) return null;
     final h = int.tryParse(m.group(1)!);
     final mm = int.tryParse(m.group(2)!);
@@ -129,18 +253,28 @@ class LessonMapper {
 
   static int _parsePairNumber(dynamic v) {
     if (v == null) return 0;
+    if (v is num) {
+      final i = v.toInt();
+      return i > 0 ? i : 0;
+    }
     final m = RegExp(r'(\d+)').firstMatch(v.toString());
     if (m == null) return 0;
-    return int.tryParse(m.group(1)!) ?? 0;
+    final parsed = int.tryParse(m.group(1)!) ?? 0;
+    return parsed > 0 ? parsed : 0;
   }
 
-  static LessonType _parseType(String note) {
-    final n = note.toLowerCase();
-    if (n.contains('лек')) return LessonType.lecture;
-    if (n.contains('прак')) return LessonType.practice;
-    if (n.contains('лаб')) return LessonType.lab;
+  static LessonType _parseType(String note, String subject) {
+    // 'лек' давал ложные срабатывания на 'комплекс' — ищем 'лекц'.
+    // Тип ищем и в примечании, и в названии (экзамен с пустым note).
+    final n = '${note.toLowerCase()} ${subject.toLowerCase()}';
     if (n.contains('экз')) return LessonType.exam;
-    if (n.contains('конс')) return LessonType.consultation;
+    if (n.contains('конс') || n.contains('зач')) {
+      // 'зач' покрывает зачёты, но не трогает обычные пары.
+      if (n.contains('конс')) return LessonType.consultation;
+    }
+    if (n.contains('лаб')) return LessonType.lab;
+    if (n.contains('практ') || n.contains('семин')) return LessonType.practice;
+    if (n.contains('лекц')) return LessonType.lecture;
     return LessonType.unknown;
   }
 
@@ -162,8 +296,8 @@ class LessonMapper {
     return s.isEmpty ? const [] : [s];
   }
 
-  static List<DateTime> _expandDates(int weekday, bool? isUpperWeek) {
-    final thisWeekMonday = DateTime.now().startOfWeek;
+  static List<DateTime> _expandDates(int weekday, DateTime anchorDate) {
+    final thisWeekMonday = anchorDate.startOfWeek;
     final baseOffset = weekday - 1;
     return List.generate(5, (i) {
       final monday = thisWeekMonday.add(Duration(days: (i - 2) * 7));
@@ -171,16 +305,35 @@ class LessonMapper {
     });
   }
 
+  static DateTime _dateForWeekday(int weekday, DateTime anchorDate) {
+    final monday = anchorDate.startOfWeek;
+    return DateTime(monday.year, monday.month, monday.day + weekday - 1);
+  }
+
   static String _stableId(
     DateTime d,
     int pair,
     String room,
+    String building,
     List<String> groups,
+    List<String> teachers,
     String subject,
+    String note,
+    DateTime start,
+    DateTime end,
+    bool? isUpperWeek,
     bool isChange,
   ) {
+    final weekKind = switch (isUpperWeek) {
+      true => 'upper',
+      false => 'lower',
+      null => 'any',
+    };
     final key =
-        '${d.year}-${d.month}-${d.day}|$pair|$room|${groups.join(",")}|$subject|${isChange ? 'c' : 'p'}';
+        '${d.year}-${d.month}-${d.day}|$pair|$room|$building|'
+        '${groups.join(",")}|${teachers.join(",")}|$subject|$note|'
+        '${start.hour}:${start.minute}-${end.hour}:${end.minute}|'
+        '$weekKind|${isChange ? 'c' : 'p'}';
     // FNV-1a 32-bit hash — short, stable, no import needed
     var hash = 0x811c9dc5;
     for (var i = 0; i < key.length; i++) {

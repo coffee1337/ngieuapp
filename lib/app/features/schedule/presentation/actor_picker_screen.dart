@@ -10,7 +10,6 @@ import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/department.dart';
 import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
-import 'package:ngieuapp/app/shared/widgets/app_gradient_bar.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
@@ -48,11 +47,14 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   String _departmentNameOf(
     Actor actor,
     Map<int, String> studentDepartmentNames,
+    Map<int, String> teacherDepartmentNames,
   ) {
     if (actor.type == ActorType.studentGroup) {
-      return studentDepartmentNames[actor.departmentId] ?? 'Без института';
+      return studentDepartmentNames[actor.departmentId] ??
+          Institutes.nameOf(actor.departmentId);
     }
-    return Departments.nameOf(actor.departmentId);
+    return teacherDepartmentNames[actor.departmentId] ??
+        Departments.nameOf(actor.departmentId);
   }
 
   Future<void> _onActorTap(Actor a) async {
@@ -61,29 +63,37 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
       for (final department in studentDepartments ?? <Department>[])
         department.id: department.name,
     };
-    final departmentName = _departmentNameOf(a, studentDepartmentNames);
+    final teacherDepartments = ref.read(teacherDepartmentsProvider).valueOrNull;
+    final teacherDepartmentNames = {
+      for (final department in teacherDepartments ?? <Department>[])
+        department.id: department.name,
+    };
+    final departmentName = _departmentNameOf(
+      a,
+      studentDepartmentNames,
+      teacherDepartmentNames,
+    );
     final selectedActor = FavoriteActor.fromActor(
       a,
       departmentName: departmentName,
     );
     final favoritesRepo = ref.read(favoriteActorsLocalDataSourceProvider);
-    await favoritesRepo.setActiveActor(a.id);
+    await favoritesRepo.setActiveActorDetails(selectedActor);
     ref.invalidate(activeFavoriteActorIdProvider);
 
-    if (a.type == ActorType.studentGroup) {
-      final repo = ref.read(profileLocalDataSourceProvider);
-      await repo.save(
-        StudentIdentity(
-          actorId: a.id,
-          displayName: a.name,
-          actorType: a.type,
-          departmentName: departmentName,
-          groupName: a.type == ActorType.studentGroup ? a.name : null,
-          departmentId: a.departmentId,
-        ),
-      );
-      ref.invalidate(studentIdentityProvider);
-    }
+    final profileRepo = ref.read(profileLocalDataSourceProvider);
+    await profileRepo.save(
+      StudentIdentity(
+        actorId: a.id,
+        displayName: a.name,
+        actorType: a.type,
+        departmentName: departmentName,
+        groupName: a.type == ActorType.studentGroup ? a.name : null,
+        fullName: a.type == ActorType.teacher ? a.name : null,
+        departmentId: a.departmentId,
+      ),
+    );
+    ref.invalidate(studentIdentityProvider);
 
     if (mounted) {
       await context.push('/schedule/${a.id}', extra: selectedActor);
@@ -94,8 +104,13 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final studentDepartments = ref.watch(studentDepartmentsProvider);
+    final teacherDepartments = ref.watch(teacherDepartmentsProvider);
     final studentDepartmentNames = {
       for (final department in studentDepartments.valueOrNull ?? <Department>[])
+        department.id: department.name,
+    };
+    final teacherDepartmentNames = {
+      for (final department in teacherDepartments.valueOrNull ?? <Department>[])
         department.id: department.name,
     };
 
@@ -103,7 +118,7 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Выберите расписание'),
+          title: const Text('Расписание'),
           actions: [
             IconButton(
               tooltip: 'Поиск по расписанию',
@@ -128,11 +143,10 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
         ),
         body: Column(
           children: [
-            const AppGradientBar(),
             // Search bar with clear visual separation
             Container(
               color: theme.colorScheme.surface,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: SearchBar(
                 controller: _searchCtrl,
                 onChanged: _onQueryChanged,
@@ -153,11 +167,11 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                 ],
                 elevation: WidgetStateProperty.all(0),
                 backgroundColor: WidgetStateProperty.all(
-                  theme.colorScheme.surfaceContainerHighest,
+                  theme.colorScheme.surfaceContainer,
                 ),
                 shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 padding: WidgetStateProperty.all(
@@ -180,14 +194,15 @@ class _ActorPickerScreenState extends ConsumerState<ActorPickerScreen> {
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(studentGroupsProvider),
                     departmentNameOf: (id) =>
-                        studentDepartmentNames[id] ?? 'Без института',
+                        studentDepartmentNames[id] ?? Institutes.nameOf(id),
                   ),
                   _ActorList(
                     asyncProvider: ref.watch(teachersProvider),
                     filter: _filter,
                     onTap: _onActorTap,
                     onRetry: () => ref.invalidate(teachersProvider),
-                    departmentNameOf: Departments.nameOf,
+                    departmentNameOf: (id) =>
+                        teacherDepartmentNames[id] ?? Departments.nameOf(id),
                   ),
                 ],
               ),
@@ -299,7 +314,7 @@ class _DepartmentHeaderDelegate extends SliverPersistentHeaderDelegate {
     return Container(
       color: isDark
           ? theme.colorScheme.surfaceContainerLow
-          : theme.colorScheme.surfaceContainerHighest,
+          : theme.colorScheme.surfaceContainer,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.centerLeft,
       child: Row(

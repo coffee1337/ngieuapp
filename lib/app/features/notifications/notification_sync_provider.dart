@@ -1,0 +1,61 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:ngieuapp/app/core/utils/app_platform.dart';
+import 'package:ngieuapp/app/core/utils/date_ext.dart';
+import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
+import 'package:ngieuapp/app/features/profile/data/profile_providers.dart';
+import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
+import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
+
+final notificationSyncProvider = FutureProvider<void>((ref) async {
+  if (!AppPlatform.supportsMobileIntegrations) return;
+  var disposed = false;
+  ref.onDispose(() => disposed = true);
+  if (!ref.watch(appSettingsLoadedProvider)) return;
+  final settings = ref.watch(appSettingsProvider);
+  final smartSettings = ref.watch(smartNotificationSettingsProvider);
+  final notifications = ref.watch(notificationsServiceProvider);
+
+  if (!settings.notificationsEnabled) {
+    // Keep the independently enabled lock-screen schedule card. Only lesson
+    // reminders belong to this setting.
+    await notifications.rescheduleFor(
+      const [],
+      minutesBefore: settings.notificationMinutesBefore,
+      enabled: false,
+      preferences: smartSettings,
+    );
+    return;
+  }
+
+  final identity = await ref.watch(studentIdentityProvider.future);
+  if (disposed) return;
+  if (identity == null) {
+    await notifications.rescheduleFor(
+      const [],
+      minutesBefore: settings.notificationMinutesBefore,
+      enabled: false,
+      preferences: smartSettings,
+    );
+    return;
+  }
+
+  final weekStart = (await ref.watch(
+    currentWeekTypeProvider.future,
+  )).date.startOfWeek;
+  if (disposed) return;
+  final lessons = await ref.watch(
+    weekScheduleProvider((
+      actorId: identity.actorId,
+      weekStart: weekStart,
+    )).future,
+  );
+  if (disposed) return;
+  await notifications.rescheduleFor(
+    lessons,
+    minutesBefore: settings.notificationMinutesBefore,
+    enabled: true,
+    preferences: smartSettings,
+  );
+});

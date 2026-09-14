@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class NextLessonCard extends StatelessWidget {
   const NextLessonCard({required this.lesson, super.key});
@@ -9,129 +10,95 @@ class NextLessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final scheme = theme.colorScheme;
     final fmt = DateFormat('HH:mm');
     final now = DateTime.now();
-    final isNow = now.isAfter(lesson.startTime) && now.isBefore(lesson.endTime);
-    final minsUntilStart = lesson.startTime.difference(now).inMinutes;
-
-    String statusText;
+    final isNow =
+        !now.isBefore(lesson.startTime) && now.isBefore(lesson.endTime);
+    final minutes = lesson.startTime.difference(now).inMinutes;
+    final String status;
     if (isNow) {
-      statusText = 'Идёт сейчас';
-    } else if (minsUntilStart < 60) {
-      statusText = 'Через $minsUntilStart мин';
-    } else if (minsUntilStart < 60 * 24) {
-      final h = minsUntilStart ~/ 60;
-      statusText = 'Через $h ч';
+      status = 'Идёт сейчас';
+    } else if (minutes >= 0 && minutes < 60) {
+      status = 'Через $minutes мин';
+    } else if (minutes >= 60 && minutes < 1440) {
+      status = 'Через ${minutes ~/ 60} ч';
     } else {
-      statusText = DateFormat('EEE, HH:mm', 'ru_RU').format(lesson.startTime);
+      status = DateFormat('EEE, HH:mm', 'ru_RU').format(lesson.startTime);
     }
 
-    final containerColor = isNow
-        ? theme.colorScheme.primaryContainer
-        : (isDark
-              ? theme.colorScheme.surfaceContainerHigh
-              : theme.colorScheme.primaryContainer);
-
-    final onContainerColor = isNow
-        ? theme.colorScheme.onPrimaryContainer
-        : (isDark
-              ? theme.colorScheme.onSurface
-              : theme.colorScheme.onPrimaryContainer);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: containerColor,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark && !isNow
-            ? Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              )
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isNow ? Icons.play_circle_fill : Icons.upcoming,
-                size: 18,
-                color: onContainerColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                isNow ? 'СЕЙЧАС' : 'СЛЕДУЮЩАЯ ПАРА',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: onContainerColor,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isNow
-                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                      : theme.colorScheme.tertiaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusText,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: isNow
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onTertiaryContainer,
-                    fontWeight: FontWeight.w600,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.md,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  isNow ? 'Текущая пара' : 'Следующая пара',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            lesson.subject,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: onContainerColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                Icons.access_time,
-                size: 14,
-                color: onContainerColor.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${fmt.format(lesson.startTime)}—${fmt.format(lesson.endTime)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: onContainerColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (lesson.classroom.isNotEmpty) ...[
-                Icon(
-                  Icons.place,
-                  size: 14,
-                  color: onContainerColor.withValues(alpha: 0.7),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Ауд. ${lesson.classroom}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: onContainerColor,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: AppRadius.smBr,
+                  ),
+                  child: Text(
+                    status,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onPrimaryContainer,
+                    ),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(lesson.subject, style: theme.textTheme.titleLarge),
+            const SizedBox(height: AppSpacing.xl),
+            _LessonInfo(
+              icon: Icons.schedule_rounded,
+              text:
+                  '${fmt.format(lesson.startTime)} — ${fmt.format(lesson.endTime)}',
+            ),
+            if (lesson.classroom.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              _LessonInfo(
+                icon: Icons.place_outlined,
+                text: 'Ауд. ${lesson.classroom}',
+              ),
             ],
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _LessonInfo extends StatelessWidget {
+  const _LessonInfo({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+      ],
     );
   }
 }

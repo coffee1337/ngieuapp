@@ -11,10 +11,21 @@ part 'app_database.g.dart';
   tables: [ScheduleEntries, Classrooms, SentScheduleChangeNotifications],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'ngieu_app'));
+  AppDatabase()
+    : super(
+        driftDatabase(
+          name: 'ngieu_app',
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3/sqlite3.wasm'),
+            driftWorker: Uri.parse('sqlite3/drift_worker.js'),
+          ),
+        ),
+      );
+
+  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -59,6 +70,43 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_sent_schedule_changes_actor '
           'ON sent_schedule_change_notifications(actor_id);',
+        );
+      }
+      if (from < 4) {
+        // Previous cache keys could collide between actors and week types.
+        // Schedule data is fully recoverable from the API, so rebuild only
+        // this cache table and keep user profile/settings untouched.
+        await m.deleteTable('schedule_entries');
+        await m.createTable(scheduleEntries);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_date '
+          'ON schedule_entries(date);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_classroom '
+          'ON schedule_entries(classroom, building);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_actor '
+          'ON schedule_entries(actor_id);',
+        );
+      }
+      if (from < 5) {
+        // Rebuild dates that older versions anchored to the device clock.
+        // The table is only a recoverable schedule cache.
+        await m.deleteTable('schedule_entries');
+        await m.createTable(scheduleEntries);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_date '
+          'ON schedule_entries(date);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_classroom '
+          'ON schedule_entries(classroom, building);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_schedule_actor '
+          'ON schedule_entries(actor_id);',
         );
       }
     },

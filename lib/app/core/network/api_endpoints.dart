@@ -8,8 +8,8 @@ class ApiEndpoints {
   );
   static const scheduleGet = 'Schedule/Get';
   static const departmentsGet = 'Departments/Get';
-  static const studentsGet = 'Students/Get';
-  static const teachersGet = 'Teachers/Get';
+  static const actorsGet = 'Actors/Get';
+  static const weekTypeGet = 'WeekType/Get';
 
   // News (web site)
   static const newsBase = String.fromEnvironment(

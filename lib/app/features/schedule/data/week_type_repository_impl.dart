@@ -5,14 +5,15 @@ import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type_repository.dart';
 
 class WeekTypeRepositoryImpl implements WeekTypeRepository {
-  WeekTypeRepositoryImpl(this._api, this._cache);
+  WeekTypeRepositoryImpl(this._api, this._cache, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
   final WeekTypeApiDataSource _api;
   final WeekTypeCacheDataSource _cache;
+  final DateTime Function() _now;
 
   @override
   Future<WeekType> getWeekType(DateTime date) async {
-    // Пробуем загрузить из кэша
-    final cached = await _cache.loadWeekType();
+    final cached = await _cache.loadWeekType(date: date);
     if (cached != null && _isSameWeek(cached.date, date)) {
       return cached;
     }
@@ -23,14 +24,30 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
       await _cache.saveWeekType(weekType);
       return weekType;
     } catch (e) {
-      // Если API недоступен, используем локальную логику
+      // Даже просроченное значение API надёжнее локального предположения о
+      // чередовании учебных недель.
+      final expired = await _cache.loadWeekType(date: date, allowExpired: true);
+      if (expired != null && _isSameWeek(expired.date, date)) {
+        return expired;
+      }
       return _fallbackWeekType(date);
     }
   }
 
   @override
-  Future<WeekType> getCurrentWeekType() {
-    return getWeekType(DateTime.now());
+  Future<WeekType> getCurrentWeekType() async {
+    try {
+      final weekType = await _api.getCurrentWeekType();
+      await _cache.saveWeekType(weekType);
+      return weekType;
+    } catch (_) {
+      final today = _now();
+      final cached = await _cache.loadWeekType(date: today, allowExpired: true);
+      if (cached != null && _isSameWeek(cached.date, today)) {
+        return cached.copyWith(date: today);
+      }
+      return _fallbackWeekType(today);
+    }
   }
 
   /// Проверяет, что даты относятся к одной неделе

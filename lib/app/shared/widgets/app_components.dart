@@ -5,7 +5,10 @@ import 'package:ngieuapp/app/theme/app_tokens.dart';
 /// Compact tappable field used in filter panels (date, time, dropdown-like).
 class AppCompactField extends StatelessWidget {
   const AppCompactField({
-    required this.icon, required this.label, required this.onTap, super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    super.key,
     this.active = false,
   });
 
@@ -70,7 +73,9 @@ class AppCompactField extends StatelessWidget {
 /// Primary action button with brand gradient.
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
-    required this.onPressed, required this.label, super.key,
+    required this.onPressed,
+    required this.label,
+    super.key,
     this.icon,
     this.enabled = true,
     this.height = AppSizes.buttonHeightSm,
@@ -85,9 +90,8 @@ class AppPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: double.infinity,
-      height: height,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minWidth: double.infinity, minHeight: height),
       child: FilledButton(
         onPressed: enabled ? onPressed : null,
         style: FilledButton.styleFrom(
@@ -95,7 +99,7 @@ class AppPrimaryButton extends StatelessWidget {
           foregroundColor: theme.colorScheme.onPrimary,
           disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdBr),
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -104,12 +108,14 @@ class AppPrimaryButton extends StatelessWidget {
               Icon(icon, size: AppSizes.iconSm),
               const SizedBox(width: AppSpacing.sm),
             ],
-            Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: enabled
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
+            Flexible(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: enabled
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -130,7 +136,7 @@ class AvailabilityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.xxs,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: semantic.availabilityContainer,
@@ -143,7 +149,7 @@ class AvailabilityBadge extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           color: semantic.onAvailabilityContainer,
           letterSpacing: 0.1,
@@ -163,7 +169,7 @@ class ChangeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.xxs,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: semantic.warningContainer,
@@ -176,7 +182,7 @@ class ChangeBadge extends StatelessWidget {
       child: Text(
         'ЗАМЕНА',
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.w800,
           color: semantic.onWarningContainer,
           letterSpacing: 0.4,
@@ -198,7 +204,7 @@ class LessonTypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.xxs,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
@@ -208,7 +214,7 @@ class LessonTypeBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           color: color,
           letterSpacing: 0.2,

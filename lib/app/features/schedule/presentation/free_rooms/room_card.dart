@@ -8,6 +8,7 @@ import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class RoomCard extends StatelessWidget {
   const RoomCard({required this.room, super.key});
+
   final ClassroomAvailability room;
 
   String _durationText() {
@@ -22,105 +23,102 @@ class RoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fmt = DateFormat('HH:mm');
-    final isStandard = ClassroomUtils.isStandardRoomNumber(room.classroom);
     final roomInfo = FloorUtils.getRoomLocationInfo(room.classroom);
-    final formattedFloor = roomInfo.floor != null
-        ? FloorUtils.formatFloor(roomInfo.floor!)
-        : null;
+    final floor = room.floor ?? roomInfo.floor;
+    final formattedFloor = floor != null ? FloorUtils.formatFloor(floor) : null;
+    final institute = room.institute.isNotEmpty
+        ? room.institute
+        : roomInfo.institute;
 
     return Card(
       margin: EdgeInsets.zero,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: isStandard
-                  ? AppSizes.roomNumberColumnWidth
-                  : AppSizes.roomNumberColumnWidthWide,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.lg),
-                  bottomLeft: Radius.circular(AppRadius.lg),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 116),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: AppSizes.roomNumberColumnWidthWide,
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.55,
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.lg,
-                horizontal: AppSpacing.sm,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    room.classroom,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: isStandard ? 17 : 12,
-                      fontWeight: FontWeight.w800,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.lg,
+                  horizontal: AppSpacing.sm,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.door_front_door_outlined,
+                      size: AppSizes.iconMd,
                       color: theme.colorScheme.primary,
-                      height: 1.2,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (formattedFloor != null) ...[
                     const SizedBox(height: AppSpacing.xs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                        vertical: AppSpacing.xxs,
+                    Text(
+                      room.classroom,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize:
+                            ClassroomUtils.isStandardRoomNumber(room.classroom)
+                            ? 17
+                            : 11,
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.primary,
+                        height: 1.15,
                       ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: AppRadius.xsBr,
-                      ),
-                      child: Text(
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (formattedFloor != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
                         formattedFloor,
-                        style: TextStyle(
-                          fontSize: 8.5,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.primary,
-                          letterSpacing: 0.1,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${fmt.format(room.freeFrom)} — ${fmt.format(room.freeUntil)}',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                    if (roomInfo.institute != null) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        roomInfo.institute!,
-                        style: theme.textTheme.bodySmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ],
-                    const SizedBox(height: AppSpacing.sm),
-                    AvailabilityBadge(text: '${_durationText()} свободно'),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${fmt.format(room.freeFrom)} — ${fmt.format(room.freeUntil)}',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      if (institute != null && institute.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          institute,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.sm),
+                      AvailabilityBadge(text: '${_durationText()} свободно'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

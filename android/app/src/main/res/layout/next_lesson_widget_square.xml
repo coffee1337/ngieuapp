@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="7dp">
+
+    <TextView
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="ПАРА"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#D9FFFFFF"
+        android:includeFontPadding="false"
+        android:textSize="9sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:fontFamily="sans-serif-medium"
+        android:text="10:40"
+        android:textColor="#FFFFFF"
+        android:includeFontPadding="false"
+        android:textSize="19sp" />
+
+    <TextView
+        android:id="@+id/widget_subject"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="Программирование"
+        android:textColor="#FFFFFFFF"
+        android:includeFontPadding="false"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/widget_room"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:fontFamily="sans-serif-medium"
+        android:text="ауд. 205"
+        android:textColor="#D9FFFFFF"
+        android:includeFontPadding="false"
+        android:textSize="11sp" />
+
+</LinearLayout>

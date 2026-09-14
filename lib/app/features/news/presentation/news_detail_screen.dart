@@ -20,7 +20,7 @@ class NewsDetailScreen extends ConsumerWidget {
     final showImages = ref.watch(appSettingsProvider).showNewsImages;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Новость')),
+      appBar: AppBar(title: const Text('Новости НГИЭУ')),
       body: previewAsync.when(
         loading: () => const NewsCardSkeleton(),
         error: (e, _) => ErrorView(error: e),
@@ -38,7 +38,7 @@ class NewsDetailScreen extends ConsumerWidget {
             data: (detail) {
               final theme = Theme.of(context);
               return SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -54,18 +54,24 @@ class NewsDetailScreen extends ConsumerWidget {
                               context,
                               preview.imageUrl,
                             ),
-                            child: CachedNetworkImage(
-                              imageUrl: preview.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
-                                color: theme.colorScheme.surfaceContainerHigh,
+                            child: Hero(
+                              tag: 'news-image-${preview.imageUrl}',
+                              child: CachedNetworkImage(
+                                imageUrl: preview.imageUrl!,
+                                fit: BoxFit.cover,
+                                fadeInDuration: const Duration(
+                                  milliseconds: 160,
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  color: theme.colorScheme.surfaceContainerHigh,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(0, 24, 0, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -82,7 +88,7 @@ class NewsDetailScreen extends ConsumerWidget {
                           const SizedBox(height: 6),
                           Text(
                             preview.title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
+                            style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               height: 1.25,
                             ),
@@ -91,7 +97,7 @@ class NewsDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: EdgeInsets.zero,
                       child: Html(
                         data: detail.contentHtml,
                         extensions: [

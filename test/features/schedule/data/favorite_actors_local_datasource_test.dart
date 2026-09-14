@@ -59,6 +59,18 @@ void main() {
     ]);
   });
 
+  test('migrates a favorite and active actor to a new id', () async {
+    await sut.addFavoriteActor(teacher);
+    await sut.setActiveActor(teacher.id);
+    final updated = teacher.copyWith(id: 'teacher-current');
+
+    await sut.replaceFavoriteActorId(teacher.id, updated);
+
+    expect(await sut.getFavorites(), [updated]);
+    expect(await sut.getActiveActorId(), updated.id);
+    expect(await sut.getActiveActorDetails(), updated);
+  });
+
   test('stores and clears active actor id', () async {
     await sut.setActiveActor(group.id);
 
@@ -67,6 +79,14 @@ void main() {
     await sut.setActiveActor(null);
 
     expect(await sut.getActiveActorId(), isNull);
+    expect(await sut.getActiveActorDetails(), isNull);
+  });
+
+  test('stores active actor details for future id migration', () async {
+    await sut.setActiveActorDetails(teacher);
+
+    expect(await sut.getActiveActorId(), teacher.id);
+    expect(await sut.getActiveActorDetails(), teacher);
   });
 
   test(

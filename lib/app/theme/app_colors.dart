@@ -5,7 +5,7 @@ class AppColors {
 
   // Основные фирменные цвета
   static const primary = Color(0xFF9F003D); // Красно-пурпурный
-  static const dark = Color(0xFF333333); // Темно-серый
+  static const dark = Color(0xFF202532); // Темно-серый
   static const white = Color(0xFFFFFFFF); // Белый
 
   // Дополнительные цвета фирменной палитры
@@ -14,27 +14,27 @@ class AppColors {
   static const orange = Color(0xFFFFA300); // Оранжевый
 
   // Фон и поверхности
-  static const surfaceLight = Color(0xFFF5F5F5);
-  static const surfaceContainerLight = Color(0xFFEDEDED);
-  static const surfaceContainerHighLight = Color(0xFFE0E0E0);
+  static const surfaceLight = Color(0xFFF5F6FA);
+  static const surfaceContainerLight = Color(0xFFEEF0F5);
+  static const surfaceContainerHighLight = Color(0xFFE5E8F0);
   static const surfaceVariantLight = Color(0xFFC2C2C2);
 
   // Текст
-  static const textPrimary = Color(0xFF333333);
-  static const textSecondary = Color(0xFF666666);
-  static const textTertiary = Color(0xFF999999);
+  static const textPrimary = Color(0xFF202532);
+  static const textSecondary = Color(0xFF626A7B);
+  static const textTertiary = Color(0xFF727B8C);
 
   // Градиенты
   static const brandGradient = LinearGradient(
-    colors: [deepBlue, purple, primary, orange],
-    stops: [0.0, 0.33, 0.66, 1.0],
+    colors: [Color(0xFF620D35), primary, Color(0xFFB82E59)],
+    stops: [0.0, 0.65, 1.0],
   );
 
   static const brandGradientVertical = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [deepBlue, purple, primary, orange],
-    stops: [0.0, 0.33, 0.66, 1.0],
+    colors: [Color(0xFF620D35), primary, Color(0xFFB82E59)],
+    stops: [0.0, 0.65, 1.0],
   );
 
   static const primaryGradient = LinearGradient(

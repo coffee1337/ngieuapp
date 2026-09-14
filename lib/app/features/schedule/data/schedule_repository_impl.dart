@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ngieuapp/app/features/notifications/schedule_change_notifications_service.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_api_datasource.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_db_datasource.dart';
@@ -26,18 +27,8 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     final stale = await _db.isStale(actorId, _ttl);
     if (stale || cached.isEmpty) {
       try {
-        final fresh = await _api.fetchSchedule(actorId);
-        await _changeNotifications?.notifyAboutNewChanges(
-          actorId: actorId,
-          oldLessons: cached,
-          freshLessons: fresh,
-        );
-        await _db.replaceForActor(actorId, fresh);
-        yield fresh
-            .where(
-              (l) => !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd),
-            )
-            .toList();
+        final fresh = await _fetchAndStore(actorId, cached, weekStart);
+        yield _lessonsForWeek(fresh, weekStart, weekEnd);
       } catch (e) {
         if (cached.isEmpty) rethrow;
       }
@@ -45,6 +36,48 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   }
 
   @override
+  Future<List<Lesson>> refreshWeek(String actorId, DateTime weekStart) async {
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final cached = await _db.getLessonsInRange(actorId, weekStart, weekEnd);
+    final fresh = await _fetchAndStore(actorId, cached, weekStart);
+    return _lessonsForWeek(fresh, weekStart, weekEnd);
+  }
+
+  @override
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) =>
       _db.getAllLessonsForDate(date);
+
+  @override
+  Future<List<Lesson>> getAllLessonsInRange(DateTime from, DateTime to) =>
+      _db.getAllLessonsInRange(from, to);
+
+  Future<List<Lesson>> _fetchAndStore(
+    String actorId,
+    List<Lesson> previous,
+    DateTime anchorDate,
+  ) async {
+    final fresh = await _api.fetchSchedule(actorId, anchorDate: anchorDate);
+    await _db.replaceForActor(actorId, fresh);
+    try {
+      await _changeNotifications?.notifyAboutNewChanges(
+        actorId: actorId,
+        oldLessons: previous,
+        freshLessons: fresh,
+      );
+    } on Exception catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Schedule change notification failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+    }
+    return fresh;
+  }
+
+  List<Lesson> _lessonsForWeek(
+    List<Lesson> lessons,
+    DateTime weekStart,
+    DateTime weekEnd,
+  ) => lessons
+      .where((l) => !l.date.isBefore(weekStart) && l.date.isBefore(weekEnd))
+      .toList();
 }

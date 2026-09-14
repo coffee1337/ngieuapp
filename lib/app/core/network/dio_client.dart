@@ -37,20 +37,26 @@ class DioClient {
 
   static void _attachCommon(Dio dio) {
     if (kDebugMode) {
-      dio.interceptors.add(
-        PrettyDioLogger(responseBody: false),
-      );
+      dio.interceptors.add(PrettyDioLogger(responseBody: false));
     }
     dio.interceptors.add(
       InterceptorsWrapper(
         onError: (e, handler) {
-          if (_shouldRetry(e) && e.requestOptions.extra['retried'] != true) {
+          if (_shouldRetry(e) &&
+              const {
+                'GET',
+                'HEAD',
+                'OPTIONS',
+              }.contains(e.requestOptions.method) &&
+              e.requestOptions.extra['retried'] != true) {
             e.requestOptions.extra['retried'] = true;
             dio
-                .fetch(e.requestOptions)
+                .fetch<dynamic>(e.requestOptions)
                 .then(
                   (r) => handler.resolve(r),
-                  onError: (err) => handler.next(err as DioException),
+                  onError: (Object err) => handler.next(
+                    err is DioException ? err : e,
+                  ),
                 );
             return;
           }

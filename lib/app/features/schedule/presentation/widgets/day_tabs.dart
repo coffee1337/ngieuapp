@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import 'package:ngieuapp/app/theme/app_theme.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class DayTab {
@@ -10,209 +8,151 @@ class DayTab {
   final bool isToday;
 }
 
-class DayTabs extends StatelessWidget {
+class DayTabs extends StatefulWidget {
   const DayTabs({
-    required this.weekStart, required this.tabController, super.key,
+    required this.weekStart,
+    required this.currentDate,
+    required this.tabController,
+    super.key,
   });
-
   final DateTime weekStart;
+  final DateTime currentDate;
   final TabController tabController;
 
   @override
+  State<DayTabs> createState() => _DayTabsState();
+}
+
+class _DayTabsState extends State<DayTabs> {
+  static final _shortDayFormat = DateFormat('EEE', 'ru_RU');
+  static final _semanticDateFormat = DateFormat('EEEE, d MMMM', 'ru_RU');
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final semantic = theme.extension<AppSemanticColors>()!;
-    final today = DateTime.now();
-    final dayFmt = DateFormat('EEE', 'ru_RU');
-    final dateFmt = DateFormat('d', 'ru_RU');
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(color: semantic.subtleDivider),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: ListenableBuilder(
-        listenable: tabController,
-        builder: (context, _) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(6, (i) {
-              final d = weekStart.add(Duration(days: i));
-              final isToday =
-                  d.year == today.year &&
-                  d.month == today.month &&
-                  d.day == today.day;
-              final dayName = dayFmt.format(d);
-              final dateStr = dateFmt.format(d);
-              final isActive = tabController.index == i;
-
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: i < 5 ? AppSpacing.sm : 0),
-                  child: _DayChip(
-                    dayName: dayName,
-                    dateStr: dateStr,
-                    isToday: isToday,
-                    isActive: isActive,
-                    onTap: () {
-                      if (tabController.index != i) {
-                        tabController.animateTo(i);
-                      }
-                    },
-                  ),
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final minWidth = MediaQuery.textScalerOf(context).scale(32) + 20;
+          final width = ((constraints.maxWidth - 40) / 6)
+              .clamp(minWidth, double.infinity)
+              .toDouble();
+          return AnimatedBuilder(
+            animation: widget.tabController.animation!,
+            builder: (context, _) {
+              final page = widget.tabController.animation!.value;
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(6, (index) {
+                    final date = widget.weekStart.add(Duration(days: index));
+                    final selection = (1 - (page - index).abs()).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    final selected = selection > 0.5;
+                    final today = DateUtils.isSameDay(date, widget.currentDate);
+                    final background = Color.lerp(
+                      scheme.surfaceContainer,
+                      scheme.primary,
+                      selection,
+                    )!;
+                    final foreground = Color.lerp(
+                      scheme.onSurface,
+                      scheme.onPrimary,
+                      selection,
+                    )!;
+                    return Padding(
+                      padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
+                      child: Semantics(
+                        selected: selected,
+                        label:
+                            '${_semanticDateFormat.format(date)}${today ? ', сегодня' : ''}',
+                        child: SizedBox(
+                          width: width,
+                          child: Transform.scale(
+                            scale: reduceMotion ? 1 : 1 + (selection * 0.035),
+                            child: Material(
+                              color: background,
+                              borderRadius: AppRadius.xlBr,
+                              child: InkWell(
+                                borderRadius: AppRadius.xlBr,
+                                onTap: () => widget.tabController.animateTo(
+                                  index,
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : AppDurations.normal,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    minHeight: AppSizes.dayChipMinHeight,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: AppRadius.xlBr,
+                                    border: Border.all(
+                                      color: today && !selected
+                                          ? scheme.primary
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                                  child: ExcludeSemantics(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _shortDayFormat.format(date),
+                                          style: textTheme.labelMedium
+                                              ?.copyWith(
+                                                color: Color.lerp(
+                                                  scheme.onSurfaceVariant,
+                                                  scheme.onPrimary,
+                                                  selection,
+                                                ),
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${date.day}',
+                                          style: textTheme.titleLarge?.copyWith(
+                                            color: foreground,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          width: 4,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: today
+                                                ? foreground
+                                                : Colors.transparent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               );
-            }),
+            },
           );
         },
       ),
     );
-  }
-}
-
-class _DayChip extends StatefulWidget {
-  const _DayChip({
-    required this.dayName,
-    required this.dateStr,
-    required this.isToday,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  final String dayName;
-  final String dateStr;
-  final bool isToday;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  State<_DayChip> createState() => _DayChipState();
-}
-
-class _DayChipState extends State<_DayChip>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animController;
-  late final Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      duration: AppDurations.fast,
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1,
-      end: 0.95,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  void _handleTap() {
-    widget.onTap();
-    _animController.forward().then((_) => _animController.reverse());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final brand = theme.extension<BrandColors>();
-
-    return GestureDetector(
-      onTap: _handleTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(scale: _scaleAnimation.value, child: child);
-        },
-        child: AnimatedContainer(
-          duration: AppDurations.fast,
-          curve: Curves.easeOut,
-          constraints: const BoxConstraints(
-            minHeight: AppSizes.dayChipMinHeight,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xs,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: widget.isActive
-                ? theme.colorScheme.primary
-                : Colors.transparent,
-            borderRadius: AppRadius.mdBr,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _getDayName(widget.dayName),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: widget.isActive
-                      ? Colors.white.withValues(alpha: 0.9)
-                      : theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.3,
-                  height: 1,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                widget.dateStr,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: widget.isActive
-                      ? Colors.white
-                      : theme.colorScheme.onSurface,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              if (widget.isToday)
-                Container(
-                  margin: const EdgeInsets.only(top: AppSpacing.xxs),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                    vertical: AppSpacing.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: widget.isActive
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : (brand?.orange ?? const Color(0xFFFFA300)),
-                    borderRadius: AppRadius.xsBr,
-                  ),
-                  child: const Text(
-                    'сегодня',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _getDayName(String fullName) {
-    if (fullName.length <= 3) return fullName;
-    return fullName.substring(0, 3);
   }
 }

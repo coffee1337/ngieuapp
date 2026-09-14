@@ -15,28 +15,36 @@ class SearchSchedule {
 
   /// Ищет занятия в БД за последние 2 недели и на 2 недели вперёд.
   /// Пустой запрос → пустой список.
-  Future<List<SearchScheduleResult>> call(String query) async {
+  Future<List<SearchScheduleResult>> call(
+    String query, {
+    required Future<bool> Function(DateTime date) resolveIsUpperWeek,
+  }) async {
     final q = query.trim().toLowerCase();
     if (q.length < 2) return const [];
 
-    final from = DateTime.now().subtract(const Duration(days: 14));
-    final to = DateTime.now().add(const Duration(days: 14));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final from = today.subtract(const Duration(days: 14));
+    final to = today.add(const Duration(days: 14));
+    final allLessons = await _repo.getAllLessonsInRange(from, to);
 
     final results = <SearchScheduleResult>[];
     final seen = <String>{};
 
-    // Идём по дням и собираем всё, что совпадает
-    for (var d = from; d.isBefore(to); d = d.add(const Duration(days: 1))) {
-      final dayLessons = await _repo.getAllLessonsForDate(d);
-      for (final l in dayLessons) {
-        final match = _matchType(l, q);
-        if (match == null) continue;
-        // Дедупликация — одно и то же занятие может быть повторено (разные группы)
-        final key =
-            '${l.date.toIso8601String()}|${l.pairNumber}|${l.subject}|${l.classroom}|${l.teacherNames.join()}';
-        if (!seen.add(key)) continue;
-        results.add(SearchScheduleResult(lesson: l, matchType: match));
-      }
+    // Загружаем весь диапазон одним запросом, затем фильтруем в памяти.
+    for (final l in allLessons) {
+      if (l.date.isBefore(from) || !l.date.isBefore(to)) continue;
+      final isUpperWeek = await resolveIsUpperWeek(l.date);
+      if (!l.parity.matchesUpperWeek(isUpperWeek)) continue;
+      final match = _matchType(l, q);
+      if (match == null) continue;
+      // Дедупликация — одно и то же занятие может быть повторено (разные группы)
+      final key =
+          '${l.date.toIso8601String()}|${l.pairNumber}|'
+          '${l.subject}|${l.classroom}|${l.building}|'
+          '${l.teacherNames.join(",")}|${l.groupNames.join(",")}';
+      if (!seen.add(key)) continue;
+      results.add(SearchScheduleResult(lesson: l, matchType: match));
     }
 
     // Сортировка: сначала по дате, потом по паре

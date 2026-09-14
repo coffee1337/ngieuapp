@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ngieuapp/app/features/profile/domain/student_identity.dart';
-import 'package:ngieuapp/app/theme/app_colors.dart';
+import 'package:ngieuapp/app/theme/app_theme.dart';
+import 'package:ngieuapp/app/theme/app_tokens.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
@@ -9,7 +10,6 @@ class ProfileHeader extends StatelessWidget {
     required this.todayStats,
     super.key,
   });
-
   final StudentIdentity identity;
   final Widget courseStats;
   final Widget todayStats;
@@ -17,21 +17,18 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+    final scheme = theme.colorScheme;
+    final brandGradient = theme.extension<BrandColors>()!.brandGradient;
+    final headerForeground = _bestForegroundFor(brandGradient);
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       decoration: BoxDecoration(
-        gradient: AppColors.brandGradient,
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        gradient: brandGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: headerForeground.withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,42 +36,84 @@ class ProfileHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
                 ),
-                child: const Icon(Icons.school, color: Colors.white, size: 28),
+                decoration: BoxDecoration(
+                  color: scheme.surface.withValues(alpha: 0.88),
+                  borderRadius: AppRadius.pillBr,
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.75),
+                  ),
+                ),
+                child: Icon(
+                  Icons.school_outlined,
+                  color: scheme.primary,
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      identity.displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      identity.departmentName,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  identity.isStudentGroup ? 'Моя группа' : 'Преподаватель',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: headerForeground,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(children: [courseStats, const SizedBox(width: 8), todayStats]),
+          const SizedBox(height: AppSpacing.xxl),
+          Text(
+            identity.displayName,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (textScale > 1.15
+                    ? theme.textTheme.titleLarge
+                    : theme.textTheme.headlineLarge)
+                    ?.copyWith(color: headerForeground, height: 1.15),
+          ),
+          if (identity.departmentName.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              identity.departmentName,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: headerForeground.withValues(alpha: 0.88),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xxxl),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 260 ||
+                  textScale > 1.15 ||
+                  !identity.isStudentGroup) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    courseStats,
+                    const SizedBox(height: AppSpacing.md),
+                    todayStats,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: courseStats),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(child: todayStats),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -88,35 +127,66 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(12),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: scheme.surface.withValues(alpha: 0.86),
+        borderRadius: AppRadius.xlBr,
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.72),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: value.length > 8 ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (value.length > 8
+                        ? theme.textTheme.titleLarge
+                        : theme.textTheme.headlineMedium)
+                    ?.copyWith(color: scheme.onSurface, height: 1.15),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85),
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+Color _bestForegroundFor(Gradient gradient) {
+  var whiteMinimum = double.infinity;
+  var darkMinimum = double.infinity;
+  const dark = Color(0xFF111318);
+
+  for (final background in gradient.colors) {
+    final whiteContrast = _contrastRatio(Colors.white, background);
+    final darkContrast = _contrastRatio(dark, background);
+    if (whiteContrast < whiteMinimum) whiteMinimum = whiteContrast;
+    if (darkContrast < darkMinimum) darkMinimum = darkContrast;
+  }
+
+  return whiteMinimum >= darkMinimum ? Colors.white : dark;
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final lighter = foreground.computeLuminance() > background.computeLuminance()
+      ? foreground.computeLuminance()
+      : background.computeLuminance();
+  final darker = foreground.computeLuminance() > background.computeLuminance()
+      ? background.computeLuminance()
+      : foreground.computeLuminance();
+  return (lighter + 0.05) / (darker + 0.05);
 }

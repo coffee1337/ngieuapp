@@ -32,6 +32,8 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
 
   void _onChanged(String v) {
     _debounce?.cancel();
+    // The clear action follows the controller text, not the debounced query.
+    setState(() {});
     _debounce = Timer(const Duration(milliseconds: 350), () {
       if (mounted) setState(() => _query = v.trim());
     });
@@ -59,8 +61,9 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
             IconButton(
               icon: const Icon(Icons.clear),
               onPressed: () {
+                _debounce?.cancel();
                 _ctrl.clear();
-                _onChanged('');
+                setState(() => _query = '');
               },
             ),
         ],
@@ -197,22 +200,30 @@ class _SearchResultTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Icon(
-                _iconFor(result.matchType),
-                size: 14,
-                color: theme.colorScheme.primary,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _iconFor(result.matchType),
+                    size: 14,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _labelFor(result.matchType),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                _labelFor(result.matchType),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
               Text(
                 '${fmt.format(l.startTime)} — ${fmt.format(l.endTime)}',
                 style: theme.textTheme.labelMedium?.copyWith(

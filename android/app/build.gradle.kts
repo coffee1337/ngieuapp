@@ -25,6 +25,7 @@ android {
         applicationId = "ru.ngieu.mobile.ngieuapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Android 6.0+ is the supported compatibility floor.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -33,12 +34,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            // Stability first: several Flutter plugins used by the app load
+            // Android classes and resources dynamically. Aggressive R8/resource
+            // shrinking can remove them and produce a release-only startup
+            // crash even though the debug build works correctly.
+            isMinifyEnabled = false
+            isShrinkResources = false
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")

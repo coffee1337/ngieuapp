@@ -44,6 +44,7 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 12, minute: 0),
+        isUpperWeek: true,
         minDuration: const Duration(minutes: 45),
       );
 
@@ -75,6 +76,7 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 18, minute: 0),
+        isUpperWeek: true,
       );
 
       expect(result.every((r) => r.classroom != 'дист.'), isTrue);
@@ -95,6 +97,7 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 8, minute: 0),
         to: const TimeOfDay(hour: 20, minute: 0),
+        isUpperWeek: true,
       );
 
       expect(result, isEmpty);
@@ -122,6 +125,7 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 9, minute: 30),
         to: const TimeOfDay(hour: 10, minute: 0),
+        isUpperWeek: true,
         minDuration: const Duration(minutes: 45),
       );
 
@@ -129,14 +133,15 @@ void main() {
     });
 
     test('returns empty when no lessons exist for date', () async {
-      when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
-        (_) async => [],
-      );
+      when(
+        () => mockRepo.getAllLessonsForDate(date),
+      ).thenAnswer((_) async => []);
 
       final result = await sut(
         date: date,
         from: const TimeOfDay(hour: 8, minute: 0),
         to: const TimeOfDay(hour: 20, minute: 0),
+        isUpperWeek: true,
       );
 
       expect(result, isEmpty);
@@ -163,6 +168,7 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 11, minute: 0),
         to: const TimeOfDay(hour: 13, minute: 0),
+        isUpperWeek: true,
         minDuration: const Duration(minutes: 45),
       );
 
@@ -191,14 +197,12 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 20, minute: 0),
+        isUpperWeek: true,
         minDuration: const Duration(minutes: 45),
       );
 
       if (result.length >= 2) {
-        expect(
-          result.first.freeDuration >= result.last.freeDuration,
-          isTrue,
-        );
+        expect(result.first.freeDuration >= result.last.freeDuration, isTrue);
       }
     });
 
@@ -223,10 +227,45 @@ void main() {
         date: date,
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 20, minute: 0),
+        isUpperWeek: true,
         instituteFilter: 'Институт экономики и управления',
       );
 
-      expect(result.every((r) => r.institute == 'Институт экономики и управления'), isTrue);
+      expect(
+        result.every((r) => r.institute == 'Институт экономики и управления'),
+        isTrue,
+      );
+    });
+
+    test('ignores lessons from the other week type', () async {
+      when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
+        (_) async => [
+          makeLesson(
+            classroom: '121',
+            parity: WeekParity.even,
+            startTime: DateTime(2025, 3, 10, 10),
+            endTime: DateTime(2025, 3, 10, 12),
+          ),
+          makeLesson(
+            id: 'lower-lesson',
+            classroom: '121',
+            parity: WeekParity.odd,
+            startTime: DateTime(2025, 3, 10, 12),
+            endTime: DateTime(2025, 3, 10, 14),
+          ),
+        ],
+      );
+
+      final result = await sut(
+        date: date,
+        from: const TimeOfDay(hour: 10, minute: 0),
+        to: const TimeOfDay(hour: 12, minute: 0),
+        isUpperWeek: false,
+      );
+
+      expect(result, hasLength(1));
+      expect(result.single.freeFrom.hour, 10);
+      expect(result.single.freeUntil.hour, 12);
     });
   });
 }

@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
+    <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
 
     <!-- Для уведомлений -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -14,6 +16,7 @@
         android:label="НГИЭУ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -36,12 +39,58 @@
 
         <!-- Home widget provider -->
         <receiver android:name="ru.ngieu.mobile.ngieuapp.NextLessonWidgetProvider"
+            android:label="@string/widget_next_lesson_name"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/next_lesson_widget_info"/>
+        </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.NextLessonSquareWidgetProvider"
+            android:label="@string/widget_square_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/next_lesson_square_widget_info"/>
+        </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.NextLessonTallWidgetProvider"
+            android:label="@string/widget_tall_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/next_lesson_tall_widget_info"/>
+        </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.UpcomingLessonsWidgetProvider"
+            android:label="@string/widget_upcoming_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/upcoming_lessons_widget_info"/>
+        </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.TodayScheduleWidgetProvider"
+            android:label="@string/widget_today_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/today_schedule_widget_info"/>
+        </receiver>
+        <receiver android:name="ru.ngieu.mobile.ngieuapp.TomorrowScheduleWidgetProvider"
+            android:label="@string/widget_tomorrow_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/tomorrow_schedule_widget_info"/>
         </receiver>
 
         <!-- Notifications -->

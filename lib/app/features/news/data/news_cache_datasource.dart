@@ -22,9 +22,15 @@ class NewsCacheDataSource {
     final box = await Hive.openBox<String>(HiveBoxes.newsList);
     final raw = box.get('page_$page');
     if (raw == null) return (items: <NewsArticle>[], updatedAt: null);
-    final list = (jsonDecode(raw) as List)
-        .map((e) => NewsArticle.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final List<NewsArticle> list;
+    try {
+      list = (jsonDecode(raw) as List)
+          .map((e) => NewsArticle.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on Object {
+      await box.delete('page_$page');
+      return (items: <NewsArticle>[], updatedAt: null);
+    }
     final meta = await Hive.openBox<int>(HiveBoxes.newsMeta);
     final ts = meta.get('page_${page}_at');
     return (
@@ -49,11 +55,16 @@ class NewsCacheDataSource {
     final box = await Hive.openBox<String>(HiveBoxes.newsDetail);
     final raw = box.get(id.toString());
     if (raw == null) return null;
-    final map = jsonDecode(raw) as Map<String, dynamic>;
-    return NewsArticleFull(
-      preview: NewsArticle.fromJson(map['preview'] as Map<String, dynamic>),
-      contentHtml: map['html'] as String,
-      gallery: (map['gallery'] as List).cast<String>(),
-    );
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return NewsArticleFull(
+        preview: NewsArticle.fromJson(map['preview'] as Map<String, dynamic>),
+        contentHtml: map['html'] as String,
+        gallery: (map['gallery'] as List).cast<String>().toList(),
+      );
+    } on Object {
+      await box.delete(id.toString());
+      return null;
+    }
   }
 }

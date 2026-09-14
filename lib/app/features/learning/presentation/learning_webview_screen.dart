@@ -13,6 +13,9 @@ class LearningWebViewScreen extends StatefulWidget {
 }
 
 class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
+  // Reusing the native web view preserves sessionStorage and in-memory login
+  // state when the user switches between the application tabs.
+  static final _keepAlive = InAppWebViewKeepAlive();
   InAppWebViewController? _controller;
   late final PullToRefreshController _pullToRefresh = PullToRefreshController(
     settings: PullToRefreshSettings(color: const Color(0xFF9F003D)),
@@ -25,14 +28,9 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
   String? _errorText;
   bool _canGoBack = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   Future<bool> _handleBack() async {
     if (_controller != null && await _controller!.canGoBack()) {
-      _controller!.goBack();
+      await _controller!.goBack();
       return false;
     }
     return true;
@@ -74,25 +72,30 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                 },
               )
             : InAppWebView(
+                keepAlive: _keepAlive,
                 pullToRefreshController: _pullToRefresh,
                 initialUrlRequest: URLRequest(
                   url: WebUri(LearningWebViewScreen._initialUrl),
                 ),
                 initialSettings: InAppWebViewSettings(
+                  cacheEnabled: true,
+                  clearCache: false,
+                  incognito: false,
+                  sharedCookiesEnabled: true,
                   transparentBackground: true,
                   useOnDownloadStart: true,
                   useShouldOverrideUrlLoading: true,
-                  userAgent:
-                      'Mozilla/5.0 (Linux; Android 13) NGIEU-Mobile/1.0 Mobile Safari/537.36',
                 ),
                 onWebViewCreated: (c) => _controller = c,
                 onLoadStart: (_, __) {
+                  if (!mounted) return;
                   setState(() {
                     _hasError = false;
                     _progress = 0;
                   });
                 },
                 onProgressChanged: (_, p) {
+                  if (!mounted) return;
                   if (p == 100) _pullToRefresh.endRefreshing();
                   setState(() => _progress = p / 100);
                 },
@@ -101,6 +104,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   if (mounted) setState(() {});
                 },
                 onReceivedError: (_, request, error) {
+                  if (!mounted) return;
                   if (request.isForMainFrame ?? false) {
                     setState(() {
                       _hasError = true;
@@ -110,6 +114,7 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   _pullToRefresh.endRefreshing();
                 },
                 onReceivedHttpError: (_, request, response) {
+                  if (!mounted) return;
                   if ((request.isForMainFrame ?? false) &&
                       (response.statusCode ?? 0) >= 500) {
                     setState(() {
@@ -119,15 +124,31 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   }
                 },
                 shouldOverrideUrlLoading: (c, action) async {
-                  final host = action.request.url?.host ?? '';
-                  if (host.contains('ngiei.mcdir.ru') ||
-                      host.contains('ngieu.ru')) {
+                  final scheme = action.request.url?.scheme.toLowerCase();
+                  // Authentication can redirect through another HTTPS host.
+                  if (scheme == 'https' || scheme == 'http') {
                     return NavigationActionPolicy.ALLOW;
                   }
                   return NavigationActionPolicy.CANCEL;
                 },
                 onDownloadStartRequest: (c, req) async {
-                  // Отдаём ОС — пусть сохраняет файл через Download Manager
+                  // The external browser owns the actual download. It may
+                  // require login again because WebView cookies are private.
+                  final messenger = ScaffoldMessenger.of(context);
+                  final scheme = req.url.scheme.toLowerCase();
+                  try {
+                    if (scheme != 'https' && scheme != 'http') {
+                      throw const FormatException('Unsupported download URL');
+                    }
+                    await InAppBrowser.openWithSystemBrowser(url: req.url);
+                  } on Object {
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Не удалось открыть загрузку в браузере'),
+                      ),
+                    );
+                  }
                 },
               ),
       ),

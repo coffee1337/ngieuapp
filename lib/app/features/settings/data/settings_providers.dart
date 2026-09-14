@@ -7,14 +7,19 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 });
 
 class AppSettingsNotifier extends StateNotifier<AppSettings> {
-  AppSettingsNotifier(this._repo) : super(const AppSettings()) {
+  AppSettingsNotifier(this._repo, this._onLoaded) : super(const AppSettings()) {
     _load();
   }
 
   final SettingsRepository _repo;
+  final void Function() _onLoaded;
 
   Future<void> _load() async {
-    state = await _repo.load();
+    try {
+      state = await _repo.load();
+    } finally {
+      _onLoaded();
+    }
   }
 
   Future<void> setThemeMode(AppThemeMode mode) async {
@@ -65,5 +70,10 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 
 final appSettingsProvider =
     StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
-      return AppSettingsNotifier(ref.watch(settingsRepositoryProvider));
+      return AppSettingsNotifier(
+        ref.watch(settingsRepositoryProvider),
+        () => ref.read(appSettingsLoadedProvider.notifier).state = true,
+      );
     });
+
+final appSettingsLoadedProvider = StateProvider<bool>((ref) => false);

@@ -37,8 +37,9 @@ class NewsRepositoryImpl implements NewsRepository {
         } else if (!forceRefresh && cached.items.isNotEmpty) {
           // Если API вернул пустой список, но не forceRefresh, показываем кэш
           yield cached.items;
-        } else if (forceRefresh && fresh.isEmpty) {
+        } else {
           // Если forceRefresh и API вернул пустой список, показываем пустой список
+          await _cache.saveList(page, fresh);
           yield fresh;
         }
       } catch (e) {

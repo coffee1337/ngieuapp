@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:ngieuapp/app/features/schedule/domain/classroom_availability.dart';
+import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 import 'package:ngieuapp/app/features/schedule/domain/utils/classroom_utils.dart';
 
@@ -21,6 +22,7 @@ class FindFreeClassrooms {
     required DateTime date,
     required TimeOfDay from,
     required TimeOfDay to,
+    required bool isUpperWeek,
     Duration minDuration = const Duration(minutes: 45),
     String? buildingFilter,
     String? instituteFilter,
@@ -33,7 +35,10 @@ class FindFreeClassrooms {
 
     lessons = lessons
         .where(
-          (l) => l.classroom.isNotEmpty && !_excluded.hasMatch(l.classroom),
+          (lesson) =>
+              lesson.parity.matchesUpperWeek(isUpperWeek) &&
+              lesson.classroom.isNotEmpty &&
+              !_excluded.hasMatch(lesson.classroom),
         )
         .toList();
 

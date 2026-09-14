@@ -15,5 +15,8 @@ class LearningAuthService {
     await _storage.write(key: 'lms_password', value: password);
   }
 
-  Future<void> clear() async => _storage.deleteAll();
+  Future<void> clear() async {
+    await _storage.delete(key: 'lms_login');
+    await _storage.delete(key: 'lms_password');
+  }
 }

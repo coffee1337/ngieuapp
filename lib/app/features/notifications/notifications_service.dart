@@ -1,8 +1,10 @@
-import 'dart:io';
+import 'package:ngieuapp/app/core/utils/app_platform.dart';
 
-import 'package:flutter/material.dart' show Color;
+import 'package:flutter/material.dart' show Color, ValueNotifier;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ngieuapp/app/features/notifications/notification_quiet_policy.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
+import 'package:ngieuapp/app/features/settings/domain/smart_notification_settings.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -13,40 +15,119 @@ class NotificationsService {
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  Future<void>? _initializing;
+  bool _canScheduleExact = true;
+  static const _quietPolicy = NotificationQuietPolicy();
+  final selectedRoute = ValueNotifier<String?>(null);
 
   static const _brandColor = Color(0xFF9F003D);
+  static const _lockScreenCardId = 0x4E474945;
 
   Future<void> init() async {
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    final inProgress = _initializing;
+    if (inProgress != null) return inProgress;
     if (_initialized) return;
+
+    final initialization = _initialize();
+    _initializing = initialization;
+    try {
+      await initialization;
+    } finally {
+      if (identical(_initializing, initialization)) {
+        _initializing = null;
+      }
+    }
+  }
+
+  Future<void> _initialize() async {
     tzdata.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Europe/Moscow'));
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings(
+    const androidInit = AndroidInitializationSettings('ic_stat_ngieu');
+    final iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      notificationCategories: [
+        DarwinNotificationCategory(
+          'lesson_reminder',
+          actions: [
+            DarwinNotificationAction.plain(
+              'open_schedule',
+              'Открыть расписание',
+              options: {DarwinNotificationActionOption.foreground},
+            ),
+          ],
+        ),
+        DarwinNotificationCategory(
+          'schedule_change',
+          actions: [
+            DarwinNotificationAction.plain(
+              'open_changes',
+              'Посмотреть изменение',
+              options: {DarwinNotificationActionOption.foreground},
+            ),
+          ],
+        ),
+      ],
     );
     await _plugin.initialize(
-      const InitializationSettings(android: androidInit, iOS: iosInit),
+      InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: (response) {
+        selectedRoute.value = response.payload;
+      },
     );
     _initialized = true;
+
+    try {
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        selectedRoute.value = launchDetails?.notificationResponse?.payload;
+      }
+    } catch (_) {
+      // Notification launch details are optional and must not block startup.
+    }
+    if (AppPlatform.isAndroid) {
+      try {
+        final android = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        _canScheduleExact =
+            await android?.canScheduleExactNotifications() ?? false;
+      } catch (_) {
+        // Samsung and other OEM builds may restrict this call until the user
+        // opens the app settings. Inexact notifications remain available.
+        _canScheduleExact = false;
+      }
+    }
   }
 
   Future<bool> requestPermissions() async {
-    if (Platform.isAndroid) {
+    if (!AppPlatform.supportsMobileIntegrations) return false;
+    await init();
+    if (AppPlatform.isAndroid) {
       final status = await Permission.notification.request();
       if (!status.isGranted) return false;
       final android = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
-      final canSchedule = await android?.canScheduleExactNotifications();
-      if (canSchedule == false) {
-        await android?.requestExactAlarmsPermission();
+      try {
+        final canSchedule = await android?.canScheduleExactNotifications();
+        if (canSchedule == false) {
+          await android?.requestExactAlarmsPermission();
+          _canScheduleExact =
+              await android?.canScheduleExactNotifications() ?? false;
+        }
+      } catch (_) {
+        // Some Samsung firmware variants do not expose the exact-alarm
+        // settings screen. Reminders still work with an inexact schedule.
+        _canScheduleExact = false;
       }
       return true;
     }
-    if (Platform.isIOS) {
+    if (AppPlatform.isIOS) {
       final granted = await _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -57,14 +138,25 @@ class NotificationsService {
     return false;
   }
 
+  Future<bool> openSystemSettings() => openAppSettings();
+
   Future<void> scheduleLessonReminder(
     Lesson lesson, {
     int minutesBefore = 15,
+    SmartNotificationSettings preferences = const SmartNotificationSettings(),
+    List<Lesson> schedule = const [],
   }) async {
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    await init();
     final notifyTime = lesson.startTime.subtract(
       Duration(minutes: minutesBefore),
     );
     if (notifyTime.isBefore(DateTime.now())) return;
+    final silent = _quietPolicy.shouldSilence(
+      at: notifyTime,
+      preferences: preferences,
+      lessons: schedule,
+    );
     final id = _idFromString(lesson.id);
     final tzTime = tz.TZDateTime.from(notifyTime, tz.local);
     await _plugin.zonedSchedule(
@@ -72,65 +164,232 @@ class NotificationsService {
       'Через $minutesBefore мин: ${lesson.subject}',
       _buildBody(lesson),
       tzTime,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
-          'lesson_reminders',
-          'Напоминания о парах',
+          silent ? 'lesson_reminders_silent' : 'lesson_reminders',
+          silent ? 'Напоминания о парах без звука' : 'Напоминания о парах',
           channelDescription: 'Уведомления о начале занятий',
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          icon: 'ic_stat_ngieu',
           color: _brandColor,
+          playSound: preferences.soundEnabled && !silent,
+          enableVibration: preferences.vibrationEnabled && !silent,
+          groupKey: 'lesson_reminders',
+          styleInformation: BigTextStyleInformation(_buildBody(lesson)),
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentList: true,
+          presentBadge: true,
+          presentSound: preferences.soundEnabled && !silent,
+          categoryIdentifier: 'lesson_reminder',
+          threadIdentifier: 'lesson_reminders',
+          interruptionLevel: silent
+              ? InterruptionLevel.passive
+              : InterruptionLevel.active,
+        ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _canScheduleExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: '/schedule',
     );
   }
 
   Future<void> showScheduleChangeNotification({
     required Lesson lesson,
     required String fingerprint,
+    SmartNotificationSettings preferences = const SmartNotificationSettings(),
+    List<Lesson> schedule = const [],
   }) async {
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    await init();
+    if (!preferences.scheduleChangesEnabled) return;
+    final quiet = _quietPolicy.shouldSilence(
+      at: DateTime.now(),
+      preferences: preferences,
+      lessons: schedule,
+    );
     await _plugin.show(
       _idFromString('schedule-change:$fingerprint'),
       _changeTitle(lesson),
       _buildBody(lesson),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
-          'schedule_changes',
-          'Изменения расписания',
+          quiet ? 'schedule_changes_silent' : 'schedule_changes',
+          quiet ? 'Изменения расписания без звука' : 'Изменения расписания',
           channelDescription: 'Уведомления о новых изменениях в расписании',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          importance: quiet ? Importance.low : Importance.high,
+          priority: quiet ? Priority.low : Priority.high,
+          icon: 'ic_stat_ngieu',
           color: _brandColor,
+          playSound: preferences.soundEnabled && !quiet,
+          enableVibration: preferences.vibrationEnabled && !quiet,
+          groupKey: 'schedule_changes',
+          styleInformation: BigTextStyleInformation(_buildBody(lesson)),
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentList: true,
+          presentBadge: true,
+          presentSound: preferences.soundEnabled && !quiet,
+          categoryIdentifier: 'schedule_change',
+          threadIdentifier: 'schedule_changes',
+          interruptionLevel: quiet
+              ? InterruptionLevel.passive
+              : InterruptionLevel.active,
+        ),
       ),
+      payload: '/schedule',
     );
   }
 
-  Future<void> cancelAll() async => _plugin.cancelAll();
+  Future<void> showTestNotification({
+    SmartNotificationSettings preferences = const SmartNotificationSettings(),
+  }) async {
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    await init();
+    await _plugin.show(
+      _idFromString('notification-test'),
+      'Уведомления НГИЭУ работают',
+      'Следующая пара появится здесь вместе со временем и аудиторией.',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'lesson_reminders',
+          'Напоминания о парах',
+          channelDescription: 'Уведомления о начале занятий',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: 'ic_stat_ngieu',
+          color: _brandColor,
+          playSound: preferences.soundEnabled,
+          enableVibration: preferences.vibrationEnabled,
+          styleInformation: const BigTextStyleInformation(
+            'Следующая пара появится здесь вместе со временем и аудиторией.',
+          ),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentList: true,
+          presentBadge: true,
+          presentSound: preferences.soundEnabled,
+          categoryIdentifier: 'lesson_reminder',
+          threadIdentifier: 'lesson_reminders',
+        ),
+      ),
+      payload: '/schedule',
+    );
+  }
+
+  /// Keeps the current or next lesson readable on Android lock screens that
+  /// do not provide a third-party AppWidget host.
+  Future<void> updateAndroidLockScreenCard(
+    List<Lesson> lessons, {
+    required bool enabled,
+  }) async {
+    if (!AppPlatform.isAndroid) return;
+    await init();
+    if (!enabled) {
+      await _plugin.cancel(_lockScreenCardId);
+      return;
+    }
+
+    final now = DateTime.now();
+    final candidates =
+        lessons
+            .where((lesson) => !lesson.isEvent && lesson.endTime.isAfter(now))
+            .toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final lesson = candidates.firstOrNull;
+    final isNow =
+        lesson != null &&
+        !now.isBefore(lesson.startTime) &&
+        now.isBefore(lesson.endTime);
+    final title = lesson == null
+        ? 'НГИЭУ · Расписание'
+        : isNow
+        ? 'Сейчас · ${lesson.subject}'
+        : 'Следующая пара · ${lesson.subject}';
+    final body = lesson == null ? 'Ближайших занятий нет' : _buildBody(lesson);
+
+    await _plugin.show(
+      _lockScreenCardId,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'lock_screen_schedule_v2',
+          'Расписание на экране блокировки',
+          channelDescription: 'Закреплённая карточка текущей и следующей пары',
+          importance: Importance.defaultImportance,
+          priority: Priority.high,
+          icon: 'ic_stat_ngieu',
+          color: _brandColor,
+          ongoing: true,
+          autoCancel: false,
+          onlyAlertOnce: true,
+          showWhen: true,
+          playSound: false,
+          enableVibration: false,
+          visibility: NotificationVisibility.public,
+          category: AndroidNotificationCategory.status,
+          styleInformation: BigTextStyleInformation(body),
+        ),
+      ),
+      payload: '/schedule',
+    );
+  }
+
+  Future<void> cancelAll() async {
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    await init();
+    await _plugin.cancelAll();
+  }
+
+  String? takeSelectedRoute() {
+    final route = selectedRoute.value;
+    selectedRoute.value = null;
+    return route;
+  }
 
   Future<void> rescheduleFor(
     List<Lesson> lessons, {
     required int minutesBefore,
     required bool enabled,
+    SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
-    await cancelAll();
+    if (!AppPlatform.supportsMobileIntegrations) return;
+    await init();
+    await _cancelLessonReminders();
     if (!enabled) return;
     final now = DateTime.now();
-    final upcoming = lessons
-        .where((l) => l.startTime.isAfter(now) && !l.isEvent)
-        .take(50)
-        .toList();
-    for (final l in upcoming) {
+    final upcoming =
+        lessons.where((l) => l.startTime.isAfter(now) && !l.isEvent).toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    for (final l in upcoming.take(50)) {
       try {
-        await scheduleLessonReminder(l, minutesBefore: minutesBefore);
+        await scheduleLessonReminder(
+          l,
+          minutesBefore: minutesBefore,
+          preferences: preferences,
+          schedule: lessons,
+        );
       } catch (_) {}
+    }
+  }
+
+  Future<void> _cancelLessonReminders() async {
+    final pending = await _plugin.pendingNotificationRequests();
+    for (final notification in pending) {
+      if (notification.payload == '/schedule') {
+        await _plugin.cancel(notification.id);
+      }
     }
   }
 
@@ -139,7 +398,7 @@ class NotificationsService {
     if (l.classroom.isNotEmpty) parts.add('Ауд. ${l.classroom}');
     if (l.teacherNames.isNotEmpty) parts.add(l.teacherNames.first);
     final t = _formatTime(l.startTime);
-    return [t, ...parts].join(' * ');
+    return [t, ...parts].join(' • ');
   }
 
   String _formatTime(DateTime t) {

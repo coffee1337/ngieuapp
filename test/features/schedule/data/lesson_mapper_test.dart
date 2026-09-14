@@ -4,6 +4,22 @@ import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 
 void main() {
   group('LessonMapper.fromApi', () {
+    test('anchors recurring lessons to the requested API week', () {
+      final result = LessonMapper.fromApi({
+        'dayName': 'Среда',
+        'classTime': '8:30 / 10:00',
+        'classNumberName': '1 пара',
+        'subjects': ['Математика'],
+        'isChange': false,
+        'isUpperWeek': true,
+      }, anchorDate: DateTime(2030, 4, 15));
+
+      expect(
+        result.map((lesson) => lesson.date),
+        contains(DateTime(2030, 4, 17)),
+      );
+    });
+
     test('parses valid API response into lessons', () {
       final json = {
         'dayName': 'Понедельник',
@@ -82,7 +98,7 @@ void main() {
         'notes': ['Лабораторная'],
         'offices': ['303'],
         'groups': ['ИТ-21'],
-        'instructors': [],
+        'instructors': <String>[],
         'isChange': false,
         'isUpperWeek': null,
       };
@@ -98,10 +114,10 @@ void main() {
         'classTime': '14:00 / 15:30',
         'classNumberName': '4 пара',
         'subjects': ['Мероприятие'],
-        'notes': [],
-        'offices': [],
+        'notes': <String>[],
+        'offices': <String>[],
         'groups': ['ИТ-21'],
-        'instructors': [],
+        'instructors': <String>[],
         'isChange': true,
         'isUpperWeek': null,
       };
@@ -143,7 +159,7 @@ void main() {
         'notes': ['Лекция'],
         'offices': ['101'],
         'groups': ['ИТ-21'],
-        'instructors': [],
+        'instructors': <String>[],
         'isChange': false,
         'isUpperWeek': true,
       };
@@ -162,7 +178,7 @@ void main() {
         'notes': ['Лекция'],
         'offices': ['101'],
         'groups': ['ИТ-21'],
-        'instructors': [],
+        'instructors': <String>[],
         'isChange': false,
         'isUpperWeek': false,
       };
@@ -170,6 +186,25 @@ void main() {
       final result = LessonMapper.fromApi(json);
 
       expect(result.first.parity, WeekParity.odd);
+    });
+
+    test('uses different stable ids for upper and lower week records', () {
+      final base = <String, dynamic>{
+        'dayName': 'Понедельник',
+        'classTime': '8:30 / 10:00',
+        'classNumberName': '1 пара',
+        'subjects': ['Математика'],
+        'notes': ['Лекция'],
+        'offices': ['121'],
+        'groups': ['ИТ-21'],
+        'instructors': ['Иванов И.И.'],
+        'isChange': false,
+      };
+
+      final upper = LessonMapper.fromApi({...base, 'isUpperWeek': true});
+      final lower = LessonMapper.fromApi({...base, 'isUpperWeek': false});
+
+      expect(upper.first.id, isNot(lower.first.id));
     });
 
     test('handles null/empty fields gracefully', () {
@@ -221,10 +256,10 @@ void main() {
         'classTime': '8-30 / 10-00',
         'classNumberName': '1 пара',
         'subjects': ['Математика'],
-        'notes': [],
-        'offices': [],
-        'groups': [],
-        'instructors': [],
+        'notes': <String>[],
+        'offices': <String>[],
+        'groups': <String>[],
+        'instructors': <String>[],
         'isChange': false,
         'isUpperWeek': null,
       };

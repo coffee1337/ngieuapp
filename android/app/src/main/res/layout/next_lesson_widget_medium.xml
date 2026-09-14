@@ -5,53 +5,50 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
 
     <TextView
-        android:id="@+id/widget_header"
+        android:id="@+id/widget_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:letterSpacing="0.1"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="false"
+        android:letterSpacing="0.06"
         android:maxLines="1"
-        android:text="СЛЕДУЮЩАЯ ПАРА"
-        android:textColor="#FFFFFF"
-        android:textSize="9sp"
-        android:textStyle="bold" />
+        android:text="БЛИЖАЙШИЕ ПАРЫ"
+        android:textColor="#D9FFFFFF"
+        android:textSize="10sp" />
+
+    <LinearLayout android:id="@+id/widget_row_0" style="@style/ScheduleWidgetRowContainer">
+        <TextView android:id="@+id/widget_item_0_time" style="@style/ScheduleWidgetTime" />
+        <TextView android:id="@+id/widget_item_0_subject" style="@style/ScheduleWidgetSubject" />
+        <TextView android:id="@+id/widget_item_0_room" style="@style/ScheduleWidgetRoom" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_1" style="@style/ScheduleWidgetRowContainer">
+        <TextView android:id="@+id/widget_item_1_time" style="@style/ScheduleWidgetTime" />
+        <TextView android:id="@+id/widget_item_1_subject" style="@style/ScheduleWidgetSubject" />
+        <TextView android:id="@+id/widget_item_1_room" style="@style/ScheduleWidgetRoom" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_row_2" style="@style/ScheduleWidgetRowContainer">
+        <TextView android:id="@+id/widget_item_2_time" style="@style/ScheduleWidgetTime" />
+        <TextView android:id="@+id/widget_item_2_subject" style="@style/ScheduleWidgetSubject" />
+        <TextView android:id="@+id/widget_item_2_room" style="@style/ScheduleWidgetRoom" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/widget_subject"
+        android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="4dp"
         android:layout_weight="1"
-        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
         android:gravity="center_vertical"
+        android:includeFontPadding="false"
         android:maxLines="2"
-        android:text="Загрузка…"
-        android:textColor="#FFFFFF"
+        android:text="Ближайших занятий нет"
+        android:textColor="#FFFFFFFF"
         android:textSize="15sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/widget_time"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#EEFFFFFF"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/widget_room"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text=""
-        android:textColor="#CCFFFFFF"
-        android:textSize="11sp" />
-
+        android:visibility="gone" />
 </LinearLayout>
