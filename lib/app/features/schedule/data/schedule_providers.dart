@@ -20,6 +20,7 @@ import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/schedule_repository.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/filter_week_schedule.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/find_free_classrooms.dart';
+import 'package:ngieuapp/app/features/schedule/domain/usecases/find_smart_gaps.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/get_next_lesson.dart';
 import 'package:ngieuapp/app/features/schedule/domain/usecases/search_schedule.dart';
 import 'package:ngieuapp/app/features/schedule/domain/week_type.dart';
@@ -91,6 +92,10 @@ final filterWeekScheduleProvider = Provider<FilterWeekSchedule>((ref) {
 
 final getNextLessonProvider = Provider<GetNextLesson>((ref) {
   return GetNextLesson();
+});
+
+final findSmartGapsProvider = Provider<FindSmartGaps>((ref) {
+  return const FindSmartGaps();
 });
 
 // ---- UI state ----

@@ -35,6 +35,10 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSCalendarsUsageDescription</key>
+		<string>НГИЭУ добавляет выбранное расписание в системный календарь.</string>
+		<key>NSCalendarsFullAccessUsageDescription</key>
+		<string>НГИЭУ синхронизирует занятия и обновляет изменения расписания.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
