@@ -68,8 +68,8 @@ void main() {
     final photoView = tester.widget<PhotoView>(
       find.byKey(const Key('fullscreen-photo-view')),
     );
-    final controller = photoView.controller! as PhotoViewController;
-    controller.scale = 2.5;
+    final controller = (photoView.controller! as PhotoViewController)
+      ..scale = 2.5;
     expect(controller.value.scale, 2.5);
 
     await tester.tap(find.byKey(const Key('fullscreen-image-reset')));

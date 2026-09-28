@@ -142,7 +142,7 @@ void main() {
 
   group('NewsParser.parseDetail', () {
     test('extracts content html and gallery images', () {
-      final preview = const NewsArticle(
+      const preview = NewsArticle(
         id: 1,
         title: 'Тест',
         url: 'https://ngieu.ru/ngieu-news/1/',
@@ -168,7 +168,7 @@ void main() {
     });
 
     test('returns fallback when no content element found', () {
-      final preview = const NewsArticle(
+      const preview = NewsArticle(
         id: 2,
         title: 'Пустая',
         url: 'https://ngieu.ru/ngieu-news/2/',

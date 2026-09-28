@@ -13,7 +13,7 @@ class FilterWeekSchedule {
           (lesson) =>
               !lesson.date.isBefore(weekStart) &&
               lesson.date.isBefore(weekEnd) &&
-              lesson.parity.matchesUpperWeek(isUpperWeek),
+              lesson.parity.matchesUpperWeek(isUpperWeek: isUpperWeek),
         )
         .toList();
 

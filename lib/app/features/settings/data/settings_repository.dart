@@ -14,7 +14,7 @@ class SettingsRepository {
     if (raw == null) return const AppSettings();
     try {
       return AppSettings.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-    } catch (_) {
+    } on Object {
       return const AppSettings();
     }
   }

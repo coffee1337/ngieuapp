@@ -120,22 +120,12 @@ class FloorUtils {
   /// - "121А • 2 этаж • Институт экономики и управления"
   static String formatRoomInfo(String roomNumber) {
     final info = getRoomLocationInfo(roomNumber);
-    final parts = <String>[];
-
-    // Номер аудитории (с сохранением оригинального формата)
-    parts.add(info.originalNumber);
-
-    // Этаж если определен
-    if (info.floor != null) {
-      parts.add(formatFloor(info.floor!));
-    }
-
-    // Институт если определен
-    if (info.institute != null) {
-      parts.add(info.institute!);
-    }
-
-    return parts.join(' • ');
+    // Номер аудитории в исходном формате, затем этаж и институт — если есть.
+    return [
+      info.originalNumber,
+      if (info.floor != null) formatFloor(info.floor!),
+      if (info.institute != null) info.institute!,
+    ].join(' • ');
   }
 
   /// Упрощенное форматирование для компактного отображения
@@ -145,20 +135,15 @@ class FloorUtils {
   /// - "121А • Институт экономики и управления"
   static String formatRoomInfoCompact(String roomNumber) {
     final info = getRoomLocationInfo(roomNumber);
-    final parts = <String>[];
-
-    // Номер аудитории
-    parts.add(info.originalNumber);
-
-    // Этаж если определен (приоритетнее института для компактности)
-    if (info.floor != null) {
-      parts.add(formatFloor(info.floor!));
-    } else if (info.institute != null) {
-      // Если этаж не определен, показываем институт
-      parts.add(info.institute!);
-    }
-
-    return parts.join(' • ');
+    // Номер аудитории. Этаж приоритетнее института для компактности;
+    // если этаж не определён — показываем институт.
+    return [
+      info.originalNumber,
+      if (info.floor != null)
+        formatFloor(info.floor!)
+      else if (info.institute != null)
+        info.institute!,
+    ].join(' • ');
   }
 
   /// Форматирует информацию о кабинете для карточек занятий

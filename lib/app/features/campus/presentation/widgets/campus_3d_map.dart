@@ -24,8 +24,14 @@ class _Campus3DMapState extends State<Campus3DMap>
     with SingleTickerProviderStateMixin {
   final _transformationController = TransformationController();
   late final AnimationController _resetController;
-  Animation<Matrix4>? _resetAnimation;
+  // Матрицы для анимации «показать весь кампус». Слушатель один и
+  // добавлен в initState, поэтому утечек подписок нет.
+  Matrix4? _resetBegin;
+  Matrix4? _resetEnd;
   CampusMapBuilding? _selectedBuilding;
+  Size? _viewport;
+  bool _didFit = false;
+  bool _userMoved = false;
 
   @override
   void initState() {
@@ -33,50 +39,70 @@ class _Campus3DMapState extends State<Campus3DMap>
     _resetController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 220),
-    );
+    )..addListener(_applyResetFrame);
   }
 
   @override
   void dispose() {
-    _resetController.dispose();
+    _resetController
+      ..removeListener(_applyResetFrame)
+      ..dispose();
     _transformationController.dispose();
     super.dispose();
   }
 
-  void _selectBuilding(Offset point, Size size) {
+  void _selectBuilding(Offset point) {
+    setState(() => _selectedBuilding = CampusMapLayout.hitTest(point));
+  }
+
+  Matrix4 _fittedTransform(Size viewport) {
     final scale = math.min(
-      size.width / CampusMapLayout.canvasSize.width,
-      size.height / CampusMapLayout.canvasSize.height,
+      viewport.width / CampusMapLayout.canvasSize.width,
+      viewport.height / CampusMapLayout.canvasSize.height,
     );
-    final origin = Offset(
-      (size.width - CampusMapLayout.canvasSize.width * scale) / 2,
-      (size.height - CampusMapLayout.canvasSize.height * scale) / 2,
-    );
-    final layoutPoint = Offset(
-      (point.dx - origin.dx) / scale,
-      (point.dy - origin.dy) / scale,
-    );
-    setState(() {
-      _selectedBuilding = CampusMapLayout.hitTest(layoutPoint);
+    final horizontalOffset =
+        (viewport.width - CampusMapLayout.canvasSize.width * scale) / 2;
+    final verticalOffset =
+        (viewport.height - CampusMapLayout.canvasSize.height * scale) / 2;
+    // Порядок важен: сначала сдвиг, потом равномерный масштаб всех трёх осей
+    // (как устаревший scale(s)). Если масштабировать по осям раздельно,
+    // getMaxScaleOnAxis() вернёт 1.0 и карта «не впишется» во вьюпорт.
+    return Matrix4.identity()
+      ..translateByDouble(horizontalOffset, verticalOffset, 0, 1)
+      ..scaleByDouble(scale, scale, scale, 1);
+  }
+
+  void _fitForViewport(Size viewport) {
+    if (_viewport == viewport && _didFit) return;
+    final first = !_didFit;
+    _viewport = viewport;
+    _didFit = true;
+    if (!first && _userMoved) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _viewport != viewport) return;
+      _transformationController.value = _fittedTransform(viewport);
     });
   }
 
   void _resetView() {
-    _resetAnimation =
-        Matrix4Tween(
-            begin: _transformationController.value,
-            end: Matrix4.identity(),
-          ).animate(
-            CurvedAnimation(
-              parent: _resetController,
-              curve: Curves.easeOutCubic,
-            ),
-          )
-          ..addListener(() {
-            _transformationController.value = _resetAnimation!.value;
-          });
+    final viewport = _viewport;
+    if (viewport == null) return;
+    _resetBegin = _transformationController.value.clone();
+    _resetEnd = _fittedTransform(viewport);
     _resetController.forward(from: 0);
     setState(() => _selectedBuilding = null);
+    _userMoved = false;
+  }
+
+  void _applyResetFrame() {
+    final begin = _resetBegin;
+    final end = _resetEnd;
+    if (begin == null || end == null) return;
+    final eased = Curves.easeOutCubic.transform(_resetController.value);
+    _transformationController.value = Matrix4Tween(
+      begin: begin,
+      end: end,
+    ).transform(eased);
   }
 
   void _openFullscreen() {
@@ -173,17 +199,7 @@ class _Campus3DMapState extends State<Campus3DMap>
         child: LayoutBuilder(
           builder: (context, constraints) {
             final viewport = constraints.biggest;
-            final widthScale =
-                viewport.width / CampusMapLayout.canvasSize.width;
-            final heightScale =
-                viewport.height / CampusMapLayout.canvasSize.height;
-            final initialScale = widget.fullscreen
-                ? math.max(widthScale, heightScale)
-                : math.min(widthScale, heightScale);
-            final mapSize = Size(
-              CampusMapLayout.canvasSize.width * initialScale,
-              CampusMapLayout.canvasSize.height * initialScale,
-            );
+            _fitForViewport(viewport);
             return Stack(
               children: [
                 Positioned.fill(
@@ -191,36 +207,33 @@ class _Campus3DMapState extends State<Campus3DMap>
                     child: TweenAnimationBuilder<double>(
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutCubic,
-                      tween: Tween(begin: 0.0, end: 1.0),
+                      tween: Tween<double>(begin: 0, end: 1),
                       builder: (context, value, child) => Opacity(
                         opacity: value,
-                        child: Transform.scale(
-                          scale: 0.985 + value * 0.015,
-                          child: child,
-                        ),
+                        child: child,
                       ),
                       child: InteractiveViewer(
                         transformationController: _transformationController,
                         constrained: false,
-                        alignment: Alignment.center,
-                        minScale: 1,
-                        maxScale: 4.5,
-                        boundaryMargin: const EdgeInsets.all(120),
-                        clipBehavior: Clip.hardEdge,
-                        onInteractionStart: (_) => _resetController.stop(),
+                        alignment: Alignment.topLeft,
+                        minScale: 0.25,
+                        maxScale: 3,
+                        boundaryMargin: const EdgeInsets.all(double.infinity),
+                        onInteractionStart: (_) {
+                          _resetController.stop();
+                          _userMoved = true;
+                        },
                         child: SizedBox.fromSize(
                           key: const Key('campus-map-canvas'),
-                          size: mapSize,
+                          size: CampusMapLayout.canvasSize,
                           child: Semantics(
                             label: 'Интерактивный план кампуса НГИЭУ',
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
-                              onTapUp: (details) => _selectBuilding(
-                                details.localPosition,
-                                mapSize,
-                              ),
+                              onTapUp: (details) =>
+                                  _selectBuilding(details.localPosition),
                               child: CustomPaint(
-                                size: mapSize,
+                                size: CampusMapLayout.canvasSize,
                                 painter: _CampusMapPainter(
                                   colorScheme: scheme,
                                   selectedBuildingId: _selectedBuilding?.id,
@@ -332,15 +345,48 @@ class CampusMapFullscreenScreen extends StatelessWidget {
 }
 
 class _CampusMapPainter extends CustomPainter {
-  const _CampusMapPainter({
+  _CampusMapPainter({
     required this.colorScheme,
     required this.selectedBuildingId,
     required this.routePoints,
-  });
+  })  : _greenPaths = [
+          for (final zone in CampusMapLayout.greenZones)
+            Path()..addPolygon(zone, true),
+        ],
+        _roadPaths = [
+          for (final road in CampusMapLayout.roads) _buildRoadPath(road.points),
+        ],
+        _buildingPaths = {
+          for (final b in CampusMapLayout.buildings) b.id: b.path,
+        },
+        _buildingCenters = {
+          for (final b in CampusMapLayout.buildings) b.id: b.center,
+        },
+        _numberPainters = {
+          for (final b in CampusMapLayout.buildings)
+            b.id: TextPainter(
+              text: TextSpan(
+                text: '${b.number}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              textDirection: TextDirection.ltr,
+            )..layout(),
+        };
 
   final ColorScheme colorScheme;
   final String? selectedBuildingId;
   final List<Offset> routePoints;
+
+  /// Кэш геометрии: Path/TextPainter создаются один раз, а не каждый paint().
+  final List<Path> _greenPaths;
+  final List<Path> _roadPaths;
+  final Map<String, Path> _buildingPaths;
+  final Map<String, Offset> _buildingCenters;
+  final Map<String, TextPainter> _numberPainters;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -372,15 +418,15 @@ class _CampusMapPainter extends CustomPainter {
       ..color = const Color(0xFF72A950).withValues(alpha: 0.38)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-    for (final points in CampusMapLayout.greenZones) {
-      final path = Path()..addPolygon(points, true);
+    for (final path in _greenPaths) {
       canvas
         ..drawPath(path, grassPaint)
         ..drawPath(path, grassOutline);
     }
 
-    for (final road in CampusMapLayout.roads) {
-      final path = _buildRoadPath(road.points);
+    for (var i = 0; i < CampusMapLayout.roads.length; i++) {
+      final road = CampusMapLayout.roads[i];
+      final path = _roadPaths[i];
       canvas
         ..drawPath(
           path,
@@ -412,7 +458,13 @@ class _CampusMapPainter extends CustomPainter {
     _paintFacilities(canvas);
 
     for (final building in CampusMapLayout.buildings) {
-      _paintBuilding(canvas, building);
+      _paintBuilding(
+        canvas,
+        building,
+        _buildingPaths[building.id]!,
+        _buildingCenters[building.id]!,
+        _numberPainters[building.id]!,
+      );
     }
     for (final building in CampusMapLayout.buildings) {
       final name = building.name;
@@ -425,7 +477,7 @@ class _CampusMapPainter extends CustomPainter {
     canvas.restore();
   }
 
-  Path _buildRoadPath(List<Offset> points) {
+  static Path _buildRoadPath(List<Offset> points) {
     final path = Path()..moveTo(points.first.dx, points.first.dy);
     for (final point in points.skip(1)) {
       path.lineTo(point.dx, point.dy);
@@ -687,7 +739,13 @@ class _CampusMapPainter extends CustomPainter {
     textPainter.paint(canvas, offset);
   }
 
-  void _paintBuilding(Canvas canvas, CampusMapBuilding building) {
+  void _paintBuilding(
+    Canvas canvas,
+    CampusMapBuilding building,
+    Path path,
+    Offset markerCenter,
+    TextPainter numberPainter,
+  ) {
     final selected = building.id == selectedBuildingId;
     final baseRoofColor = switch (building.tone) {
       CampusBuildingTone.academic => const Color(0xFFE7E1D5),
@@ -702,13 +760,18 @@ class _CampusMapPainter extends CustomPainter {
             ),
             colorScheme.surfaceContainerHigh,
           );
-    canvas.drawShadow(
-      building.path.shift(const Offset(0, 3)),
-      Colors.black.withValues(alpha: 0.28),
-      selected ? 12 : 7,
-      true,
-    );
-    final roofBounds = building.path.getBounds();
+    // drawShadow — самая дорогая операция. В тёмной теме тени почти
+    // не видно, пропускаем их полностью.
+    final isDark = colorScheme.brightness == Brightness.dark;
+    if (!isDark) {
+      canvas.drawShadow(
+        path.shift(const Offset(0, 3)),
+        Colors.black.withValues(alpha: 0.28),
+        selected ? 12 : 7,
+        true,
+      );
+    }
+    final roofBounds = path.getBounds();
     final roofPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
@@ -719,19 +782,17 @@ class _CampusMapPainter extends CustomPainter {
         ],
       ).createShader(roofBounds);
     canvas
-      ..drawPath(building.path, roofPaint)
+      // Один каскад на здание: крыша, обводка, маркер и его ободок.
+      ..drawPath(path, roofPaint)
       ..drawPath(
-        building.path,
+        path,
         Paint()
           ..color = selected
               ? colorScheme.primary
               : colorScheme.outline.withValues(alpha: 0.42)
           ..style = PaintingStyle.stroke
           ..strokeWidth = selected ? 4 : 1.4,
-      );
-
-    final markerCenter = building.center;
-    canvas
+      )
       ..drawCircle(
         markerCenter,
         17,
@@ -748,20 +809,9 @@ class _CampusMapPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5,
       );
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: '${building.number}',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(
+    numberPainter.paint(
       canvas,
-      markerCenter - Offset(textPainter.width / 2, textPainter.height / 2),
+      markerCenter - Offset(numberPainter.width / 2, numberPainter.height / 2),
     );
   }
 

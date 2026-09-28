@@ -55,7 +55,7 @@ class WeekTypeCacheDataSource {
         return null;
       }
       return result;
-    } catch (_) {
+    } on Object {
       // Повреждённый кэш не должен мешать запуску приложения.
       await box.delete(key);
       return null;

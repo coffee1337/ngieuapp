@@ -10,7 +10,7 @@ class VisualStyleRepository {
     try {
       final box = await Hive.openBox<String>(_boxName);
       return appVisualStyleFromStorage(box.get(_key));
-    } catch (_) {
+    } on Object {
       return AppVisualStyle.material;
     }
   }

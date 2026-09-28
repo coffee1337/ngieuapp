@@ -26,7 +26,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('fullscreen map fills a portrait viewport', (tester) async {
+  testWidgets('fullscreen map initially shows the complete campus', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: SizedBox(
@@ -38,11 +40,16 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 300));
 
-    final viewport = tester.getSize(find.byType(InteractiveViewer));
     final canvas = tester.getSize(find.byKey(const Key('campus-map-canvas')));
+    final viewer = tester.widget<InteractiveViewer>(
+      find.byType(InteractiveViewer),
+    );
 
-    expect(canvas.height, greaterThanOrEqualTo(viewport.height));
-    expect(canvas.width, greaterThan(viewport.width));
+    expect(canvas, const Size(864, 637));
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      lessThan(1),
+    );
     expect(tester.takeException(), isNull);
   });
 }

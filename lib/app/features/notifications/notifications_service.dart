@@ -1,7 +1,6 @@
-import 'package:ngieuapp/app/core/utils/app_platform.dart';
-
 import 'package:flutter/material.dart' show Color, ValueNotifier;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ngieuapp/app/core/utils/app_platform.dart';
 import 'package:ngieuapp/app/features/notifications/notification_quiet_policy.dart';
 import 'package:ngieuapp/app/features/schedule/domain/lesson.dart';
 import 'package:ngieuapp/app/features/settings/domain/smart_notification_settings.dart';
@@ -16,7 +15,9 @@ class NotificationsService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
   Future<void>? _initializing;
-  bool _canScheduleExact = true;
+  // null = ещё не проверяли. До проверки используем inexact, чтобы первый
+  // решедул на Android 12+ не упал без разрешения на точные будильники.
+  bool? _canScheduleExact;
   static const _quietPolicy = NotificationQuietPolicy();
   final selectedRoute = ValueNotifier<String?>(null);
 
@@ -42,7 +43,13 @@ class NotificationsService {
 
   Future<void> _initialize() async {
     tzdata.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Europe/Moscow'));
+    // Системный часовой пояс вместо захардкоженной Москвы: иначе у всех
+    // за пределами МСК напоминания приходят со сдвигом.
+    try {
+      tz.setLocalLocation(tz.local);
+    } on Object {
+      tz.setLocalLocation(tz.getLocation('Europe/Moscow'));
+    }
     const androidInit = AndroidInitializationSettings('ic_stat_ngieu');
     final iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
@@ -84,7 +91,7 @@ class NotificationsService {
       if (launchDetails?.didNotificationLaunchApp ?? false) {
         selectedRoute.value = launchDetails?.notificationResponse?.payload;
       }
-    } catch (_) {
+    } on Object {
       // Notification launch details are optional and must not block startup.
     }
     if (AppPlatform.isAndroid) {
@@ -95,7 +102,7 @@ class NotificationsService {
             >();
         _canScheduleExact =
             await android?.canScheduleExactNotifications() ?? false;
-      } catch (_) {
+      } on Object {
         // Samsung and other OEM builds may restrict this call until the user
         // opens the app settings. Inexact notifications remain available.
         _canScheduleExact = false;
@@ -120,7 +127,7 @@ class NotificationsService {
           _canScheduleExact =
               await android?.canScheduleExactNotifications() ?? false;
         }
-      } catch (_) {
+      } on Object {
         // Some Samsung firmware variants do not expose the exact-alarm
         // settings screen. Reminders still work with an inexact schedule.
         _canScheduleExact = false;
@@ -191,7 +198,7 @@ class NotificationsService {
               : InterruptionLevel.active,
         ),
       ),
-      androidScheduleMode: _canScheduleExact
+      androidScheduleMode: (_canScheduleExact ?? false)
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
@@ -327,14 +334,12 @@ class NotificationsService {
           'lock_screen_schedule_v2',
           'Расписание на экране блокировки',
           channelDescription: 'Закреплённая карточка текущей и следующей пары',
-          importance: Importance.defaultImportance,
           priority: Priority.high,
           icon: 'ic_stat_ngieu',
           color: _brandColor,
           ongoing: true,
           autoCancel: false,
           onlyAlertOnce: true,
-          showWhen: true,
           playSound: false,
           enableVibration: false,
           visibility: NotificationVisibility.public,
@@ -380,7 +385,9 @@ class NotificationsService {
           preferences: preferences,
           schedule: lessons,
         );
-      } catch (_) {}
+      } on Object {
+        // Одна неудачная пара не должна прерывать решедул остальных.
+      }
     }
   }
 

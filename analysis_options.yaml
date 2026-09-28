@@ -10,3 +10,6 @@ analyzer:
 linter:
   rules:
     public_member_api_docs: false
+    # Лимит 80 символов из very_good_analysis: кодовая база использует
+    # dart format с лимитом 100+, длинные строки — норма, а не ошибка.
+    lines_longer_than_80_chars: false

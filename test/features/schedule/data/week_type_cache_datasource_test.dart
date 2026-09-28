@@ -26,7 +26,7 @@ void main() {
     await source.saveWeekType(second);
     expect(await source.loadWeekType(date: DateTime(2025, 3, 12)), first);
     expect(await source.loadWeekType(date: second.date), second);
-    expect(await source.loadWeekType(date: DateTime(2025, 4, 1)), isNull);
+    expect(await source.loadWeekType(date: DateTime(2025, 4)), isNull);
     final box = await Hive.openBox<String>(HiveBoxes.scheduleCache);
     await box.put('unrelated', 'preserve');
     await source.clearCache();

@@ -11,7 +11,7 @@ class OfflineBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isOnline = ref.watch(connectivityProvider);
+    final isOnline = ref.watch(isOnlineProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

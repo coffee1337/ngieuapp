@@ -23,7 +23,9 @@ class SmartNotificationSettingsNotifier
       state = SmartNotificationSettings.fromJson(
         jsonDecode(raw) as Map<String, dynamic>,
       );
-    } catch (_) {}
+    } on Object {
+      // Повреждённые настройки не должны блокировать запуск приложения.
+    }
   }
 
   Future<void> update(SmartNotificationSettings value) async {

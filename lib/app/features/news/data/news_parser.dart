@@ -5,10 +5,13 @@ import 'package:ngieuapp/app/features/news/domain/news_article.dart';
 
 /// Чистый парсер, не знает про сеть — легко тестировать.
 class NewsParser {
-  NewsParser({String baseUrl = ApiEndpoints.newsBase})
+  NewsParser({this.baseUrl = ApiEndpoints.newsBase})
     : _base = Uri.parse(baseUrl);
 
   final Uri _base;
+  /// Строковая форма base — для передачи в compute() (Uri не нужен).
+  /// Публичное: читается из NewsApiDataSource для isolate-парсинга.
+  final String baseUrl;
   static final _idPattern = RegExp(r'/ngieu-news/(\d+)/');
 
   static const _monthMap = {

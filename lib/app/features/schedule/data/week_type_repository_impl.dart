@@ -23,7 +23,7 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
       final weekType = await _api.getWeekType(date);
       await _cache.saveWeekType(weekType);
       return weekType;
-    } catch (e) {
+    } on Object {
       // Даже просроченное значение API надёжнее локального предположения о
       // чередовании учебных недель.
       final expired = await _cache.loadWeekType(date: date, allowExpired: true);
@@ -40,7 +40,7 @@ class WeekTypeRepositoryImpl implements WeekTypeRepository {
       final weekType = await _api.getCurrentWeekType();
       await _cache.saveWeekType(weekType);
       return weekType;
-    } catch (_) {
+    } on Object {
       final today = _now();
       final cached = await _cache.loadWeekType(date: today, allowExpired: true);
       if (cached != null && _isSameWeek(cached.date, today)) {

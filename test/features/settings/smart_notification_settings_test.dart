@@ -4,8 +4,7 @@ import 'package:ngieuapp/app/features/settings/domain/smart_notification_setting
 void main() {
   test('detects quiet hours that cross midnight', () {
     const settings = SmartNotificationSettings(
-      quietHoursStart: 22,
-      quietHoursEnd: 7,
+      
     );
 
     expect(settings.isQuietTime(DateTime(2026, 9, 9, 23)), isTrue);

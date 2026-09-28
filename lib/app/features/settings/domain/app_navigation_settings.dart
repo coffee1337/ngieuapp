@@ -22,6 +22,26 @@ class AppNavigationSettings {
     this.visibleTabs = defaultVisibleAppTabs,
   });
 
+  factory AppNavigationSettings.fromJson(Map<String, dynamic> json) {
+    final defaultName = json['defaultTab'] as String?;
+    final visibleNames = (json['visibleTabs'] as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .toSet();
+    final defaultTab = AppTab.values.firstWhere(
+      (tab) => tab.name == defaultName,
+      orElse: () => AppTab.news,
+    );
+    final visible = AppTab.values
+        .where((tab) => visibleNames.contains(tab.name))
+        .toList();
+    return AppNavigationSettings(
+      defaultTab: defaultTab,
+      visibleTabs: visible.isEmpty && !json.containsKey('visibleTabs')
+          ? defaultVisibleAppTabs
+          : visible,
+    ).normalized();
+  }
+
   final AppTab defaultTab;
   final List<AppTab> visibleTabs;
 
@@ -53,24 +73,4 @@ class AppNavigationSettings {
     'defaultTab': defaultTab.name,
     'visibleTabs': visibleTabs.map((tab) => tab.name).toList(),
   };
-
-  factory AppNavigationSettings.fromJson(Map<String, dynamic> json) {
-    final defaultName = json['defaultTab'] as String?;
-    final visibleNames = (json['visibleTabs'] as List<dynamic>? ?? const [])
-        .whereType<String>()
-        .toSet();
-    final defaultTab = AppTab.values.firstWhere(
-      (tab) => tab.name == defaultName,
-      orElse: () => AppTab.news,
-    );
-    final visible = AppTab.values
-        .where((tab) => visibleNames.contains(tab.name))
-        .toList();
-    return AppNavigationSettings(
-      defaultTab: defaultTab,
-      visibleTabs: visible.isEmpty && !json.containsKey('visibleTabs')
-          ? defaultVisibleAppTabs
-          : visible,
-    ).normalized();
-  }
 }

@@ -32,12 +32,12 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     await _repo.save(state);
   }
 
-  Future<void> setShowChanges(bool value) async {
+  Future<void> setShowChanges({required bool value}) async {
     state = state.copyWith(showChanges: value);
     await _repo.save(state);
   }
 
-  Future<void> setNotificationsEnabled(bool value) async {
+  Future<void> setNotificationsEnabled({required bool value}) async {
     state = state.copyWith(notificationsEnabled: value);
     await _repo.save(state);
   }
@@ -47,17 +47,17 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
     await _repo.save(state);
   }
 
-  Future<void> setShowNewsImages(bool value) async {
+  Future<void> setShowNewsImages({required bool value}) async {
     state = state.copyWith(showNewsImages: value);
     await _repo.save(state);
   }
 
-  Future<void> setHomeWidgetEnabled(bool value) async {
+  Future<void> setHomeWidgetEnabled({required bool value}) async {
     state = state.copyWith(homeWidgetEnabled: value);
     await _repo.save(state);
   }
 
-  Future<void> setHomeWidgetShowRoom(bool value) async {
+  Future<void> setHomeWidgetShowRoom({required bool value}) async {
     state = state.copyWith(homeWidgetShowRoom: value);
     await _repo.save(state);
   }

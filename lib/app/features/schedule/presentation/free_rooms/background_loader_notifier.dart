@@ -69,7 +69,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
   Future<void> _runBatch(Completer<void> completer) async {
     final apiDs = _ref.read(scheduleApiDataSourceProvider);
     final dbDs = _ref.read(scheduleDbDataSourceProvider);
-    const batchSize = 3;
+    // Keep a bounded amount of parallel work. Three requests made the first
+    // useful result needlessly wait for a long queue of groups.
+    const batchSize = 6;
     var loadedCount = 0;
     var total = 0;
     try {
@@ -96,6 +98,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
                   );
               if (!mounted) return;
               await dbDs.replaceForActor(g.id, lessons);
+              if (!mounted) return;
               loadedCount++;
             } on Object catch (error) {
               if (kDebugMode) debugPrint('Schedule ${g.id} failed: $error');
@@ -110,7 +113,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
             );
           }),
         );
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        // Один invalidate на батч вместо одного на группу: 100 групп
+        // давали 100 полных пересчётов свободных аудиторий.
+        if (mounted) _ref.invalidate(freeRoomsProvider);
       }
     } on Object catch (error) {
       if (kDebugMode) debugPrint('Background schedule load failed: $error');
@@ -123,7 +128,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
           lastRunTime: DateTime.now(),
           shouldAutoLoad: state.shouldAutoLoad,
         );
-        _ref.invalidate(freeRoomsProvider);
+        // Финальный invalidate только если были успехи: пустой прогон
+        // (всё из кэша/всё упало) не должен дёргать freeRooms заново.
+        if (loadedCount > 0) _ref.invalidate(freeRoomsProvider);
       }
       _completer = null;
       completer.complete();
@@ -134,7 +141,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
     if (state.shouldRunAutomatically) await run();
   }
 
-  void setAutoLoad(bool enabled) {
+  void setAutoLoad({required bool enabled}) {
     state = BackgroundLoaderState(
       isLoading: state.isLoading,
       loaded: state.loaded,

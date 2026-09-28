@@ -27,7 +27,7 @@ class _CampusDirectionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isOnline = ref.watch(connectivityProvider);
+    final isOnline = ref.watch(isOnlineProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Маршрут до корпуса'),
@@ -65,9 +65,6 @@ class _CampusDirectionsScreenState
               initialSettings: InAppWebViewSettings(
                 transparentBackground: true,
                 useShouldOverrideUrlLoading: true,
-                javaScriptEnabled: true,
-                domStorageEnabled: true,
-                cacheEnabled: true,
               ),
               onWebViewCreated: (controller) => _controller = controller,
               onProgressChanged: (_, progress) {

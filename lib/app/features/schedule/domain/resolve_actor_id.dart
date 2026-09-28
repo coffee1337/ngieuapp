@@ -41,7 +41,7 @@ Actor? resolveActorId({
 }
 
 String _normalizeActorName(String value) =>
-    value.toLowerCase().replaceAll(RegExp(r'[^0-9a-zа-яё]'), '');
+    value.toLowerCase().replaceAll(RegExp('[^0-9a-zа-яё]'), '');
 
 bool _isTechnicalFallback(String name, String id) {
   final normalized = name.trim().toLowerCase();

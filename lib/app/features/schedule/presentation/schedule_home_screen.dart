@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/features/schedule/data/active_actor_provider.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/actor_picker_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
-import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 

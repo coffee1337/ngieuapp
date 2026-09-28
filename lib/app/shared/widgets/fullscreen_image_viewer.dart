@@ -9,7 +9,6 @@ Future<void> showFullscreenImageViewer(BuildContext context, String? imageUrl) {
 
   return Navigator.of(context).push(
     PageRouteBuilder<void>(
-      opaque: true,
       transitionDuration: const Duration(milliseconds: 180),
       reverseTransitionDuration: const Duration(milliseconds: 140),
       pageBuilder: (_, animation, __) =>

@@ -151,7 +151,7 @@ class ScheduleDbDataSource {
       if (decoded is List) {
         return decoded.map((e) => e.toString()).toList();
       }
-    } catch (_) {
+    } on Object {
       return raw
           .split(',')
           .map((e) => e.trim())

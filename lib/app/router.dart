@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:ngieuapp/app/features/campus/presentation/campus_directions_screen.dart';
 import 'package:ngieuapp/app/features/campus/presentation/campus_map_screen.dart';
 import 'package:ngieuapp/app/features/learning/presentation/learning_webview_screen.dart';
@@ -17,10 +16,10 @@ import 'package:ngieuapp/app/features/schedule/presentation/schedule_home_screen
 import 'package:ngieuapp/app/features/schedule/presentation/schedule_search_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/smart_gaps_screen.dart';
 import 'package:ngieuapp/app/features/schedule/presentation/week_schedule_screen.dart';
-import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
-import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
+import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_motion_style.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/presentation/settings_screen.dart';
 import 'package:ngieuapp/app/shared/widgets/offline_banner.dart';
 import 'package:ngieuapp/app/theme/app_tokens.dart';

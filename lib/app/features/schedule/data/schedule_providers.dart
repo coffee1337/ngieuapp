@@ -107,7 +107,7 @@ final weekTypeProvider = FutureProvider.autoDispose.family<WeekType, DateTime>((
 ) async {
   try {
     return await ref.watch(weekTypeRepositoryProvider).getWeekType(date);
-  } catch (e) {
+  } on Object {
     // При ошибке используем локальную логику
     return WeekType(date: date, isUpperWeek: date.isEvenWeek);
   }
@@ -124,9 +124,8 @@ class CurrentWeekStartNotifier extends StateNotifier<DateTime> {
     Duration navigationDebounce = const Duration(milliseconds: 140),
   }) : this._((initialDate ?? DateTime.now()).startOfWeek, navigationDebounce);
 
-  CurrentWeekStartNotifier._(DateTime initialWeek, this._navigationDebounce)
-    : _targetWeek = initialWeek,
-      super(initialWeek);
+  CurrentWeekStartNotifier._(super.initialWeek, this._navigationDebounce)
+    : _targetWeek = initialWeek;
 
   final Duration _navigationDebounce;
   DateTime _targetWeek;
@@ -226,11 +225,15 @@ final refreshWeekScheduleProvider = Provider<Future<void> Function(WeekKey)>((
 
 final weekScheduleProvider = FutureProvider.autoDispose
     .family<List<Lesson>, WeekKey>((ref, key) async {
-      final rawAsync = await ref.watch(rawWeekScheduleProvider(key).future);
-      final showChanges = ref.watch(appSettingsProvider).showChanges;
-
-      final weekType = await ref.watch(weekTypeProvider(key.weekStart).future);
-
+      // Параллельно: раньше raw и weekType ждали друг друга последовательно.
+      final rawFuture = ref.watch(rawWeekScheduleProvider(key).future);
+      final weekTypeFuture = ref.watch(weekTypeProvider(key.weekStart).future);
+      final results = await Future.wait([rawFuture, weekTypeFuture]);
+      final rawAsync = results[0] as List<Lesson>;
+      final weekType = results[1] as WeekType;
+      final showChanges = ref.watch(
+        appSettingsProvider.select((s) => s.showChanges),
+      );
       final filter = ref.watch(filterWeekScheduleProvider);
       final filtered = filter(
         lessons: rawAsync,

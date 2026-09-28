@@ -23,7 +23,7 @@ class ScheduleApiDataSource {
       final raw = _extractRawList(data);
       final lessons = raw
           .whereType<Map<dynamic, dynamic>>()
-          .map((e) => Map<String, dynamic>.from(e))
+          .map(Map<String, dynamic>.from)
           .expand((item) => LessonMapper.fromApi(item, anchorDate: anchorDate))
           .toList();
       if (raw.isNotEmpty && lessons.isEmpty) {

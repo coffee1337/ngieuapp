@@ -16,7 +16,7 @@ class NavigationSettingsRepository {
       return AppNavigationSettings.fromJson(
         jsonDecode(raw) as Map<String, dynamic>,
       );
-    } catch (_) {
+    } on Object {
       return const AppNavigationSettings();
     }
   }

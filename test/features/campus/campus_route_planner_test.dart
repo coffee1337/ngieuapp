@@ -41,4 +41,14 @@ void main() {
       isEmpty,
     );
   });
+
+  test('keeps entrance approaches and route segments on the pedestrian graph', () {
+    final route = planner.route(
+      fromBuildingId: 'building-03',
+      toBuildingId: 'building-04',
+    );
+
+    expect(route, contains(const Offset(329, 299)));
+    expect(route, contains(const Offset(468, 296)));
+  });
 }

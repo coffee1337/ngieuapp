@@ -46,28 +46,25 @@ class WeekScheduleScreen extends ConsumerWidget {
     final key = (actorId: actorId, weekStart: weekStart);
     final lessonsAsync = ref.watch(weekScheduleProvider(key));
     final weekEnd = weekStart.add(const Duration(days: 5));
-    final showChanges = ref.watch(appSettingsProvider).showChanges;
+    final showChanges = ref.watch(
+      appSettingsProvider.select((s) => s.showChanges),
+    );
     final theme = Theme.of(context);
     final weekTypeAsync = ref.watch(weekTypeProvider(weekStart));
     final currentDate =
         ref.watch(currentWeekTypeProvider).valueOrNull?.date ?? DateTime.now();
-    final favorites = ref.watch(favoriteActorsProvider).valueOrNull ?? const [];
-    final favorite = _favoriteById(favorites, actorId);
-    final displayActor = favorite ?? _initialActorById(actorId);
-    final isFavorite = favorite != null;
+    final displayActor = _initialActorById(actorId);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(displayActor?.name ?? 'Расписание'),
+        title: _ScheduleTitle(
+          actorId: actorId,
+          fallback: displayActor,
+        ),
         actions: [
-          IconButton(
-            icon: Icon(isFavorite ? Icons.star_rounded : Icons.star_border),
-            tooltip: isFavorite
-                ? 'Удалить из избранного'
-                : 'Добавить в избранное',
-            onPressed: displayActor == null
-                ? null
-                : () => _toggleFavorite(ref, favorite, displayActor),
+          _FavoriteStarButton(
+            actorId: actorId,
+            fallback: displayActor,
           ),
           IconButton(
             icon: const Icon(Icons.swap_horiz_rounded),
@@ -81,9 +78,8 @@ class WeekScheduleScreen extends ConsumerWidget {
                 case _ScheduleAction.smartGaps:
                   context.push(
                     '/schedule/${Uri.encodeComponent(actorId)}/gaps',
-                    extra: displayActor,
+                    extra: _ScheduleTitle.favoriteOf(ref, actorId) ?? displayActor,
                   );
-                  break;
                 case _ScheduleAction.exportCalendar:
                   final lessons = lessonsAsync.valueOrNull;
                   if (lessons != null) {
@@ -92,15 +88,16 @@ class WeekScheduleScreen extends ConsumerWidget {
                       ref,
                       lessons: lessons,
                       weekStart: weekStart,
-                      actorName: displayActor?.name ?? 'Расписание',
+                      actorName:
+                          _ScheduleTitle.favoriteOf(ref, actorId)?.name ??
+                          displayActor?.name ??
+                          'Расписание',
                     );
                   }
-                  break;
                 case _ScheduleAction.toggleChanges:
                   ref
                       .read(appSettingsProvider.notifier)
-                      .setShowChanges(!showChanges);
-                  break;
+                      .setShowChanges(value: !showChanges);
               }
             },
             itemBuilder: (context) => [
@@ -231,7 +228,7 @@ class WeekScheduleScreen extends ConsumerWidget {
   ) async {
     try {
       await ref.read(refreshWeekScheduleProvider)(key);
-    } catch (_) {
+    } on Object {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -283,7 +280,7 @@ class WeekScheduleScreen extends ConsumerWidget {
                 ),
               ),
             );
-          } catch (error) {
+          } on Object catch (error) {
             if (!dialogContext.mounted) return;
             Navigator.of(dialogContext).pop();
             if (!context.mounted) return;
@@ -305,27 +302,80 @@ class WeekScheduleScreen extends ConsumerWidget {
     );
   }
 
-  FavoriteActor? _favoriteById(List<FavoriteActor> favorites, String actorId) {
-    for (final favorite in favorites) {
-      if (favorite.id == actorId) return favorite;
-    }
-    return null;
-  }
-
   FavoriteActor? _initialActorById(String actorId) {
     final actor = initialActor;
     if (actor == null || actor.id != actorId) return null;
     return actor;
   }
+}
+
+/// Заголовок расписания: перестраивается только при смене избранного.
+class _ScheduleTitle extends ConsumerWidget {
+  const _ScheduleTitle({required this.actorId, required this.fallback});
+
+  final String actorId;
+  final FavoriteActor? fallback;
+
+  /// Читает избранное без подписки — для разовых действий (меню, экспорт).
+  static FavoriteActor? favoriteOf(WidgetRef ref, String actorId) {
+    final favorites =
+        ref.read(favoriteActorsProvider).valueOrNull ?? const [];
+    for (final f in favorites) {
+      if (f.id == actorId) return f;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoriteActorsProvider).valueOrNull ?? const [];
+    FavoriteActor? favorite;
+    for (final f in favorites) {
+      if (f.id == actorId) {
+        favorite = f;
+        break;
+      }
+    }
+    return Text((favorite ?? fallback)?.name ?? 'Расписание');
+  }
+}
+
+/// Кнопка избранного: изолирует watch(favoriteActorsProvider) от всего экрана.
+class _FavoriteStarButton extends ConsumerWidget {
+  const _FavoriteStarButton({required this.actorId, required this.fallback});
+
+  final String actorId;
+  final FavoriteActor? fallback;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoriteActorsProvider).valueOrNull ?? const [];
+    FavoriteActor? favorite;
+    for (final f in favorites) {
+      if (f.id == actorId) {
+        favorite = f;
+        break;
+      }
+    }
+    final displayActor = favorite ?? fallback;
+    final isFavorite = favorite != null;
+    return IconButton(
+      icon: Icon(isFavorite ? Icons.star_rounded : Icons.star_border),
+      tooltip: isFavorite ? 'Удалить из избранного' : 'Добавить в избранное',
+      onPressed: displayActor == null
+          ? null
+          : () => _toggleFavorite(ref, favorite, displayActor),
+    );
+  }
 
   Future<void> _toggleFavorite(
     WidgetRef ref,
     FavoriteActor? favorite,
-    FavoriteActor? displayActor,
+    FavoriteActor displayActor,
   ) async {
     final repo = ref.read(favoriteActorsLocalDataSourceProvider);
     if (favorite == null) {
-      await repo.addFavoriteActor(displayActor!);
+      await repo.addFavoriteActor(displayActor);
     } else {
       await repo.removeFavoriteActor(actorId);
     }
@@ -356,7 +406,7 @@ class _WeekHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final semantic = theme.extension<AppSemanticColors>()!;
-    final isOnline = ref.watch(connectivityProvider);
+    final isOnline = ref.watch(isOnlineProvider);
     final lastUpdated = ref.watch(scheduleLastUpdatedProvider(actorId));
     final fmt = DateFormat('d MMM', 'ru_RU');
     final currentDate =

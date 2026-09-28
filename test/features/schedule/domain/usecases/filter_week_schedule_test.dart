@@ -84,7 +84,7 @@ void main() {
 
     test('shows any-parity lesson regardless of week type', () {
       final lessons = [
-        makeLesson(id: 'any', date: monday, parity: WeekParity.any),
+        makeLesson(id: 'any', date: monday),
       ];
 
       final resultEven = sut(
@@ -111,7 +111,6 @@ void main() {
         makeLesson(
           id: 'upper-change',
           date: monday,
-          pairNumber: 1,
           parity: WeekParity.even,
           isChange: true,
         ),
@@ -134,13 +133,10 @@ void main() {
           makeLesson(
             id: 'regular',
             date: monday,
-            pairNumber: 1,
-            isChange: false,
           ),
           makeLesson(
             id: 'change',
             date: monday,
-            pairNumber: 1,
             isChange: true,
             classroom: '205',
           ),
@@ -160,8 +156,8 @@ void main() {
 
     test('shows regular lesson when showChanges=false', () {
       final lessons = [
-        makeLesson(id: 'regular', date: monday, pairNumber: 1, isChange: false),
-        makeLesson(id: 'change', date: monday, pairNumber: 1, isChange: true),
+        makeLesson(id: 'regular', date: monday),
+        makeLesson(id: 'change', date: monday, isChange: true),
       ];
 
       final result = sut(
@@ -180,7 +176,6 @@ void main() {
         makeLesson(
           id: 'cancel',
           date: monday,
-          pairNumber: 1,
           isChange: true,
           isEvent: true,
           subject: 'Мероприятие',
@@ -205,7 +200,6 @@ void main() {
         makeLesson(
           id: 'moved',
           date: monday,
-          pairNumber: 1,
           isChange: true,
           isEvent: true,
           subject: 'Мероприятие',

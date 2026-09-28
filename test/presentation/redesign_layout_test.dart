@@ -43,17 +43,17 @@ void main() {
                 child: Column(
                   children: [
                     LessonTile(lesson: lesson),
-                    Padding(
-                      padding: const EdgeInsets.all(20),
+                    const Padding(
+                      padding: EdgeInsets.all(20),
                       child: ProfileHeader(
-                        identity: const StudentIdentity(
+                        identity: StudentIdentity(
                           actorId: 'group-1',
                           actorType: ActorType.studentGroup,
                           displayName: 'Информационные системы — ИТ-21',
                           departmentName: 'Институт информационных технологий',
                         ),
-                        courseStats: const StatCard(label: 'Курс', value: '2'),
-                        todayStats: const StatCard(
+                        courseStats: StatCard(label: 'Курс', value: '2'),
+                        todayStats: StatCard(
                           label: 'Сегодня пар',
                           value: '4',
                         ),

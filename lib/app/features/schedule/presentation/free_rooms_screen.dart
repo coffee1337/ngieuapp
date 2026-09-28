@@ -53,7 +53,8 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
 
   String _shortInstitute(String full) {
     final lower = full.toLowerCase();
-    if (lower.contains('экономик')) return 'ИЭиУ';
+    // Единая аббревиатура с CampusCatalog.shortName — иначе разъедется фильтр.
+    if (lower.contains('экономик')) return 'ИЭУ';
     if (lower.contains('информационн')) return 'ИИТиСС';
     if (lower.contains('инженерн')) return 'ИИ';
     return full;
@@ -177,16 +178,6 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       ];
     }
     final loader = ref.watch(backgroundLoaderProvider);
-    if (loader.isLoading) {
-      return [
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 430,
-            child: FreeRoomsLoadingView(loader: loader),
-          ),
-        ),
-      ];
-    }
     final minDurationMinutes =
         _minDurationMinutes ??
         ref.watch(appSettingsProvider).defaultFreeRoomDurationMinutes;
@@ -214,14 +205,15 @@ class _FreeRoomsScreenState extends ConsumerState<FreeRoomsScreen> {
       ],
       data: (rooms) {
         if (rooms.isEmpty) {
-          return const [
+          return [
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 240,
                 child: EmptyView(
-                  text:
-                      'Свободных аудиторий не найдено.\n'
-                      'Попробуйте изменить параметры поиска.',
+                  text: loader.isLoading
+                      ? 'Расписания загружаются. Результаты появятся автоматически.'
+                      : 'Свободных аудиторий не найдено.\n'
+                            'Попробуйте изменить параметры поиска.',
                   icon: Icons.meeting_room_outlined,
                 ),
               ),

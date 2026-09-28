@@ -15,17 +15,21 @@ Future<void> main() async {
   // Force Skia rendering on Android for crisper text (Impeller can be blurry on some devices)
   // This is overridden by AndroidManifest EnableImpeller flag
 
-  await initializeDateFormatting('ru_RU');
-  await Hive.initFlutter();
+  // Параллелим независимые init: дата + Hive + ориентация.
+  await Future.wait([
+    initializeDateFormatting('ru_RU'),
+    Hive.initFlutter(),
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+  ]);
 
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  // Set status bar style
+  // Set status bar style. Brightness подстроится под тему через
+  // AppLaunchSplash/AnnotatedRegion, здесь — нейтральный дефолт:
+  // тёмные иконки на светлом, иначе в dark статус-бар нечитаем.
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
     ),
   );
 
@@ -41,7 +45,7 @@ Future<void> main() async {
 Future<void> _initializeOptionalServices() async {
   try {
     await NotificationsService.instance.init();
-  } catch (error, stackTrace) {
+  } on Object catch (error, stackTrace) {
     debugPrint('Notifications initialization failed: $error');
     debugPrintStack(stackTrace: stackTrace);
   }

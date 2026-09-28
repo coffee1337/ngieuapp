@@ -3,7 +3,7 @@ import 'package:ngieuapp/app/features/widget/lock_screen_card_settings.dart';
 
 void main() {
   test('lock screen card state updates without losing load status', () {
-    const initial = LockScreenCardState(enabled: false, loaded: true);
+    const initial = LockScreenCardState(loaded: true);
     final enabled = initial.copyWith(enabled: true);
 
     expect(enabled.enabled, isTrue);

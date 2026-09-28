@@ -36,14 +36,13 @@ class NewsCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: article.imageUrl!,
                   fit: BoxFit.cover,
+                  // Ограничиваем декодируемый размер: в ленте не нужен full-HD.
+                  memCacheWidth: 800,
+                  maxWidthDiskCache: 800,
+                  fadeInDuration: const Duration(milliseconds: 160),
                   placeholder: (_, __) => ColoredBox(
                     color: theme.colorScheme.surfaceContainerHigh,
-                    child: const Center(
-                      child: SizedBox.square(
-                        dimension: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
+                    child: const SizedBox.expand(),
                   ),
                   errorWidget: (_, __, ___) => ColoredBox(
                     color: theme.colorScheme.surfaceContainerHigh,
