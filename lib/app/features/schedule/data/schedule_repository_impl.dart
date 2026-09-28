@@ -47,29 +47,18 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   Future<List<Lesson>> getAllLessonsForDate(DateTime date) =>
       _db.getAllLessonsForDate(date);
 
-  @override
-  Future<List<Lesson>> getAllLessonsInRange(DateTime from, DateTime to) =>
-      _db.getAllLessonsInRange(from, to);
-
   Future<List<Lesson>> _fetchAndStore(
     String actorId,
     List<Lesson> previous,
     DateTime anchorDate,
   ) async {
     final fresh = await _api.fetchSchedule(actorId, anchorDate: anchorDate);
+    await _changeNotifications?.notifyAboutNewChanges(
+      actorId: actorId,
+      oldLessons: previous,
+      freshLessons: fresh,
+    );
     await _db.replaceForActor(actorId, fresh);
-    try {
-      await _changeNotifications?.notifyAboutNewChanges(
-        actorId: actorId,
-        oldLessons: previous,
-        freshLessons: fresh,
-      );
-    } on Exception catch (error, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('Schedule change notification failed: $error');
-        debugPrintStack(stackTrace: stackTrace);
-      }
-    }
     return fresh;
   }
 

@@ -25,7 +25,6 @@ class NotificationsService {
   static const _lockScreenCardId = 0x4E474945;
 
   Future<void> init() async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     final inProgress = _initializing;
     if (inProgress != null) return inProgress;
     if (_initialized) return;
@@ -94,7 +93,7 @@ class NotificationsService {
     } on Object {
       // Notification launch details are optional and must not block startup.
     }
-    if (AppPlatform.isAndroid) {
+    if (Platform.isAndroid) {
       try {
         final android = _plugin
             .resolvePlatformSpecificImplementation<
@@ -111,9 +110,8 @@ class NotificationsService {
   }
 
   Future<bool> requestPermissions() async {
-    if (!AppPlatform.supportsMobileIntegrations) return false;
     await init();
-    if (AppPlatform.isAndroid) {
+    if (Platform.isAndroid) {
       final status = await Permission.notification.request();
       if (!status.isGranted) return false;
       final android = _plugin
@@ -153,7 +151,6 @@ class NotificationsService {
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
     List<Lesson> schedule = const [],
   }) async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     await init();
     final notifyTime = lesson.startTime.subtract(
       Duration(minutes: minutesBefore),
@@ -213,7 +210,6 @@ class NotificationsService {
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
     List<Lesson> schedule = const [],
   }) async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     await init();
     if (!preferences.scheduleChangesEnabled) return;
     final quiet = _quietPolicy.shouldSilence(
@@ -259,7 +255,6 @@ class NotificationsService {
   Future<void> showTestNotification({
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     await init();
     await _plugin.show(
       _idFromString('notification-test'),
@@ -300,7 +295,7 @@ class NotificationsService {
     List<Lesson> lessons, {
     required bool enabled,
   }) async {
-    if (!AppPlatform.isAndroid) return;
+    if (!Platform.isAndroid) return;
     await init();
     if (!enabled) {
       await _plugin.cancel(_lockScreenCardId);
@@ -352,7 +347,6 @@ class NotificationsService {
   }
 
   Future<void> cancelAll() async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     await init();
     await _plugin.cancelAll();
   }
@@ -369,7 +363,6 @@ class NotificationsService {
     required bool enabled,
     SmartNotificationSettings preferences = const SmartNotificationSettings(),
   }) async {
-    if (!AppPlatform.supportsMobileIntegrations) return;
     await init();
     await _cancelLessonReminders();
     if (!enabled) return;
