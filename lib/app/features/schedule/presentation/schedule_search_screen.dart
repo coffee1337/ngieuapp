@@ -113,8 +113,9 @@ class _ScheduleSearchScreenState extends ConsumerState<ScheduleSearchScreen> {
 
     final flat = <Object>[];
     for (final d in dates) {
-      flat.add(d);
-      flat.addAll(byDate[d]!);
+      flat
+        ..add(d)
+        ..addAll(byDate[d]!);
     }
 
     return ListView.builder(

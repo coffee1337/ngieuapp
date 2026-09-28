@@ -27,7 +27,7 @@ class LockScreenCardNotifier extends StateNotifier<LockScreenCardState> {
     state = LockScreenCardState(enabled: box.get(_key) == 'true', loaded: true);
   }
 
-  Future<void> setEnabled(bool value) async {
+  Future<void> setEnabled({required bool value}) async {
     state = state.copyWith(enabled: value, loaded: true);
     final box = await Hive.openBox<String>(_boxName);
     await box.put(_key, value.toString());

@@ -46,8 +46,9 @@ void main() {
     notifier.syncServerDate(DateTime(2026, 9, 23));
     expect(notifier.state, DateTime(2026, 9, 21));
 
-    notifier.nextWeek();
-    notifier.syncServerDate(DateTime(2026, 10, 7));
+    notifier
+      ..nextWeek()
+      ..syncServerDate(DateTime(2026, 10, 7));
     expect(notifier.state, DateTime(2026, 9, 28));
   });
 }

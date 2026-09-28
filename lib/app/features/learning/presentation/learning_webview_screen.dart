@@ -78,9 +78,6 @@ class _LearningWebViewScreenState extends State<LearningWebViewScreen> {
                   url: WebUri(LearningWebViewScreen._initialUrl),
                 ),
                 initialSettings: InAppWebViewSettings(
-                  cacheEnabled: true,
-                  clearCache: false,
-                  incognito: false,
                   sharedCookiesEnabled: true,
                   transparentBackground: true,
                   useOnDownloadStart: true,

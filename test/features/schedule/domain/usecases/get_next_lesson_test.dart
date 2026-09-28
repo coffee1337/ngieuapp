@@ -19,7 +19,7 @@ void main() {
         makeLesson(
           id: 'past',
           startTime: DateTime(2025, 3, 10, 8, 30),
-          endTime: DateTime(2025, 3, 10, 10, 0),
+          endTime: DateTime(2025, 3, 10, 10),
         ),
         makeLesson(
           id: 'current',
@@ -28,7 +28,7 @@ void main() {
         ),
         makeLesson(
           id: 'future',
-          startTime: DateTime(2025, 3, 10, 12, 0),
+          startTime: DateTime(2025, 3, 10, 12),
           endTime: DateTime(2025, 3, 10, 13, 30),
         ),
       ];
@@ -44,13 +44,13 @@ void main() {
       final lessons = [
         makeLesson(
           id: 'event',
-          startTime: DateTime(2025, 3, 10, 11, 0),
-          endTime: DateTime(2025, 3, 10, 12, 0),
+          startTime: DateTime(2025, 3, 10, 11),
+          endTime: DateTime(2025, 3, 10, 12),
           isEvent: true,
         ),
         makeLesson(
           id: 'lecture',
-          startTime: DateTime(2025, 3, 10, 12, 0),
+          startTime: DateTime(2025, 3, 10, 12),
           endTime: DateTime(2025, 3, 10, 13, 30),
         ),
       ];
@@ -64,7 +64,7 @@ void main() {
       final lessons = [
         makeLesson(
           id: 'past',
-          startTime: DateTime(2025, 3, 10, 8, 0),
+          startTime: DateTime(2025, 3, 10, 8),
           endTime: DateTime(2025, 3, 10, 9, 30),
         ),
       ];
@@ -82,8 +82,8 @@ void main() {
       final lessons = [
         makeLesson(
           id: 'ongoing',
-          startTime: DateTime(2025, 3, 10, 9, 0),
-          endTime: DateTime(2025, 3, 10, 11, 0),
+          startTime: DateTime(2025, 3, 10, 9),
+          endTime: DateTime(2025, 3, 10, 11),
         ),
       ];
 
@@ -96,12 +96,12 @@ void main() {
       final lessons = [
         makeLesson(
           id: 'later',
-          startTime: DateTime(2025, 3, 10, 14, 0),
+          startTime: DateTime(2025, 3, 10, 14),
           endTime: DateTime(2025, 3, 10, 15, 30),
         ),
         makeLesson(
           id: 'sooner',
-          startTime: DateTime(2025, 3, 10, 12, 0),
+          startTime: DateTime(2025, 3, 10, 12),
           endTime: DateTime(2025, 3, 10, 13, 30),
         ),
       ];
@@ -115,7 +115,7 @@ void main() {
       final lessons = [
         makeLesson(
           id: 'just-ended',
-          startTime: DateTime(2025, 3, 10, 9, 0),
+          startTime: DateTime(2025, 3, 10, 9),
           endTime: now,
         ),
       ];

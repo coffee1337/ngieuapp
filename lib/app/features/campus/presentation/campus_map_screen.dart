@@ -107,7 +107,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
                       ? _RoomResultCard(
                           key: ValueKey(_query),
                           result: room,
-                          onDirections: ref.read(connectivityProvider)
+                          onDirections: ref.read(isOnlineProvider)
                               ? () => context.push('/campus/directions')
                               : null,
                         )
@@ -157,7 +157,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
       useSafeArea: true,
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, setSheetState) {
-          final buildings = CampusMapLayout.buildings;
+          const buildings = CampusMapLayout.buildings;
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               AppSpacing.xxl,
@@ -169,7 +169,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Маршрут по кампусу',
+                  'Маршрут по территории вуза',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -181,7 +181,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 DropdownButtonFormField<String>(
-                  value: fromId,
+                  initialValue: fromId,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Откуда',
@@ -205,7 +205,7 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 DropdownButtonFormField<String>(
-                  value: toId,
+                  initialValue: toId,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Куда',
@@ -273,17 +273,17 @@ class _CampusMapScreenState extends ConsumerState<CampusMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isOnline = ref.watch(connectivityProvider);
+    final isOnline = ref.watch(isOnlineProvider);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Theme.of(
           context,
         ).colorScheme.surface.withValues(alpha: 0.9),
-        title: const Text('Карта кампуса'),
+        title: const Text('Карта корпусов'),
         actions: [
           IconButton(
-            tooltip: 'О кампусе',
+            tooltip: 'О корпусе',
             onPressed: () => _openCampusInfo(isOnline),
             icon: const Icon(Icons.info_outline_rounded),
           ),
@@ -410,7 +410,7 @@ class _CampusHeader extends StatelessWidget {
         children: [
           Icon(Icons.location_city_rounded, size: 36, color: scheme.primary),
           const SizedBox(height: AppSpacing.lg),
-          Text('Главный кампус НГИЭУ', style: theme.textTheme.titleLarge),
+          Text('Главный корпус НГИЭУ', style: theme.textTheme.titleLarge),
           const SizedBox(height: AppSpacing.sm),
           Text(
             CampusCatalog.mainCampusAddress,
@@ -456,7 +456,7 @@ class _RoomResultCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     if (!result.isRecognized) {
-      return _MessageCard(
+      return const _MessageCard(
         icon: Icons.search_off_rounded,
         title: 'Кабинет не распознан',
         text:

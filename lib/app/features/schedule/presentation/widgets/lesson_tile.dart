@@ -9,6 +9,12 @@ class LessonTile extends StatelessWidget {
   const LessonTile({required this.lesson, super.key});
   final Lesson lesson;
 
+  static final _standardRoom = RegExp(r'^[1-3]\d{2}');
+
+  static bool _isMappableRoom(String room) {
+    return _standardRoom.hasMatch(room.trim());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -73,11 +79,13 @@ class LessonTile extends StatelessWidget {
                   'Ауд. ${lesson.classroom}',
                 if (lesson.building.trim().isNotEmpty) lesson.building,
               ].join(' · '),
-              onTap: lesson.classroom.trim().isEmpty
-                  ? null
-                  : () => context.push(
+              // Диплинк на карту — только для стандартных кабинетов 1xx-3xx.
+              // Иначе карта автооткрывала bottom-sheet "не распознан".
+              onTap: _isMappableRoom(lesson.classroom)
+                  ? () => context.push(
                       '/campus?room=${Uri.encodeQueryComponent(lesson.classroom.trim())}',
-                    ),
+                    )
+                  : null,
             ),
           if (lesson.teacherNames.isNotEmpty)
             _LessonDetail(

@@ -12,7 +12,7 @@ class AppLaunchSplash extends StatefulWidget {
 
 class _AppLaunchSplashState extends State<AppLaunchSplash>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  AnimationController? _controller;
   bool _finished = false;
 
   @override
@@ -21,7 +21,7 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
     _controller =
         AnimationController(
             vsync: this,
-            duration: const Duration(milliseconds: 900),
+            duration: const Duration(milliseconds: 700),
           )
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed && mounted) {
@@ -33,18 +33,20 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_finished) return widget.child;
-    final scheme = Theme.of(context).colorScheme;
+    // Без анимаций — никакого искусственного ожидания: MediaQuery можно
+    // читать только в build, а не в initState.
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (reduceMotion) {
       return widget.child;
     }
+    if (_finished) return widget.child;
+    final scheme = Theme.of(context).colorScheme;
 
     return Stack(
       fit: StackFit.expand,
@@ -52,22 +54,22 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
         widget.child,
         IgnorePointer(
           child: AnimatedBuilder(
-            animation: _controller,
+            animation: _controller!,
             builder: (context, _) {
               final fadeOut = CurvedAnimation(
-                parent: _controller,
+                parent: _controller!,
                 curve: const Interval(0.76, 1, curve: Curves.easeInCubic),
               ).value;
               final logoEntrance = CurvedAnimation(
-                parent: _controller,
+                parent: _controller!,
                 curve: const Interval(0, 0.38, curve: Curves.easeOutBack),
               ).value;
               final titleEntrance = CurvedAnimation(
-                parent: _controller,
+                parent: _controller!,
                 curve: const Interval(0.2, 0.55, curve: Curves.easeOutCubic),
               ).value;
               final progress = CurvedAnimation(
-                parent: _controller,
+                parent: _controller!,
                 curve: const Interval(0.18, 0.74, curve: Curves.easeInOut),
               ).value;
 
@@ -96,7 +98,7 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
                               child: Opacity(
                                 opacity: logoEntrance
                                     .clamp(0.0, 1.0)
-                                    .toDouble(),
+                                    ,
                                 child: const _LaunchMark(),
                               ),
                             ),
@@ -106,7 +108,7 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
                               child: Opacity(
                                 opacity: titleEntrance
                                     .clamp(0.0, 1.0)
-                                    .toDouble(),
+                                    ,
                                 child: Column(
                                   children: [
                                     Text(
@@ -151,7 +153,7 @@ class _AppLaunchSplashState extends State<AppLaunchSplash>
                                     child: FractionallySizedBox(
                                       widthFactor: progress
                                           .clamp(0.02, 1.0)
-                                          .toDouble(),
+                                          ,
                                       child: ColoredBox(
                                         color: scheme.onPrimary,
                                         child: const SizedBox.expand(),

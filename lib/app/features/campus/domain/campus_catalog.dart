@@ -5,11 +5,13 @@ class CampusInstitute {
     required this.name,
     required this.shortName,
     required this.roomPrefix,
+    required this.maxFloor,
   });
 
   final String name;
   final String shortName;
   final String roomPrefix;
+  final int maxFloor;
 }
 
 class CampusRoomResult {
@@ -42,6 +44,7 @@ abstract final class CampusCatalog {
       name: 'Институт экономики и управления',
       shortName: 'ИЭУ',
       roomPrefix: '1xx',
+      maxFloor: 4,
     ),
     CampusInstitute(
       name:
@@ -49,11 +52,13 @@ abstract final class CampusCatalog {
           'и систем связи',
       shortName: 'ИИТиСС',
       roomPrefix: '2xx',
+      maxFloor: 3,
     ),
     CampusInstitute(
       name: 'Инженерный институт',
       shortName: 'ИИ',
       roomPrefix: '3xx',
+      maxFloor: 2,
     ),
   ];
 
@@ -63,11 +68,14 @@ abstract final class CampusCatalog {
     final institute = instituteName == null
         ? null
         : institutes.firstWhere((item) => item.name == instituteName);
-
+    final floor = FloorUtils.getFloorFromRoomNumber(query);
+    if (institute == null || floor == null || floor > institute.maxFloor) {
+      return CampusRoomResult(query: query, institute: null, floor: null);
+    }
     return CampusRoomResult(
       query: query,
       institute: institute,
-      floor: FloorUtils.getFloorFromRoomNumber(query),
+      floor: floor,
     );
   }
 

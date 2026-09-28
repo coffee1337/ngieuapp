@@ -8,7 +8,7 @@ enum LessonType { lecture, practice, lab, exam, consultation, event, unknown }
 enum WeekParity { any, odd, even }
 
 extension WeekParityMatching on WeekParity {
-  bool matchesUpperWeek(bool isUpperWeek) => switch (this) {
+  bool matchesUpperWeek({required bool isUpperWeek}) => switch (this) {
     WeekParity.any => true,
     WeekParity.even => isUpperWeek,
     WeekParity.odd => !isUpperWeek,

@@ -86,7 +86,7 @@ class ScheduleCalendarService {
       final eventId = entry.value.eventId;
       if (eventId == null) continue;
       final result = await _plugin.deleteEvent(calendarId, eventId);
-      if (result.isSuccess && result.data == true) removed++;
+      if (result.isSuccess && (result.data ?? false)) removed++;
     }
 
     return CalendarSyncResult(
@@ -98,7 +98,7 @@ class ScheduleCalendarService {
 
   Future<void> _ensurePermission() async {
     final current = await _plugin.hasPermissions();
-    if (current.isSuccess && current.data == true) return;
+    if (current.isSuccess && (current.data ?? false)) return;
     final requested = await _plugin.requestPermissions();
     if (!requested.isSuccess || requested.data != true) {
       throw const CalendarSyncException(
@@ -138,7 +138,7 @@ class ScheduleCalendarService {
     }
 
     for (final calendar in calendars) {
-      if (calendar.isDefault == true &&
+      if ((calendar.isDefault ?? false) &&
           calendar.isReadOnly != true &&
           calendar.id != null) {
         await _localDataSource.saveCalendarId(calendar.id!);
@@ -163,7 +163,7 @@ class ScheduleCalendarService {
 
   static String buildLocation(Lesson lesson) => [
     lesson.building.trim(),
-    lesson.classroom.trim().isEmpty ? '' : 'ауд. ${lesson.classroom.trim()}',
+    if (lesson.classroom.trim().isEmpty) '' else 'ауд. ${lesson.classroom.trim()}',
   ].where((part) => part.isNotEmpty).join(', ');
 
   static String? lessonIdFromDescription(String? description) {

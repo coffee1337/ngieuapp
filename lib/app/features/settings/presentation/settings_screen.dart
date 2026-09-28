@@ -2,18 +2,19 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ngieuapp/app/core/utils/app_platform.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_provider.dart';
-import 'package:ngieuapp/app/features/notifications/reschedule_notifications.dart';
 import 'package:ngieuapp/app/features/notifications/notifications_service.dart';
-import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
+import 'package:ngieuapp/app/features/notifications/reschedule_notifications.dart';
 import 'package:ngieuapp/app/features/settings/data/layout_density_provider.dart';
 import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
+import 'package:ngieuapp/app/features/settings/data/navigation_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/smart_notification_settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/visual_style_providers.dart';
-import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_layout_density.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_motion_style.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_navigation_settings.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/features/widget/home_widget_provider.dart';
 import 'package:ngieuapp/app/features/widget/lock_screen_card_settings.dart';
@@ -276,7 +277,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 value: s.showChanges,
                 onChanged: (v) async {
-                  await notifier.setShowChanges(v);
+                  await notifier.setShowChanges(value: v);
                   await rescheduleNotifications(ref);
                 },
               ),
@@ -317,7 +318,9 @@ class SettingsScreen extends ConsumerWidget {
                 title: const Text('Показывать изображения в новостях'),
                 subtitle: const Text('Отключите, чтобы экономить трафик'),
                 value: s.showNewsImages,
-                onChanged: notifier.setShowNewsImages,
+                onChanged: (value) => notifier.setShowNewsImages(
+                  value: value,
+                ),
               ),
             ],
           ),
@@ -332,7 +335,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 value: s.homeWidgetEnabled,
                 onChanged: (value) async {
-                  await notifier.setHomeWidgetEnabled(value);
+                  await notifier.setHomeWidgetEnabled(value: value);
                 },
               ),
               const ListTile(
@@ -374,7 +377,7 @@ class SettingsScreen extends ConsumerWidget {
                           }
                           await ref
                               .read(lockScreenCardSettingsProvider.notifier)
-                              .setEnabled(value);
+                              .setEnabled(value: value);
                           await ref
                               .read(notificationsServiceProvider)
                               .updateAndroidLockScreenCard(
@@ -407,7 +410,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: s.homeWidgetShowRoom,
                 onChanged: s.homeWidgetEnabled
                     ? (value) async {
-                        await notifier.setHomeWidgetShowRoom(value);
+                        await notifier.setHomeWidgetShowRoom(value: value);
                       }
                     : null,
               ),
@@ -453,8 +456,8 @@ class SettingsScreen extends ConsumerWidget {
                     if (!granted) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text(
+                          const SnackBar(
+                            content: Text(
                               'Разрешение не предоставлено. Включите уведомления в настройках телефона.',
                             ),
                             action: SnackBarAction(
@@ -467,7 +470,7 @@ class SettingsScreen extends ConsumerWidget {
                       return;
                     }
                   }
-                  await notifier.setNotificationsEnabled(v);
+                  await notifier.setNotificationsEnabled(value: v);
                   await rescheduleNotifications(ref);
                 },
               ),

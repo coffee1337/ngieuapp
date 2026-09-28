@@ -23,7 +23,7 @@ Lesson makeLesson({
     date: d,
     pairNumber: pairNumber,
     startTime: startTime ?? DateTime(d.year, d.month, d.day, 8, 30),
-    endTime: endTime ?? DateTime(d.year, d.month, d.day, 10, 0),
+    endTime: endTime ?? DateTime(d.year, d.month, d.day, 10),
     subject: subject,
     type: type,
     classroom: classroom,

@@ -8,8 +8,8 @@ import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_heade
 import 'package:ngieuapp/app/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:ngieuapp/app/features/schedule/data/favorite_actors_providers.dart';
 import 'package:ngieuapp/app/features/schedule/data/schedule_providers.dart';
-import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/features/schedule/domain/actor.dart';
+import 'package:ngieuapp/app/features/schedule/domain/favorite_actor.dart';
 import 'package:ngieuapp/app/shared/widgets/error_view.dart';
 import 'package:ngieuapp/app/shared/widgets/skeleton.dart';
 
@@ -197,7 +197,7 @@ class _ProfileContent extends ConsumerWidget {
         ),
         ProfileMenuTile(
           icon: Icons.map_outlined,
-          title: 'Карта кампуса и кабинетов',
+          title: 'Карта территории вуза и кабинетов',
           onTap: () => context.push('/campus'),
         ),
         ProfileMenuTile(

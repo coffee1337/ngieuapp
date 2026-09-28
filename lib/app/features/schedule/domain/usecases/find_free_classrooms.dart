@@ -36,7 +36,7 @@ class FindFreeClassrooms {
     lessons = lessons
         .where(
           (lesson) =>
-              lesson.parity.matchesUpperWeek(isUpperWeek) &&
+              lesson.parity.matchesUpperWeek(isUpperWeek: isUpperWeek) &&
               lesson.classroom.isNotEmpty &&
               !_excluded.hasMatch(lesson.classroom),
         )
@@ -150,8 +150,10 @@ class _Interval {
   final DateTime end;
 }
 
+/// Ключ дедупликации аудиторий. Поля финальные — класс неизменяемый.
+@immutable
 class _RoomKey {
-  _RoomKey(this.room, this.building);
+  const _RoomKey(this.room, this.building);
   final String room;
   final String building;
 

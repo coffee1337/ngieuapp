@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
-  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 5;

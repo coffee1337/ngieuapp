@@ -13,7 +13,6 @@ void main() {
 
   test('moves default tab when it becomes hidden', () {
     final settings = const AppNavigationSettings(
-      defaultTab: AppTab.news,
       visibleTabs: [AppTab.schedule, AppTab.profile],
     ).normalized();
 

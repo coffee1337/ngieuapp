@@ -15,37 +15,43 @@ class MotionReveal extends StatefulWidget {
 
 class _MotionRevealState extends State<MotionReveal>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  AnimationController? _controller;
   late final double _delayFraction;
 
   @override
   void initState() {
     super.initState();
     final style = AppMotionSettings.currentStyle;
+    // reduced или системное отключение — контроллер вообще не создаём.
+    // Системный флаг проверяем в build (там есть context), здесь — только
+    // настройку приложения.
+    if (style == AppMotionStyle.reduced) {
+      _delayFraction = 1;
+      return;
+    }
     final motionMillis = style == AppMotionStyle.expressive ? 360 : 240;
     final delayMillis = widget.order.clamp(0, 5) * 28;
     _delayFraction = delayMillis / (motionMillis + delayMillis);
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: motionMillis + delayMillis),
-      value: style == AppMotionStyle.reduced ? 1 : 0,
-    );
-    if (style != AppMotionStyle.reduced) {
-      _controller.forward();
-    }
+    )..forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    final controller = _controller;
+    if (controller == null || MediaQuery.disableAnimationsOf(context)) {
+      return widget.child;
+    }
     final curved = CurvedAnimation(
-      parent: _controller,
+      parent: controller,
       curve: Interval(_delayFraction, 1, curve: Curves.easeOutCubic),
     );
     return FadeTransition(

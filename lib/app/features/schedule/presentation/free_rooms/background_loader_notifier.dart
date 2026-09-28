@@ -92,6 +92,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
                   .fetchSchedule(g.id, anchorDate: anchorDate)
                   .timeout(const Duration(seconds: 10));
               await dbDs.replaceForActor(g.id, lessons);
+              if (!mounted) return;
               loadedCount++;
             } on Object catch (error) {
               if (kDebugMode) debugPrint('Schedule ${g.id} failed: $error');
@@ -106,7 +107,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
             );
           }),
         );
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        // Один invalidate на батч вместо одного на группу: 100 групп
+        // давали 100 полных пересчётов свободных аудиторий.
+        if (mounted) _ref.invalidate(freeRoomsProvider);
       }
     } on Object catch (error) {
       if (kDebugMode) debugPrint('Background schedule load failed: $error');
@@ -119,7 +122,9 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
           lastRunTime: DateTime.now(),
           shouldAutoLoad: state.shouldAutoLoad,
         );
-        _ref.invalidate(freeRoomsProvider);
+        // Финальный invalidate только если были успехи: пустой прогон
+        // (всё из кэша/всё упало) не должен дёргать freeRooms заново.
+        if (loadedCount > 0) _ref.invalidate(freeRoomsProvider);
       }
       _completer = null;
       completer.complete();
@@ -130,7 +135,7 @@ class BackgroundLoaderNotifier extends StateNotifier<BackgroundLoaderState> {
     if (state.shouldRunAutomatically) await run();
   }
 
-  void setAutoLoad(bool enabled) {
+  void setAutoLoad({required bool enabled}) {
     state = BackgroundLoaderState(
       isLoading: state.isLoading,
       loaded: state.loaded,

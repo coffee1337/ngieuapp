@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ngieuapp/app/core/utils/schedule_clock_provider.dart';
-
 import 'package:ngieuapp/app/features/notifications/notification_sync_provider.dart';
 import 'package:ngieuapp/app/features/settings/data/layout_density_provider.dart';
-import 'package:ngieuapp/app/features/settings/data/motion_settings_provider.dart';
 import 'package:ngieuapp/app/features/settings/data/settings_providers.dart';
 import 'package:ngieuapp/app/features/settings/data/visual_style_providers.dart';
-import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/features/settings/domain/app_layout_density.dart';
+import 'package:ngieuapp/app/features/settings/domain/app_settings.dart';
 import 'package:ngieuapp/app/features/widget/home_widget_sync_provider.dart';
 import 'package:ngieuapp/app/router.dart';
 import 'package:ngieuapp/app/shared/widgets/app_launch_splash.dart';
@@ -21,18 +19,27 @@ class NgieuApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(scheduleClockProvider);
+    // Сайд-эффекты подписываем через listen, а не watch: иначе каждый их
+    // перезапуск пересоздавал бы весь MaterialApp.
+    ref
+      ..listen(scheduleClockProvider, (_, __) {})
+      ..listen(notificationSyncProvider, (_, __) {})
+      ..listen(homeWidgetSyncProvider, (_, __) {});
     final router = ref.watch(routerProvider);
-    final settings = ref.watch(appSettingsProvider);
+    // Только нужные поля — смена любого другого поля настроек
+    // больше не пересоздаёт тему и весь MaterialApp.
+    final themeModeSetting = ref.watch(
+      appSettingsProvider.select((s) => s.themeMode),
+    );
+    final fontScale = ref.watch(
+      appSettingsProvider.select((s) => s.fontScale),
+    );
     final density = ref.watch(layoutDensityProvider);
-    ref.watch(motionSettingsProvider);
     final visualStyle = ref.watch(visualStyleProvider);
-    ref.watch(notificationSyncProvider);
-    ref.watch(homeWidgetSyncProvider);
 
     final themeMode = visualStyle == AppVisualStyle.amoled
         ? ThemeMode.dark
-        : switch (settings.themeMode) {
+        : switch (themeModeSetting) {
             AppThemeMode.system => ThemeMode.system,
             AppThemeMode.light => ThemeMode.light,
             AppThemeMode.dark => ThemeMode.dark,
@@ -55,7 +62,7 @@ class NgieuApp extends ConsumerWidget {
         return AppLaunchSplash(
           child: MediaQuery(
             data: mq.copyWith(
-              textScaler: TextScaler.linear(settings.fontScale.value),
+              textScaler: TextScaler.linear(fontScale.value),
             ),
             child: child!,
           ),

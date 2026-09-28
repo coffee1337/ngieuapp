@@ -20,13 +20,22 @@ class MinDurationSheet extends StatelessWidget {
               style: theme.textTheme.titleMedium,
             ),
           ),
-          for (final m in options)
-            RadioListTile<int>(
-              title: Text('$m мин'),
-              value: m,
-              groupValue: current,
-              onChanged: (v) => Navigator.pop(context, v),
+          RadioGroup<int>(
+            groupValue: current,
+            onChanged: (v) {
+              if (v != null) Navigator.pop(context, v);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final m in options)
+                  RadioListTile<int>(
+                    title: Text('$m мин'),
+                    value: m,
+                  ),
+              ],
             ),
+          ),
           const SizedBox(height: AppSpacing.md),
         ],
       ),
@@ -62,17 +71,24 @@ class InstituteSheet extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: Text('Институт', style: theme.textTheme.titleMedium),
           ),
-          for (final option in options)
-            RadioListTile<String>(
-              title: Text(
-                option['label']!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              value: option['value']!,
-              groupValue: current ?? '',
-              onChanged: (v) => Navigator.pop(context, v ?? ''),
+          RadioGroup<String>(
+            groupValue: current ?? '',
+            onChanged: (v) => Navigator.pop(context, v ?? ''),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final option in options)
+                  RadioListTile<String>(
+                    title: Text(
+                      option['label']!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    value: option['value']!,
+                  ),
+              ],
             ),
+          ),
           const SizedBox(height: AppSpacing.md),
         ],
       ),

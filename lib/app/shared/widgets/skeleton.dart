@@ -29,29 +29,36 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, child) => ShaderMask(
-        shaderCallback: (bounds) {
-          return LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: const [
-              Color(0x00FFFFFF),
-              Color(0x44FFFFFF),
-              Color(0x00FFFFFF),
-            ],
-            stops: [
-              (_ctrl.value - 0.3).clamp(0.0, 1.0),
-              _ctrl.value,
-              (_ctrl.value + 0.3).clamp(0.0, 1.0),
-            ],
-          ).createShader(bounds);
-        },
-        blendMode: BlendMode.srcATop,
-        child: child,
+    // Без анимации — статичная заглушка без ShaderMask каждый кадр.
+    // TickerMode срабатывает и на системное отключение анимаций.
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return TickerMode(
+      enabled: TickerMode.valuesOf(context).enabled,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, child) => ShaderMask(
+          shaderCallback: (bounds) {
+            if (bounds.isEmpty) {
+              return const LinearGradient(colors: []).createShader(bounds);
+            }
+            return LinearGradient(
+              colors: const [
+                Color(0x00FFFFFF),
+                Color(0x44FFFFFF),
+                Color(0x00FFFFFF),
+              ],
+              stops: [
+                (_ctrl.value - 0.3).clamp(0.0, 1.0),
+                _ctrl.value,
+                (_ctrl.value + 0.3).clamp(0.0, 1.0),
+              ],
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.srcATop,
+          child: child,
+        ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }
@@ -103,17 +110,17 @@ class _LessonSkeletonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SkeletonBox(width: 48, height: 48, borderRadius: AppRadius.sm),
-          const SizedBox(width: AppSpacing.lg),
+          SkeletonBox(width: 48, height: 48, borderRadius: AppRadius.sm),
+          SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 SkeletonBox(height: 14),
                 SizedBox(height: AppSpacing.md),
                 SkeletonBox(width: 180, height: 12),
@@ -150,11 +157,11 @@ class _ListItemSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           SkeletonBox(height: 14),
           SizedBox(height: AppSpacing.md),
           SkeletonBox(width: 200, height: 12),
@@ -188,16 +195,16 @@ class _NewsItemSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           SkeletonBox(height: 160, borderRadius: AppRadius.lg),
           SizedBox(height: AppSpacing.lg),
           SkeletonBox(width: 100, height: 10),
           SizedBox(height: AppSpacing.md),
-          SkeletonBox(height: 16),
+          SkeletonBox(),
           SizedBox(height: AppSpacing.sm),
           SkeletonBox(width: 240, height: 12),
         ],

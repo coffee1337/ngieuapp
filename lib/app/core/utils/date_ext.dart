@@ -25,6 +25,6 @@ extension DateExt on DateTime {
     ).startOfWeek;
     final diffDays = startOfWeek.difference(academicStart).inDays;
     final weekNum = (diffDays ~/ 7) + 1;
-    return weekNum % 2 == 0;
+    return weekNum.isEven;
   }
 }

@@ -9,6 +9,17 @@ class SmartNotificationSettings {
     this.vibrationEnabled = true,
   });
 
+  factory SmartNotificationSettings.fromJson(Map<String, dynamic> json) =>
+      SmartNotificationSettings(
+        scheduleChangesEnabled: json['scheduleChangesEnabled'] as bool? ?? true,
+        quietHoursEnabled: json['quietHoursEnabled'] as bool? ?? true,
+        quietHoursStart: (json['quietHoursStart'] as num?)?.toInt() ?? 22,
+        quietHoursEnd: (json['quietHoursEnd'] as num?)?.toInt() ?? 7,
+        quietDuringLessons: json['quietDuringLessons'] as bool? ?? true,
+        soundEnabled: json['soundEnabled'] as bool? ?? true,
+        vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
+      );
+
   final bool scheduleChangesEnabled;
   final bool quietHoursEnabled;
   final int quietHoursStart;
@@ -54,15 +65,4 @@ class SmartNotificationSettings {
     'soundEnabled': soundEnabled,
     'vibrationEnabled': vibrationEnabled,
   };
-
-  factory SmartNotificationSettings.fromJson(Map<String, dynamic> json) =>
-      SmartNotificationSettings(
-        scheduleChangesEnabled: json['scheduleChangesEnabled'] as bool? ?? true,
-        quietHoursEnabled: json['quietHoursEnabled'] as bool? ?? true,
-        quietHoursStart: (json['quietHoursStart'] as num?)?.toInt() ?? 22,
-        quietHoursEnd: (json['quietHoursEnd'] as num?)?.toInt() ?? 7,
-        quietDuringLessons: json['quietDuringLessons'] as bool? ?? true,
-        soundEnabled: json['soundEnabled'] as bool? ?? true,
-        vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
-      );
 }

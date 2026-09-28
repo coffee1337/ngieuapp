@@ -26,14 +26,12 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
           makeLesson(
             id: 'l2',
-            classroom: '121',
-            startTime: DateTime(2025, 3, 10, 12, 0),
+            startTime: DateTime(2025, 3, 10, 12),
             endTime: DateTime(2025, 3, 10, 13, 30),
           ),
         ],
@@ -45,7 +43,6 @@ void main() {
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 12, minute: 0),
         isUpperWeek: true,
-        minDuration: const Duration(minutes: 45),
       );
 
       // Assert
@@ -61,13 +58,13 @@ void main() {
           makeLesson(
             classroom: 'дист.',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
           makeLesson(
             id: 'real',
             classroom: '205',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
         ],
       );
@@ -88,7 +85,7 @@ void main() {
           makeLesson(
             classroom: '',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
         ],
       );
@@ -108,14 +105,12 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
-            startTime: DateTime(2025, 3, 10, 8, 0),
+            startTime: DateTime(2025, 3, 10, 8),
             endTime: DateTime(2025, 3, 10, 9, 30),
           ),
           makeLesson(
             id: 'l2',
-            classroom: '121',
-            startTime: DateTime(2025, 3, 10, 10, 0),
+            startTime: DateTime(2025, 3, 10, 10),
             endTime: DateTime(2025, 3, 10, 11, 30),
           ),
         ],
@@ -126,7 +121,6 @@ void main() {
         from: const TimeOfDay(hour: 9, minute: 30),
         to: const TimeOfDay(hour: 10, minute: 0),
         isUpperWeek: true,
-        minDuration: const Duration(minutes: 45),
       );
 
       expect(result, isEmpty);
@@ -151,15 +145,13 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
           makeLesson(
             id: 'overlap',
-            classroom: '121',
             startTime: DateTime(2025, 3, 10, 9, 30),
-            endTime: DateTime(2025, 3, 10, 11, 0),
+            endTime: DateTime(2025, 3, 10, 11),
           ),
         ],
       );
@@ -169,7 +161,6 @@ void main() {
         from: const TimeOfDay(hour: 11, minute: 0),
         to: const TimeOfDay(hour: 13, minute: 0),
         isUpperWeek: true,
-        minDuration: const Duration(minutes: 45),
       );
 
       expect(result, hasLength(1));
@@ -180,14 +171,13 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
-            startTime: DateTime(2025, 3, 10, 9, 0),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            startTime: DateTime(2025, 3, 10, 9),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
           makeLesson(
             id: 'l2',
             classroom: '205',
-            startTime: DateTime(2025, 3, 10, 8, 0),
+            startTime: DateTime(2025, 3, 10, 8),
             endTime: DateTime(2025, 3, 10, 8, 30),
           ),
         ],
@@ -198,7 +188,6 @@ void main() {
         from: const TimeOfDay(hour: 10, minute: 0),
         to: const TimeOfDay(hour: 20, minute: 0),
         isUpperWeek: true,
-        minDuration: const Duration(minutes: 45),
       );
 
       if (result.length >= 2) {
@@ -210,15 +199,14 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
           makeLesson(
             id: 'l2',
             classroom: '205',
             startTime: DateTime(2025, 3, 10, 8, 30),
-            endTime: DateTime(2025, 3, 10, 10, 0),
+            endTime: DateTime(2025, 3, 10, 10),
           ),
         ],
       );
@@ -241,14 +229,12 @@ void main() {
       when(() => mockRepo.getAllLessonsForDate(date)).thenAnswer(
         (_) async => [
           makeLesson(
-            classroom: '121',
             parity: WeekParity.even,
             startTime: DateTime(2025, 3, 10, 10),
             endTime: DateTime(2025, 3, 10, 12),
           ),
           makeLesson(
             id: 'lower-lesson',
-            classroom: '121',
             parity: WeekParity.odd,
             startTime: DateTime(2025, 3, 10, 12),
             endTime: DateTime(2025, 3, 10, 14),
