@@ -33,7 +33,7 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
     // TickerMode срабатывает и на системное отключение анимаций.
     if (MediaQuery.disableAnimationsOf(context)) return widget.child;
     return TickerMode(
-      enabled: TickerMode.valuesOf(context).enabled,
+      enabled: TickerMode.of(context),
       child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, child) => ShaderMask(
