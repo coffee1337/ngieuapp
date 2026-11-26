@@ -132,7 +132,7 @@ class NotificationsService {
       }
       return true;
     }
-    if (AppAppPlatform.isIOS) {
+    if (AppPlatform.isIOS) {
       final granted = await _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin

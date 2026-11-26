@@ -35,7 +35,7 @@ class SearchSchedule {
     for (final l in allLessons) {
       if (l.date.isBefore(from) || !l.date.isBefore(to)) continue;
       final isUpperWeek = await resolveIsUpperWeek(l.date);
-      if (!l.parity.matchesUpperWeek(isUpperWeek)) continue;
+      if (!l.parity.matchesUpperWeek(isUpperWeek: isUpperWeek)) continue;
       final match = _matchType(l, q);
       if (match == null) continue;
       // Дедупликация — одно и то же занятие может быть повторено (разные группы)
