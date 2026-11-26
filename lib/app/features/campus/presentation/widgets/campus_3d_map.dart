@@ -23,16 +23,24 @@ class Campus3DMap extends StatefulWidget {
 class _Campus3DMapState extends State<Campus3DMap>
     with SingleTickerProviderStateMixin {
   final _transformationController = TransformationController();
-  late final AnimationController _resetController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 220),
-  );
+  late final AnimationController _resetController;
   Matrix4? _resetBegin;
   Matrix4? _resetEnd;
   CampusMapBuilding? _selectedBuilding;
   Size? _viewport;
   bool _didFit = false;
   bool _userMoved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Created here, not in a lazy field initialiser: dispose() must never be the
+    // first access, or the ticker would be requested from a deactivated element.
+    _resetController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    )..addListener(_applyResetFrame);
+  }
 
   @override
   void dispose() {

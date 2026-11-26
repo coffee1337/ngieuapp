@@ -230,6 +230,17 @@ private let brandGradient = LinearGradient(
 )
 
 private extension View {
+    /// `.monospacedDigit()` is iOS 15+; the widget extension still supports iOS 14,
+    /// so the modifier degrades to the plain font there instead of failing the build.
+    @ViewBuilder
+    func widgetMonospacedDigits() -> some View {
+        if #available(iOSApplicationExtension 15.0, *) {
+            monospacedDigit()
+        } else {
+            self
+        }
+    }
+
     @ViewBuilder
     func scheduleWidgetBackground() -> some View {
         if #available(iOSApplicationExtension 17.0, *) {
@@ -264,7 +275,7 @@ struct NextLessonView: View {
             )
             Text(startTime(details.time).isEmpty ? "—" : startTime(details.time))
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .monospacedDigit()
+                .widgetMonospacedDigits()
                 .foregroundColor(.white)
                 .lineLimit(1)
             Spacer(minLength: 0)
@@ -299,7 +310,7 @@ struct WideNextLessonView: View {
                 )
                 Text(startTime(details.time).isEmpty ? "—" : startTime(details.time))
                     .font(.system(size: 25, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    .widgetMonospacedDigits()
                     .foregroundColor(.white)
                     .lineLimit(1)
             }
@@ -358,7 +369,7 @@ private struct RowsView: View {
                     HStack(spacing: 8) {
                         Text(lesson.time)
                             .font(.system(size: large ? 12 : 11, weight: .bold, design: .rounded))
-                            .monospacedDigit()
+                            .widgetMonospacedDigits()
                             .frame(width: large ? 84 : 78, alignment: .leading)
                         Text(lesson.subject)
                             .font(.system(size: large ? 13 : 12, weight: .semibold))
@@ -432,7 +443,7 @@ private struct LockScreenScheduleView: View {
                         .widgetAccentable()
                     Text(time.isEmpty ? "—" : time)
                         .font(.headline.weight(.bold))
-                        .monospacedDigit()
+                        .widgetMonospacedDigits()
                         .minimumScaleFactor(0.75)
                     if !room.isEmpty {
                         Text(room)
@@ -451,7 +462,7 @@ private struct LockScreenScheduleView: View {
                     Spacer(minLength: 2)
                     Text(time.isEmpty ? "—" : time)
                         .font(.headline.weight(.bold))
-                        .monospacedDigit()
+                        .widgetMonospacedDigits()
                 }
                 Text(subject.isEmpty ? "Откройте приложение" : subject)
                     .font(.headline)
