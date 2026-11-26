@@ -22,8 +22,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      # Pinned to the SDK range declared in pubspec.yaml: newer stable releases raise
+      # the Gradle floor above the wrapper this project ships (8.14).
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.38.4'
           channel: stable
           cache: true
       - run: flutter pub get
@@ -39,6 +42,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.38.4'
           channel: stable
           cache: true
       - run: flutter pub get
