@@ -27,7 +27,8 @@ class _Campus3DMapState extends State<Campus3DMap>
     vsync: this,
     duration: const Duration(milliseconds: 220),
   );
-  Animation<Matrix4>? _resetAnimation;
+  Matrix4? _resetBegin;
+  Matrix4? _resetEnd;
   CampusMapBuilding? _selectedBuilding;
   Size? _viewport;
   bool _didFit = false;

@@ -93,7 +93,7 @@ class NotificationsService {
     } on Object {
       // Notification launch details are optional and must not block startup.
     }
-    if (Platform.isAndroid) {
+    if (AppPlatform.isAndroid) {
       try {
         final android = _plugin
             .resolvePlatformSpecificImplementation<
@@ -111,7 +111,7 @@ class NotificationsService {
 
   Future<bool> requestPermissions() async {
     await init();
-    if (Platform.isAndroid) {
+    if (AppPlatform.isAndroid) {
       final status = await Permission.notification.request();
       if (!status.isGranted) return false;
       final android = _plugin
@@ -132,7 +132,7 @@ class NotificationsService {
       }
       return true;
     }
-    if (AppPlatform.isIOS) {
+    if (AppAppPlatform.isIOS) {
       final granted = await _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -295,7 +295,7 @@ class NotificationsService {
     List<Lesson> lessons, {
     required bool enabled,
   }) async {
-    if (!Platform.isAndroid) return;
+    if (!AppPlatform.isAndroid) return;
     await init();
     if (!enabled) {
       await _plugin.cancel(_lockScreenCardId);
