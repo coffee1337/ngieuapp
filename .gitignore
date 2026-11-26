@@ -47,3 +47,9 @@ app.*.map.json
 .aider.*
 build.log
 model_bench*
+
+# Agent scaffolding (not part of the product)
+.claude/
+.codex/
+AGENTS.md
+CLAUDE.md

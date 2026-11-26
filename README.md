@@ -10,6 +10,8 @@ University application with schedules, notifications, campus information and nat
 
 </div>
 
+> **[Interactive case study →](https://coffee1337.github.io/projects/ngie/)**
+
 ---
 
 ## 📖 About
